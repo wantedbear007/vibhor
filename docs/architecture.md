@@ -239,9 +239,10 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   card's top and bottom; the right column stacks the metadata and equalizer,
   the seek bar, and the transport controls. The landscape card keeps the
   half-stage minimum height, with the thumbnail filling that full inner height
-  and a uniform 20 dp content gutter. The card uses a 24 dp corner radius while
-  the inset album art uses 28 dp, so the inner edge keeps a matching visual
-  roundness instead of reading sharper than the outer card.
+  and a uniform 20 dp content gutter. Both the card (maximum 24 dp) and album
+  art (maximum 28 dp) measure their actual size and apply
+  `R = min(Rmax, min(W, H) / 2)`, so a radius can never exceed half the smaller
+  side while retaining the intended outer/inner roundness relationship.
 - In landscape the volume pill column is exactly the 132 dp pill width, with
   only the row gap beside the card; it no longer reserves an oversized column
   with extra gutters on both sides. The player therefore takes the remaining

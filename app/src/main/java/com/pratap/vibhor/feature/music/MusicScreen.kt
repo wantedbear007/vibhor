@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,11 +65,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.media.NowPlaying
 import com.pratap.vibhor.core.time.formatPlaybackTime
 import com.pratap.vibhor.core.ui.components.VerticalPillSlider
+import com.pratap.vibhor.core.ui.components.rememberConsistentCornerShape
 import com.pratap.vibhor.core.ui.theme.DeepSlate
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
@@ -234,9 +237,16 @@ private fun MusicCard(
     minContentHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
+    var cardSize by remember { mutableStateOf(IntSize.Zero) }
+    val cardShape = rememberConsistentCornerShape(
+        size = cardSize,
+        maxRadius = PlayerCardMaxCornerRadius,
+    )
     Surface(
-        modifier = modifier.testTag(MusicTestTags.Card),
-        shape = RoundedCornerShape(PlayerCardCornerRadius),
+        modifier = modifier
+            .onSizeChanged { cardSize = it }
+            .testTag(MusicTestTags.Card),
+        shape = cardShape,
         color = DeepSlate.copy(alpha = 0.74f),
         border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.08f)),
     ) {
@@ -431,19 +441,24 @@ private fun AlbumArtwork(
     art: Bitmap?,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(AlbumArtCornerRadius)
+    var artSize by remember { mutableStateOf(IntSize.Zero) }
+    val shape = rememberConsistentCornerShape(
+        size = artSize,
+        maxRadius = AlbumArtMaxCornerRadius,
+    )
+    val measuredModifier = modifier.onSizeChanged { artSize = it }
     if (art != null) {
         Image(
             bitmap = art.asImageBitmap(),
             contentDescription = stringResource(R.string.music_album_art),
             contentScale = ContentScale.Crop,
-            modifier = modifier
+            modifier = measuredModifier
                 .clip(shape)
                 .testTag(MusicTestTags.AlbumArt),
         )
     } else {
         Box(
-            modifier = modifier
+            modifier = measuredModifier
                 .clip(shape)
                 .background(
                     Brush.linearGradient(
@@ -736,8 +751,8 @@ private fun VolumePill(
 }
 
 private val PlayerCardPadding = 20.dp
-private val PlayerCardCornerRadius = 24.dp
-private val AlbumArtCornerRadius = 28.dp
+private val PlayerCardMaxCornerRadius = 24.dp
+private val AlbumArtMaxCornerRadius = 28.dp
 private val VolumePillWidth = 132.dp
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
 private const val SEEK_MATCH_WINDOW_MS = 1_000L
