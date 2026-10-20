@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -181,14 +182,20 @@ fun HomeScreen(
                     expanded = quickMenuExpanded,
                     onDismissRequest = { quickMenuExpanded = false },
                     modifier = Modifier
-                        .widthIn(max = 320.dp)
+                        .widthIn(min = 360.dp, max = 440.dp)
                         .testTag(HomeTestTags.QuickPopup),
+                    shape = RoundedCornerShape(20.dp),
+                    containerColor = Midnight.copy(alpha = 0.94f),
+                    tonalElevation = 0.dp,
+                    shadowElevation = 16.dp,
+                    border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
                 ) {
                     if (state.favourites.isEmpty()) {
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = stringResource(R.string.home_quick_empty),
+                                    style = MaterialTheme.typography.bodyLarge,
                                     color = SecondaryText,
                                 )
                             },
@@ -196,6 +203,10 @@ fun HomeScreen(
                                 quickMenuExpanded = false
                                 onOpenAppDrawer()
                             },
+                            contentPadding = PaddingValues(
+                                horizontal = VibhorSpacing.lg,
+                                vertical = VibhorSpacing.md,
+                            ),
                         )
                     } else {
                         state.favourites.forEach { app ->
@@ -223,7 +234,7 @@ private fun QuickAppItem(
         text = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
             ) {
                 val icon = remember(app.packageName, app.activityName) {
                     app.icon?.asImageBitmap()
@@ -232,17 +243,19 @@ private fun QuickAppItem(
                     Image(
                         bitmap = icon,
                         contentDescription = null,
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(48.dp),
                     )
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .background(DeepSlate, CircleShape),
                     )
                 }
                 Text(
                     text = app.label,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 18.sp,
                     color = PrimaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -250,6 +263,10 @@ private fun QuickAppItem(
             }
         },
         onClick = onClick,
+        contentPadding = PaddingValues(
+            horizontal = VibhorSpacing.lg,
+            vertical = VibhorSpacing.md,
+        ),
     )
 }
 
