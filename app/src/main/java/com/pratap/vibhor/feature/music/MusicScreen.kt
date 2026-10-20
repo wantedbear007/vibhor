@@ -739,10 +739,15 @@ private fun VolumePill(
         VerticalPillSlider(
             value = state.volumeLevel,
             onValueChange = onVolumeChange,
-            iconRes = R.drawable.ic_volume_up,
+            iconRes = if (state.volumeMuted) {
+                R.drawable.ic_volume_off
+            } else {
+                R.drawable.ic_volume_up
+            },
             label = stringResource(R.string.apps_volume),
             fillColors = listOf(accent, accent.copy(alpha = 0.58f)),
             testTag = MusicTestTags.VolumeSlider,
+            enabled = !state.volumeMuted,
             modifier = Modifier
                 .width(VolumePillWidth)
                 .fillMaxHeight(),

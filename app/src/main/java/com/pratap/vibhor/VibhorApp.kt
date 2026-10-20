@@ -233,6 +233,7 @@ private fun AppsRoute(
             }
         },
         onToggleNightMode = controlViewModel::toggleNightMode,
+        onToggleMute = controlViewModel::toggleMute,
         onOpenSettings = onOpenSettings,
         onRequestSystemBrightnessPermission = {
             runCatching {

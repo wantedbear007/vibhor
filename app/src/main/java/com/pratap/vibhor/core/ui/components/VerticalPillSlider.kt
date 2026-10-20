@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -44,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -73,6 +75,7 @@ fun VerticalPillSlider(
     fillColors: List<Color>,
     testTag: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val clamped = value.coerceIn(0f, 1f)
     var dragValue by remember { mutableFloatStateOf(clamped) }
@@ -91,7 +94,7 @@ fun VerticalPillSlider(
     val trackShape = RoundedCornerShape(999.dp)
 
     Column(
-        modifier = modifier,
+        modifier = modifier.alpha(if (enabled) 1f else 0.45f),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -105,25 +108,27 @@ fun VerticalPillSlider(
                     .clip(trackShape)
                     .background(SurfaceElevated.copy(alpha = 0.72f))
                     .border(1.dp, PrimaryText.copy(alpha = 0.10f), trackShape)
-                    .pointerInput(Unit) {
-                        awaitEachGesture {
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            fun updateValue(y: Float) {
-                                val next = (1f - (y / size.height).coerceIn(0f, 1f))
-                                    .coerceIn(0f, 1f)
-                                dragValue = next
-                                onValueChange(next)
-                            }
-                            dragging = true
-                            updateValue(down.position.y)
-                            down.consume()
-                            try {
-                                drag(down.id) { change ->
-                                    updateValue(change.position.y)
-                                    change.consume()
+                    .pointerInput(enabled) {
+                        if (enabled) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                fun updateValue(y: Float) {
+                                    val next = (1f - (y / size.height).coerceIn(0f, 1f))
+                                        .coerceIn(0f, 1f)
+                                    dragValue = next
+                                    onValueChange(next)
                                 }
-                            } finally {
-                                dragging = false
+                                dragging = true
+                                updateValue(down.position.y)
+                                down.consume()
+                                try {
+                                    drag(down.id) { change ->
+                                        updateValue(change.position.y)
+                                        change.consume()
+                                    }
+                                } finally {
+                                    dragging = false
+                                }
                             }
                         }
                     }
@@ -133,11 +138,15 @@ fun VerticalPillSlider(
                             current = dragValue.coerceIn(0f, 1f),
                             range = 0f..1f,
                         )
-                        setProgress { target ->
-                            val next = target.coerceIn(0f, 1f)
-                            dragValue = next
-                            onValueChange(next)
-                            true
+                        if (enabled) {
+                            setProgress { target ->
+                                val next = target.coerceIn(0f, 1f)
+                                dragValue = next
+                                onValueChange(next)
+                                true
+                            }
+                        } else {
+                            disabled()
                         }
                     }
                     .testTag(testTag),

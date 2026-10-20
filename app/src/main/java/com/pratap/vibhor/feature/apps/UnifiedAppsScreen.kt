@@ -82,6 +82,7 @@ object UnifiedAppsTestTags {
     const val BluetoothTile = "apps_quick_bluetooth"
     const val WifiTile = "apps_quick_wifi"
     const val NightTile = "apps_quick_night"
+    const val MuteTile = "apps_quick_mute"
     const val Divider = "apps_panel_divider"
     const val NightOverlay = "apps_night_overlay"
 }
@@ -102,6 +103,7 @@ fun UnifiedAppsScreen(
     onOpenBluetoothSettings: () -> Unit,
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
+    onToggleMute: () -> Unit,
     onOpenSettings: () -> Unit,
     onRequestSystemBrightnessPermission: () -> Unit,
     onAppClick: (InstalledApp) -> Unit,
@@ -152,6 +154,7 @@ fun UnifiedAppsScreen(
                         onOpenBluetoothSettings = onOpenBluetoothSettings,
                         onOpenWifiSettings = onOpenWifiSettings,
                         onToggleNightMode = onToggleNightMode,
+                        onToggleMute = onToggleMute,
                         onOpenSettings = onOpenSettings,
                         modifier = Modifier
                             .weight(controlWeight)
@@ -222,6 +225,7 @@ private fun QuickControlPanel(
     onOpenBluetoothSettings: () -> Unit,
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
+    onToggleMute: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -298,13 +302,18 @@ private fun QuickControlPanel(
                     VerticalPillSlider(
                         value = state.volumeLevel,
                         onValueChange = onVolumeChange,
-                        iconRes = R.drawable.ic_volume_up,
+                        iconRes = if (state.volumeMuted) {
+                            R.drawable.ic_volume_off
+                        } else {
+                            R.drawable.ic_volume_up
+                        },
                         label = stringResource(R.string.apps_volume),
                         fillColors = listOf(
                             VibhorThemeColors.accent,
                             VibhorThemeColors.accent.copy(alpha = 0.58f),
                         ),
                         testTag = UnifiedAppsTestTags.VolumeSlider,
+                        enabled = !state.volumeMuted,
                         modifier = Modifier
                             .width(sliderWidth)
                             .fillMaxHeight(),
@@ -335,6 +344,7 @@ private fun QuickControlPanel(
                 onOpenBluetoothSettings = onOpenBluetoothSettings,
                 onOpenWifiSettings = onOpenWifiSettings,
                 onToggleNightMode = onToggleNightMode,
+                onToggleMute = onToggleMute,
             )
         }
     }
@@ -376,6 +386,7 @@ private fun QuickControlGrid(
     onOpenBluetoothSettings: () -> Unit,
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
+    onToggleMute: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val on = stringResource(R.string.apps_quick_on)
@@ -424,17 +435,30 @@ private fun QuickControlGrid(
                 modifier = Modifier.weight(1f),
             )
         }
-        QuickControlTile(
-            iconRes = R.drawable.ic_night_mode,
-            label = stringResource(R.string.apps_quick_night),
-            status = if (state.nightMode) on else off,
-            active = state.nightMode,
-            enabled = true,
-            highlight = VibhorThemeColors.accent,
-            onClick = onToggleNightMode,
-            testTag = UnifiedAppsTestTags.NightTile,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            QuickControlTile(
+                iconRes = R.drawable.ic_night_mode,
+                label = stringResource(R.string.apps_quick_night),
+                status = if (state.nightMode) on else off,
+                active = state.nightMode,
+                enabled = true,
+                highlight = VibhorThemeColors.accent,
+                onClick = onToggleNightMode,
+                testTag = UnifiedAppsTestTags.NightTile,
+                modifier = Modifier.weight(1f),
+            )
+            QuickControlTile(
+                iconRes = R.drawable.ic_volume_off,
+                label = stringResource(R.string.apps_quick_mute),
+                status = if (state.volumeMuted) on else off,
+                active = state.volumeMuted,
+                enabled = true,
+                highlight = VibhorThemeColors.accent,
+                onClick = onToggleMute,
+                testTag = UnifiedAppsTestTags.MuteTile,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -666,6 +690,7 @@ private fun UnifiedAppsLandscapePreview() {
             onOpenBluetoothSettings = {},
             onOpenWifiSettings = {},
             onToggleNightMode = {},
+            onToggleMute = {},
             onOpenSettings = {},
             onRequestSystemBrightnessPermission = {},
             onAppClick = {},

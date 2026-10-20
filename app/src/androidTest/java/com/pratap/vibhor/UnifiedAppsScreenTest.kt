@@ -33,6 +33,7 @@ class UnifiedAppsScreenTest {
         composeRule.onNodeWithTag(UnifiedAppsTestTags.BluetoothTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.WifiTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.NightTile).assertIsDisplayed()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.MuteTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).assertIsDisplayed()
         composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -52,6 +53,8 @@ class UnifiedAppsScreenTest {
         composeRule.onNodeWithTag(UnifiedAppsTestTags.BluetoothTile).assert(longClickAction)
         composeRule.onNodeWithTag(UnifiedAppsTestTags.WifiTile).assert(longClickAction)
         composeRule.onNodeWithTag(UnifiedAppsTestTags.NightTile)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.MuteTile)
             .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
     }
 

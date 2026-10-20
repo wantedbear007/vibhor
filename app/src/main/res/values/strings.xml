@@ -24,6 +24,7 @@
     <string name="apps_quick_bluetooth">Bluetooth</string>
     <string name="apps_quick_wifi">Wi-Fi</string>
     <string name="apps_quick_night">Night mode</string>
+    <string name="apps_quick_mute">Mute</string>
     <string name="apps_quick_on">On</string>
     <string name="apps_quick_off">Off</string>
     <string name="apps_quick_unavailable">Unavailable</string>

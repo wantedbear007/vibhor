@@ -46,10 +46,21 @@ class CockpitViewModel(
         connectivityRefresh.map { },
     ).onStart { emit(Unit) }
 
+    /**
+     * Mute changes are not consistently broadcast on every Android version.
+     * This counter requests an immediate real-state read after a tap while the
+     * device flow continues to handle external changes and fallback polling.
+     */
+    private val volumeRefresh = MutableStateFlow(0)
+    private val deviceChanges = merge(
+        deviceControls.observeChanges(),
+        volumeRefresh.map { },
+    ).onStart { emit(Unit) }
+
     val uiState: StateFlow<CockpitUiState> = combine(
         clockTicker.ticks(),
         settingsStore.settings,
-        deviceControls.observeChanges().onStart { emit(Unit) },
+        deviceChanges,
         connectivityChanges,
     ) { now, settings, _, _ ->
         val use24Hour = when (settings.clockFormat) {
@@ -62,6 +73,7 @@ class CockpitViewModel(
             timeText = formatClockTime(now, is24Hour = use24Hour),
             dateText = formatClockDate(now),
             volumeLevel = deviceControls.mediaVolume(),
+            volumeMuted = deviceControls.isMediaMuted(),
             brightnessLevel = deviceControls.screenBrightness(),
             brightnessPermissionGranted = deviceControls.canWriteSystemBrightness(),
             wifiSupported = connectivity.wifiSupported,
@@ -80,6 +92,11 @@ class CockpitViewModel(
 
     fun setVolume(level: Float) {
         deviceControls.setMediaVolume(level)
+    }
+
+    fun toggleMute() {
+        deviceControls.setMediaMuted(!deviceControls.isMediaMuted())
+        volumeRefresh.update { it + 1 }
     }
 
     fun setBrightness(level: Float) {

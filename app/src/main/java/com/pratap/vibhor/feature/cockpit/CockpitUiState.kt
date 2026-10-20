@@ -7,6 +7,7 @@ data class CockpitUiState(
     val timeText: String = "",
     val dateText: String = "",
     val volumeLevel: Float = 0.5f,
+    val volumeMuted: Boolean = false,
     val brightnessLevel: Float = 0.5f,
     val brightnessPermissionGranted: Boolean = false,
     val wifiSupported: Boolean = false,

@@ -70,6 +70,12 @@ interface DeviceControls {
     /** Sets the media-stream volume. Never changes ring or alarm volume. */
     fun setMediaVolume(fraction: Float)
 
+    /** True when the platform has muted the media stream. */
+    fun isMediaMuted(): Boolean
+
+    /** Mutes or unmutes the media stream without discarding its volume. */
+    fun setMediaMuted(muted: Boolean)
+
     /** Effective screen brightness as a 0..1 fraction. */
     fun screenBrightness(): Float
 
@@ -111,6 +117,20 @@ class AndroidDeviceControls(
         val index = DeviceLevels.volumeFractionToIndex(fraction, max)
         runCatching {
             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, index, 0)
+        }
+    }
+
+    override fun isMediaMuted(): Boolean = runCatching {
+        audioManager.isStreamMute(AudioManager.STREAM_MUSIC)
+    }.getOrDefault(false)
+
+    override fun setMediaMuted(muted: Boolean) {
+        runCatching {
+            audioManager.adjustStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                if (muted) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE,
+                0,
+            )
         }
     }
 

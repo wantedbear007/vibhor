@@ -113,7 +113,7 @@ Home button.
 |---|---|
 | **Home** (default clock) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
-| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Mute tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
@@ -179,7 +179,9 @@ grid uses compact cards sized for the right-hand panel, with large icons and
 centered labels.
 
 Sound and brightness read and write the same real device channels as the Music
-volume control.
+volume control. The **Mute** tile beside Night mode mutes or unmutes the real
+media stream without discarding its volume; both volume sliders gray out and
+stop accepting input while muted, and re-enable when the stream is unmuted.
 Volume changes made with hardware keys or by another app are reflected live;
 brightness observes the global system setting. On first use the Brightness
 slider offers to grant the special **Modify system settings** access so it can
@@ -270,7 +272,10 @@ size** and **Reset** apply to all of them):
 - Clock blur requires Android 12+; on Android 9 the darkness layer still works.
 - The Music page and the Apps page share the same real volume control. Volume
   drives the media stream through `AudioManager`; both sliders follow external
-  system changes through live platform observers. Brightness is available on
+  system changes through live platform observers. The Mute tile on the Apps
+  rail uses `AudioManager`'s media-stream mute state and leaves the stored
+  volume intact; both volume sliders gray out and disable while muted.
+  Brightness is available on
   the Apps rail and writes the global `Settings.System.SCREEN_BRIGHTNESS` value
   when the user grants the special **Modify system settings** access, which is
   requested in context from the Brightness slider on the Apps page. Without

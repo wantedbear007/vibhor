@@ -84,11 +84,13 @@ class CockpitViewModelTest {
 
         controls.volume = 0.85f
         controls.brightness = 0.15f
+        controls.muted = true
         controls.emitChange()
         advanceUntilIdle()
 
         assertEquals(0.85f, viewModel.uiState.value.volumeLevel)
         assertEquals(0.15f, viewModel.uiState.value.brightnessLevel)
+        assertEquals(true, viewModel.uiState.value.volumeMuted)
 
         collection.cancel()
     }
@@ -247,6 +249,37 @@ class CockpitViewModelTest {
         collection.cancel()
     }
 
+    @Test
+    fun `mute toggle preserves volume and publishes the real mute state`() =
+        runTest(dispatcher) {
+            val controls = FakeDeviceControls(volume = 0.4f)
+            val viewModel = CockpitViewModel(
+                clockTicker = FakeClockTicker(ZonedDateTime.now()),
+                settingsStore = InMemorySettingsStore(),
+                deviceControls = controls,
+                quickControls = FakeQuickControls(),
+            )
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.toggleMute()
+            advanceUntilIdle()
+
+            assertEquals(true, controls.muted)
+            assertEquals(true, viewModel.uiState.value.volumeMuted)
+            assertEquals(0.4f, viewModel.uiState.value.volumeLevel)
+            assertEquals(0.4f, controls.volume)
+
+            viewModel.toggleMute()
+            advanceUntilIdle()
+
+            assertEquals(false, controls.muted)
+            assertEquals(false, viewModel.uiState.value.volumeMuted)
+            assertEquals(0.4f, viewModel.uiState.value.volumeLevel)
+
+            collection.cancel()
+        }
+
     private class FakeClockTicker(
         private val instant: ZonedDateTime,
     ) : ClockTicker {
@@ -256,6 +289,7 @@ class CockpitViewModelTest {
     private class FakeDeviceControls(
         var volume: Float = 0.5f,
         var brightness: Float = 0.5f,
+        var muted: Boolean = false,
         var canWriteBrightness: Boolean = true,
     ) : DeviceControls {
         private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -268,6 +302,12 @@ class CockpitViewModelTest {
 
         override fun setMediaVolume(fraction: Float) {
             volume = fraction
+        }
+
+        override fun isMediaMuted(): Boolean = muted
+
+        override fun setMediaMuted(muted: Boolean) {
+            this.muted = muted
         }
 
         override fun screenBrightness(): Float = brightness

@@ -279,7 +279,9 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   index mapping is a pure function (`DeviceLevels`) and is unit tested. A
   runtime receiver for `android.media.VOLUME_CHANGED_ACTION` plus a lightweight
   fallback poll keeps the UI in sync when hardware keys or another app change
-  the stream.
+  the stream. `isStreamMute` / `ADJUST_MUTE` / `ADJUST_UNMUTE` expose the
+  platform mute state without changing the stored volume; the volume sliders
+  disable while that state is active.
 - **Brightness** writes the global `Settings.System.SCREEN_BRIGHTNESS` value
   when the user has granted the special **Modify system settings** access. On a
   successful global write the activity's window override is cleared so system
@@ -304,10 +306,11 @@ does not.
 - The rail renders a compact left-aligned clock and date from `CockpitUiState`,
   with the Settings gear sharing the clock's line, the real media-volume and
   system-brightness values with visible **Volume** and **Brightness** labels, a
-  Bluetooth/Wi-Fi row, and a full-width Night mode tile.
+  Bluetooth/Wi-Fi row, and a Night mode/Mute row.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume
   changes still arrive through the shared `CockpitViewModel`, so the left rail
-  and the Music volume pill stay consistent.
+  and the Music volume pill stay consistent. Muting the media stream disables
+  and dims the volume slider on both pages, while brightness remains active.
 - Both pill sliders use the active accent color. Inactive quick tiles use an
   accent-tinted surface, border, icon, and status text; active tiles fill with
   the solid accent and switch their content to the accent-on color.
