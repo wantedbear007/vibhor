@@ -158,6 +158,7 @@ private fun AppsRoute(
         },
         onTabSelected = viewModel::selectTab,
         onAppLongPress = { app -> viewModel.toggleFavourite(app.packageName) },
+        onSearchQueryChange = viewModel::setSearchQuery,
     )
 }
 

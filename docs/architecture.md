@@ -17,7 +17,7 @@ launcher UI is a three-page horizontal pager (Apps, Home, Cockpit).
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
 | `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
-| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, and `AppDrawerScreen` (Favourites/All tabs over the installed-app grid). |
+| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, and `AppDrawerScreen` (Material 3 header, search field, segmented Favourites/All tabs, adaptive tonal app grid). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
 
 UI code does not access Android system services directly. All system
@@ -121,8 +121,13 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
   `AndroidAppLauncher`; the presentation layer never calls `startActivity`.
 - Favourites are stored by package name in `LauncherSettings` and joined with
   the live installed-app list, so uninstalled apps disappear without leaving a
-  stale entry. The drawer tab (`Favourites`/`All`) lives in
+  stale entry. The drawer tab (`Favourites`/`All`) and the search query live in
   `AppDrawerViewModel`. Home and the drawer share the same source of truth.
+- `AppDrawerViewModel` filters the active tab by label (case-insensitive, after
+  trimming the query) and exposes the result as `displayedApps`; the persisted
+  `appIconScale` still drives icon, label, and column sizing. `AppDrawerScreen`
+  adds a Material 3 header, pill search field, segmented tabs, and rounded
+  tonal tiles, with every color sourced from the theme and persisted accent.
 
 ### Cockpit device controls
 

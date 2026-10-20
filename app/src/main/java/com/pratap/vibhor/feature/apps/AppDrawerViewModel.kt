@@ -22,14 +22,26 @@ class AppDrawerViewModel(
 ) : ViewModel() {
 
     private val selectedTab = MutableStateFlow(AppDrawerTab.All)
+    private val searchQuery = MutableStateFlow("")
 
     val uiState: StateFlow<AppDrawerUiState> = combine(
         installedAppsSource.apps(),
         settingsStore.settings,
         selectedTab,
-    ) { apps, settings, tab ->
+        searchQuery,
+    ) { apps, settings, tab, query ->
         val favourites = settings.favouritePackageNames
         val favouriteApps = apps.filter { it.packageName in favourites }
+        val tabApps = when (tab) {
+            AppDrawerTab.Favourites -> favouriteApps
+            AppDrawerTab.All -> apps
+        }
+        val normalizedQuery = query.trim()
+        val displayedApps = if (normalizedQuery.isEmpty()) {
+            tabApps
+        } else {
+            tabApps.filter { it.label.contains(normalizedQuery, ignoreCase = true) }
+        }
         AppDrawerUiState(
             apps = apps,
             favouriteApps = favouriteApps,
@@ -37,6 +49,8 @@ class AppDrawerViewModel(
             selectedTab = tab,
             isLoading = false,
             iconScale = settings.appIconScale,
+            searchQuery = query,
+            displayedApps = displayedApps,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -46,6 +60,10 @@ class AppDrawerViewModel(
 
     fun selectTab(tab: AppDrawerTab) {
         selectedTab.update { tab }
+    }
+
+    fun setSearchQuery(query: String) {
+        searchQuery.update { query }
     }
 
     fun toggleFavourite(packageName: String) = settingsStore.toggleFavourite(packageName)

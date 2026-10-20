@@ -14,4 +14,6 @@ data class AppDrawerUiState(
     val selectedTab: AppDrawerTab = AppDrawerTab.All,
     val isLoading: Boolean = true,
     val iconScale: Float = 1f,
+    val searchQuery: String = "",
+    val displayedApps: List<InstalledApp> = emptyList(),
 )

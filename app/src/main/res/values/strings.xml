@@ -5,11 +5,28 @@
     <string name="navigation_empty">No navigation app found</string>
     <string name="media_title">Media</string>
     <string name="media_empty">No media playing</string>
+    <string name="apps_title">Apps</string>
+    <string name="apps_search_hint">Search apps</string>
+    <string name="apps_search_clear">Clear search</string>
+    <string name="apps_search_empty_title">No matches</string>
+    <string name="apps_search_empty">No apps match “%1$s”.</string>
     <string name="apps_loading">Loading apps…</string>
-    <string name="apps_empty">No launchable apps found</string>
-    <string name="apps_favourites_empty">No favourites yet. Long-press an app to add one.</string>
+    <string name="apps_empty_title">No apps found</string>
+    <string name="apps_empty">No launchable apps were found on this device.</string>
+    <string name="apps_favourites_empty_title">No favourites yet</string>
+    <string name="apps_favourites_empty">Long-press any app to pin it here.</string>
+    <string name="apps_favourite">Favourite</string>
+    <string name="apps_favourite_action">Toggle favourite</string>
     <string name="apps_tab_favourites">Favourites</string>
     <string name="apps_tab_all">All</string>
+    <plurals name="apps_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <plurals name="apps_results">
+        <item quantity="one">%1$d result</item>
+        <item quantity="other">%1$d results</item>
+    </plurals>
     <string name="settings_title">Settings</string>
     <string name="settings_close">Close settings</string>
     <string name="settings_section_clock">Clock</string>

@@ -32,5 +32,8 @@ class LauncherPagerTest {
         composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
 
         composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).assertIsDisplayed()
     }
 }

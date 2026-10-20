@@ -3,6 +3,7 @@ package com.pratap.vibhor.feature.apps
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.platform.InstalledAppsSource
+import com.pratap.vibhor.core.platform.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -54,6 +56,66 @@ class AppDrawerViewModelTest {
 
         collection.cancel()
     }
+
+    @Test
+    fun `search filters displayed apps by label ignoring case`() = runTest(dispatcher) {
+        val apps = sampleApps()
+        val viewModel = AppDrawerViewModel(
+            installedAppsSource = FakeInstalledAppsSource(flowOf(apps)),
+            settingsStore = InMemorySettingsStore(),
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setSearchQuery("MaP")
+        advanceUntilIdle()
+
+        assertEquals("MaP", viewModel.uiState.value.searchQuery)
+        assertEquals(listOf(apps[1]), viewModel.uiState.value.displayedApps)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `favourites tab search only matches favourites`() = runTest(dispatcher) {
+        val apps = sampleApps()
+        val viewModel = AppDrawerViewModel(
+            installedAppsSource = FakeInstalledAppsSource(flowOf(apps)),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(
+                    favouritePackageNames = setOf(apps[0].packageName),
+                ),
+            ),
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.selectTab(AppDrawerTab.Favourites)
+        viewModel.setSearchQuery("map")
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.displayedApps.isEmpty())
+
+        viewModel.setSearchQuery("dial")
+        advanceUntilIdle()
+        assertEquals(listOf(apps[0]), viewModel.uiState.value.displayedApps)
+
+        collection.cancel()
+    }
+
+    private fun sampleApps() = listOf(
+        InstalledApp(
+            packageName = "com.example.dialer",
+            activityName = "com.example.dialer.MainActivity",
+            label = "Dialer",
+        ),
+        InstalledApp(
+            packageName = "com.example.maps",
+            activityName = "com.example.maps.MainActivity",
+            label = "Maps",
+        ),
+    )
 
     private class FakeInstalledAppsSource(
         private val apps: Flow<List<InstalledApp>>,

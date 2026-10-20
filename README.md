@@ -109,7 +109,7 @@ Cockpit**, with Home as the default (middle) page.
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | **Favourites** and **All** tabs over a responsive grid of real installed launcher apps, sorted by label; tapping launches the app, long-pressing toggles a favourite. |
+| **Apps** | **Favourites** and **All** tabs with a rounded search field, over an adaptive grid of rounded tonal app tiles; tapping launches the app, long-pressing toggles a favourite. Search filters the active tab by app label. |
 
 Navigation gestures:
 
@@ -119,6 +119,12 @@ Navigation gestures:
 - **Back** from Cockpit or Apps returns to Home; Back on Home is left to the system.
 - Snap transitions target ~180 ms.
 - Pressing **Home** (launcher reset) always returns to the Home page, even from another page or after resume. This behavior is preserved unchanged from the foundation milestone.
+
+The Apps page follows the same Material 3 styling as Settings: a title and app
+count, a pill-shaped search field, segmented Favourites/All tabs, and rounded
+tonal app tiles with subtle pressed feedback. Columns and tile sizes adapt to
+the screen width and the persisted app-icon-size setting; labels stay on one
+line and ellipsize when needed.
 
 ## Settings
 
