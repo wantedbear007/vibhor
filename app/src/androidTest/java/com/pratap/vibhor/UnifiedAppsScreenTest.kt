@@ -30,7 +30,7 @@ class UnifiedAppsScreenTest {
         composeRule.onNodeWithTag(UnifiedAppsTestTags.BluetoothTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.WifiTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.NightTile).assertIsDisplayed()
-        composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsTile).assertIsDisplayed()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).assertIsDisplayed()
         composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule
@@ -42,10 +42,10 @@ class UnifiedAppsScreenTest {
     }
 
     @Test
-    fun settingsTileOpensSettingsOverlay() {
+    fun settingsButtonOpensSettingsOverlay() {
         openUnifiedApps()
 
-        composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsTile).performClick()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).performClick()
 
         composeRule.onNodeWithTag(SettingsTestTags.Page).assertIsDisplayed()
     }

@@ -89,7 +89,6 @@ object UnifiedAppsTestTags {
     const val BluetoothTile = "apps_quick_bluetooth"
     const val WifiTile = "apps_quick_wifi"
     const val NightTile = "apps_quick_night"
-    const val SettingsTile = "apps_quick_settings"
     const val Divider = "apps_panel_divider"
     const val NightOverlay = "apps_night_overlay"
 }
@@ -231,52 +230,51 @@ private fun QuickControlPanel(
         modifier = modifier.testTag(UnifiedAppsTestTags.ControlPanel),
     ) {
         val narrow = maxWidth < 260.dp
-        val clockSize = (maxWidth.value * if (narrow) 0.13f else 0.155f)
-            .coerceIn(if (narrow) 26f else 34f, if (narrow) 44f else 64f)
+        val clockSize = (maxWidth.value * if (narrow) 0.09f else 0.105f)
+            .coerceIn(if (narrow) 20f else 24f, if (narrow) 32f else 40f)
             .sp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            val settingsButtonSize = if (narrow) 40.dp else 48.dp
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = state.timeText,
                         fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Normal,
                         fontSize = clockSize,
-                        lineHeight = clockSize * 1.04f,
-                        letterSpacing = (-1.5).sp,
+                        lineHeight = clockSize * 1.08f,
+                        letterSpacing = (-0.5).sp,
                         color = PrimaryText,
-                        textAlign = TextAlign.Center,
+                        textAlign = TextAlign.Start,
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
                             .testTag(UnifiedAppsTestTags.Clock),
                     )
-                    Text(
-                        text = state.dateText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = SecondaryText,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .testTag(UnifiedAppsTestTags.Date),
+                    Spacer(modifier = Modifier.width(8.dp))
+                    SettingsIconButton(
+                        onClick = onOpenSettings,
+                        buttonSize = settingsButtonSize,
+                        iconSize = if (narrow) 18.dp else 20.dp,
                     )
                 }
-                SettingsIconButton(
-                    onClick = onOpenSettings,
-                    buttonSize = if (narrow) 40.dp else 48.dp,
-                    iconSize = if (narrow) 18.dp else 20.dp,
-                    modifier = Modifier.align(Alignment.TopEnd),
+                Text(
+                    text = state.dateText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = SecondaryText,
+                    textAlign = TextAlign.Start,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                        .testTag(UnifiedAppsTestTags.Date),
                 )
             }
 
@@ -335,7 +333,6 @@ private fun QuickControlPanel(
                 onToggleWifi = onToggleWifi,
                 onToggleBluetooth = onToggleBluetooth,
                 onToggleNightMode = onToggleNightMode,
-                onOpenSettings = onOpenSettings,
             )
         }
     }
@@ -521,7 +518,6 @@ private fun QuickControlGrid(
     onToggleWifi: () -> Unit,
     onToggleBluetooth: () -> Unit,
     onToggleNightMode: () -> Unit,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val on = stringResource(R.string.apps_quick_on)
@@ -564,30 +560,17 @@ private fun QuickControlGrid(
                 modifier = Modifier.weight(1f),
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            QuickControlTile(
-                iconRes = R.drawable.ic_night_mode,
-                label = stringResource(R.string.apps_quick_night),
-                status = if (state.nightMode) on else off,
-                active = state.nightMode,
-                enabled = true,
-                highlight = VibhorThemeColors.accent,
-                onClick = onToggleNightMode,
-                testTag = UnifiedAppsTestTags.NightTile,
-                modifier = Modifier.weight(1f),
-            )
-            QuickControlTile(
-                iconRes = R.drawable.ic_gear,
-                label = stringResource(R.string.apps_quick_settings),
-                status = stringResource(R.string.apps_quick_open),
-                active = false,
-                enabled = true,
-                highlight = VibhorThemeColors.accent,
-                onClick = onOpenSettings,
-                testTag = UnifiedAppsTestTags.SettingsTile,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        QuickControlTile(
+            iconRes = R.drawable.ic_night_mode,
+            label = stringResource(R.string.apps_quick_night),
+            status = if (state.nightMode) on else off,
+            active = state.nightMode,
+            enabled = true,
+            highlight = VibhorThemeColors.accent,
+            onClick = onToggleNightMode,
+            testTag = UnifiedAppsTestTags.NightTile,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

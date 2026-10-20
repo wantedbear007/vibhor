@@ -110,7 +110,7 @@ Apps**, with Home as the default (middle) page.
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (centered bold clock/date, Settings shortcut, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear on the clock line, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
@@ -147,14 +147,14 @@ rather than fabricated. On Android 9 the legacy normal permissions allow those
 toggles. Night mode is a persisted launcher-page dimming layer, because toggling
 the system Night Light requires privileged access.
 
-Settings opens from the Cockpit rail and from both the compact gear beside the
-Apps clock and the Settings quick tile.
+Settings opens from the Cockpit rail and from the compact gear beside the
+Apps clock.
 
 ## Settings
 
 A full-screen **Settings** overlay (not a pager page) opens from the gear
-button in the Cockpit side rail or from the quick-control panel on the Apps
-page. It contains:
+button in the Cockpit side rail or from the gear beside the Apps clock. It
+contains:
 
 | Setting | Range | Default | Effect |
 |---|---|---|---|

@@ -37,11 +37,11 @@ VibhorApp (HorizontalPager)
 ├── LauncherPage.Cockpit → CockpitScreen + CockpitViewModel
 ├── LauncherPage.Home    → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
 └── LauncherPage.Apps    → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
-       ├── fixed quick-control rail (clock, sound, brightness, radio tiles)
+       ├── fixed quick-control rail (clock + settings gear, sound, brightness, radio/night tiles)
        └── embedded AppDrawerContent (search, tabs, app grid)
 
 SettingsScreen + SettingsViewModel (overlay) opens from the Cockpit gear
-or the Apps quick-control panel.
+or the Apps clock gear.
 ```
 
 - **Swipe left** (finger left) opens the unified Apps page; **swipe right**
@@ -53,7 +53,7 @@ or the Apps quick-control panel.
   `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` scrolls the pager
   back to Home. This launcher-reset behavior is unchanged from the foundation.
 - **Settings** is an overlay (not a pager page) toggled from the Cockpit side
-  rail or the Apps quick-control panel. `settingsVisible` is held in
+  rail or the Apps clock gear. `settingsVisible` is held in
   `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
   Settings before the pager's own Back handling applies.
 - The Apps route reuses the same `AppDrawerViewModel` and `CockpitViewModel`
@@ -184,10 +184,11 @@ width (with a 38% fallback in portrait), separated from the app grid by a
 one-pixel gradient divider. The launcher grid scrolls independently; the rail
 does not.
 
-- The rail renders a centered bold clock and date from `CockpitUiState`, a
-  compact Settings shortcut, the same real media-volume and system-brightness
-  values as Cockpit with visible **Volume** and **Brightness** labels, and a
-  2×2 tile grid for Bluetooth, Wi-Fi, Night mode, and Settings.
+- The rail renders a compact left-aligned clock and date from `CockpitUiState`,
+  with the Settings gear sharing the clock's line, the same real
+  media-volume and system-brightness values as Cockpit with visible **Volume**
+  and **Brightness** labels, a Bluetooth/Wi-Fi row, and a full-width Night mode
+  tile.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume
   changes still arrive through the shared `CockpitViewModel`, so the left rail
   and Cockpit stay consistent.
