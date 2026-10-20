@@ -12,7 +12,7 @@ media session.
 
 | Package | Responsibility |
 |---|---|
-| `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset, accent theme host) and `VibhorApp` (horizontal pager host + Settings overlay). |
+| `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset, accent theme host) and `VibhorApp` (horizontal pager host + Settings and Blackout overlays). |
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
 | `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Music, Home, Apps). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face and `formatPlaybackTime` for media positions). |
@@ -24,7 +24,8 @@ media session.
 | `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume pill). |
 | `feature.cockpit` | `CockpitUiState` and `CockpitViewModel` (real device controls, connectivity, night mode, and the Apps clock), shared by the Music and Apps pages. |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
-| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
+| `feature.blackout` | Stateless immersive black page with the shared cockpit clock, the active media title, and an exit action. |
+| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting and the system-wallpaper action). |
 
 UI code does not access Android system services directly. All system
 integrations live in `core.platform` behind small interfaces (`ClockTicker`,
@@ -45,10 +46,12 @@ VibhorApp (HorizontalPager)
 ├── LauncherPage.Music → MusicScreen + MusicViewModel + CockpitViewModel + HomeViewModel (favourites)
 ├── LauncherPage.Home  → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
 └── LauncherPage.Apps  → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
-       ├── fixed quick-control rail (clock + settings gear, sound, brightness, radio/night tiles)
+       ├── fixed quick-control rail (clock + settings gear, sound, brightness, radio/night/mute tiles, Blackout)
        └── embedded AppDrawerContent (search, tabs, app grid)
 
 SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
+BlackoutScreen (overlay) reuses CockpitViewModel for time and MusicViewModel
+for the real active media title.
 ```
 
 - **Swipe left** (finger left) opens the unified Apps page; **swipe right**
@@ -58,18 +61,25 @@ SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
   so the system default applies.
 - A repeated **Home press** delivers `onNewIntent`; `MainActivity` bumps
   `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` closes the Settings
-  overlay, then scrolls the pager to the persisted `homeButtonTarget` (Clock or
-  Player). When the activity is created from the system Home intent, the same
-  target supplies the pager's initial page.
+  and Blackout overlays, then scrolls the pager to the persisted
+  `homeButtonTarget` (Clock or Player). When the activity is created from the
+  system Home intent, the same target supplies the pager's initial page.
 - **Settings** is an overlay (not a pager page) toggled from the Apps clock
   gear. `settingsVisible` is held in
   `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
   Settings before the pager's own Back handling applies.
+- **Blackout** is a topmost overlay toggled by the full-width quick tile.
+  `blackoutVisible` is also held in `rememberSaveable`; it hides the status bar,
+  disables pager scrolling, consumes pointer input so the launcher underneath
+  cannot be operated, and closes through its bottom-right action, Back, or a
+  repeated Home press.
 - The Apps route reuses process-scoped `AppDrawerViewModel` and
   `CockpitViewModel` instances, and the Music route reuses the same
   `CockpitViewModel` plus `HomeViewModel` for favourites. Volume and brightness
   state is therefore shared through the same view model; the Music page
-  presents volume only, while the Apps rail exposes both.
+  presents volume only, while the Apps rail exposes both. Blackout reuses the
+  same `CockpitViewModel` and `MusicViewModel`, so its clock and title cannot
+  drift from the other pages.
 
 ### Swipe animation styles
 
@@ -125,6 +135,12 @@ wallpaper shows through. Home deliberately keeps the wallpaper and its clock
 backdrop controls. While the Settings overlay is visible, the pager is drawn
 at zero alpha so a transparent background shows the wallpaper rather than the
 launcher page underneath.
+
+**Settings → Appearance → System wallpaper** starts
+`Intent.ACTION_SET_WALLPAPER`, handing the change to Android's own wallpaper
+picker. No wallpaper permission is added and no bitmap enters the process. The
+newly chosen wallpaper becomes visible immediately behind Home and anywhere the
+launcher background is transparent when the user returns.
 
 ## UI state flow
 

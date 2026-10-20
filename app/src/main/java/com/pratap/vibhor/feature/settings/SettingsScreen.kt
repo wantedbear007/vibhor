@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -95,6 +96,7 @@ object SettingsTestTags {
     const val ClockBlurToggle = "settings_clock_blur_toggle"
     const val DarknessSlider = "settings_darkness_slider"
     const val StatusBarToggle = "settings_status_bar_toggle"
+    const val WallpaperButton = "settings_wallpaper_button"
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
     const val AccentOptionPrefix = "settings_accent_"
@@ -115,8 +117,9 @@ object SettingsTestTags {
 
 /**
  * Launcher settings. Every user-tunable launcher behavior is exposed here;
- * each setting persists through the SettingsStore and applies immediately
- * to the affected screen.
+ * each setting persists through the SettingsStore and applies immediately to
+ * the affected screen. System actions such as changing the wallpaper open the
+ * matching Android surface.
  */
 @Composable
 fun SettingsScreen(
@@ -127,6 +130,7 @@ fun SettingsScreen(
     onClockBlurChange: (Int) -> Unit,
     onBackgroundDarknessChange: (Float) -> Unit,
     onShowStatusBarChange: (Boolean) -> Unit,
+    onChangeWallpaper: () -> Unit,
     onQuickButtonScaleChange: (Float) -> Unit,
     onAppIconScaleChange: (Float) -> Unit,
     onAccentColorChange: (AccentColor) -> Unit,
@@ -221,6 +225,7 @@ fun SettingsScreen(
                                 state = state,
                                 onShowStatusBarChange = onShowStatusBarChange,
                                 onAccentColorChange = onAccentColorChange,
+                                onChangeWallpaper = onChangeWallpaper,
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag(SettingsTestTags.SectionAppearance),
@@ -268,6 +273,7 @@ fun SettingsScreen(
                             state = state,
                             onShowStatusBarChange = onShowStatusBarChange,
                             onAccentColorChange = onAccentColorChange,
+                            onChangeWallpaper = onChangeWallpaper,
                             modifier = Modifier.testTag(SettingsTestTags.SectionAppearance),
                         )
                         HomeAppsSettingsSection(
@@ -416,6 +422,7 @@ private fun AppearanceSettingsSection(
     state: SettingsUiState,
     onShowStatusBarChange: (Boolean) -> Unit,
     onAccentColorChange: (AccentColor) -> Unit,
+    onChangeWallpaper: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsSection(
@@ -430,6 +437,7 @@ private fun AppearanceSettingsSection(
             show = state.showStatusBar,
             onToggle = onShowStatusBarChange,
         )
+        WallpaperSetting(onChangeWallpaper = onChangeWallpaper)
     }
 }
 
@@ -951,6 +959,48 @@ private fun StatusBarSetting(
 }
 
 @Composable
+private fun WallpaperSetting(
+    onChangeWallpaper: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
+        ) {
+            Text(
+                text = stringResource(R.string.settings_wallpaper),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(R.string.settings_wallpaper_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SecondaryText,
+            )
+        }
+        Surface(
+            onClick = onChangeWallpaper,
+            modifier = Modifier.testTag(SettingsTestTags.WallpaperButton),
+            shape = RoundedCornerShape(12.dp),
+            color = VibhorThemeColors.accent,
+            contentColor = VibhorThemeColors.accentOn,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_wallpaper_action),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            )
+        }
+    }
+}
+
+@Composable
 private fun AccentColorSetting(
     selected: AccentColor,
     onSelect: (AccentColor) -> Unit,
@@ -1453,6 +1503,7 @@ private fun SettingsLandscapePreview() {
             onClockBlurChange = {},
             onBackgroundDarknessChange = {},
             onShowStatusBarChange = {},
+            onChangeWallpaper = {},
             onQuickButtonScaleChange = {},
             onAppIconScaleChange = {},
             onAccentColorChange = {},

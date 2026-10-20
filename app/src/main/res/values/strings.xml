@@ -25,8 +25,10 @@
     <string name="apps_quick_wifi">Wi-Fi</string>
     <string name="apps_quick_night">Night mode</string>
     <string name="apps_quick_mute">Mute</string>
+    <string name="apps_quick_blackout">Blackout</string>
     <string name="apps_quick_on">On</string>
     <string name="apps_quick_off">Off</string>
+    <string name="apps_quick_open">Open</string>
     <string name="apps_quick_unavailable">Unavailable</string>
     <string name="apps_quick_bluetooth_settings">Open Bluetooth settings</string>
     <string name="apps_quick_wifi_settings">Open Wi-Fi settings</string>
@@ -70,6 +72,9 @@
     <string name="settings_value_off">Off</string>
     <string name="settings_status_bar">Show status bar</string>
     <string name="settings_status_bar_summary">Hide for a cleaner Home; swipe down to reveal</string>
+    <string name="settings_wallpaper">System wallpaper</string>
+    <string name="settings_wallpaper_summary">Choose a new wallpaper with Android\'s picker.</string>
+    <string name="settings_wallpaper_action">Change</string>
     <string name="settings_app_icon_size">App icon size</string>
     <string name="settings_quick_button_size">Favourites button size</string>
     <string name="settings_home_button_target">Default screen</string>
@@ -116,4 +121,6 @@
     <string name="music_unknown_title">Unknown track</string>
     <string name="music_unknown_artist">Unknown artist</string>
     <string name="music_album_art">Album artwork</string>
+    <string name="blackout_no_music">No music playing</string>
+    <string name="blackout_turn_off">Turn off</string>
 </resources>

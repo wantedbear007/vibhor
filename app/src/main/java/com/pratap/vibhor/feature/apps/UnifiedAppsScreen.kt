@@ -83,6 +83,7 @@ object UnifiedAppsTestTags {
     const val WifiTile = "apps_quick_wifi"
     const val NightTile = "apps_quick_night"
     const val MuteTile = "apps_quick_mute"
+    const val BlackoutTile = "apps_quick_blackout"
     const val Divider = "apps_panel_divider"
     const val NightOverlay = "apps_night_overlay"
 }
@@ -104,6 +105,7 @@ fun UnifiedAppsScreen(
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     onToggleMute: () -> Unit,
+    onOpenBlackout: () -> Unit,
     onOpenSettings: () -> Unit,
     onRequestSystemBrightnessPermission: () -> Unit,
     onAppClick: (InstalledApp) -> Unit,
@@ -155,6 +157,7 @@ fun UnifiedAppsScreen(
                         onOpenWifiSettings = onOpenWifiSettings,
                         onToggleNightMode = onToggleNightMode,
                         onToggleMute = onToggleMute,
+                        onOpenBlackout = onOpenBlackout,
                         onOpenSettings = onOpenSettings,
                         modifier = Modifier
                             .weight(controlWeight)
@@ -226,6 +229,7 @@ private fun QuickControlPanel(
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     onToggleMute: () -> Unit,
+    onOpenBlackout: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -345,6 +349,7 @@ private fun QuickControlPanel(
                 onOpenWifiSettings = onOpenWifiSettings,
                 onToggleNightMode = onToggleNightMode,
                 onToggleMute = onToggleMute,
+                onOpenBlackout = onOpenBlackout,
             )
         }
     }
@@ -387,11 +392,13 @@ private fun QuickControlGrid(
     onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     onToggleMute: () -> Unit,
+    onOpenBlackout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val on = stringResource(R.string.apps_quick_on)
     val off = stringResource(R.string.apps_quick_off)
     val unavailable = stringResource(R.string.apps_quick_unavailable)
+    val open = stringResource(R.string.apps_quick_open)
     val bluetoothSettingsLabel = stringResource(R.string.apps_quick_bluetooth_settings)
     val wifiSettingsLabel = stringResource(R.string.apps_quick_wifi_settings)
 
@@ -459,6 +466,17 @@ private fun QuickControlGrid(
                 modifier = Modifier.weight(1f),
             )
         }
+        QuickControlTile(
+            iconRes = R.drawable.ic_fullscreen,
+            label = stringResource(R.string.apps_quick_blackout),
+            status = open,
+            active = false,
+            enabled = true,
+            highlight = VibhorThemeColors.accent,
+            onClick = onOpenBlackout,
+            testTag = UnifiedAppsTestTags.BlackoutTile,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -691,6 +709,7 @@ private fun UnifiedAppsLandscapePreview() {
             onOpenWifiSettings = {},
             onToggleNightMode = {},
             onToggleMute = {},
+            onOpenBlackout = {},
             onOpenSettings = {},
             onRequestSystemBrightnessPermission = {},
             onAppClick = {},

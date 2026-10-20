@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
+import com.pratap.vibhor.feature.blackout.BlackoutTestTags
 import com.pratap.vibhor.feature.settings.SettingsTestTags
 import org.junit.Rule
 import org.junit.Test
@@ -34,6 +35,7 @@ class UnifiedAppsScreenTest {
         composeRule.onNodeWithTag(UnifiedAppsTestTags.WifiTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.NightTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.MuteTile).assertIsDisplayed()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.BlackoutTile).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).assertIsDisplayed()
         composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 10_000) {
@@ -65,6 +67,36 @@ class UnifiedAppsScreenTest {
         composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).performClick()
 
         composeRule.onNodeWithTag(SettingsTestTags.Page).assertIsDisplayed()
+    }
+
+    @Test
+    fun blackoutTileOpensImmersivePageAndDismissesIt() {
+        openUnifiedApps()
+
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.BlackoutTile).performClick()
+
+        composeRule.onNodeWithTag(BlackoutTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(BlackoutTestTags.Time).assertExists()
+        composeRule.onNodeWithTag(BlackoutTestTags.Track).assertExists()
+
+        composeRule.onNodeWithTag(BlackoutTestTags.Dismiss).performClick()
+
+        composeRule.onNodeWithTag(BlackoutTestTags.Page).assertDoesNotExist()
+    }
+
+    @Test
+    fun backClosesBlackoutBeforeLeavingApps() {
+        openUnifiedApps()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.BlackoutTile).performClick()
+        composeRule.onNodeWithTag(BlackoutTestTags.Page).assertIsDisplayed()
+
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BlackoutTestTags.Page).assertDoesNotExist()
+        composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
     }
 
     private fun openUnifiedApps() {

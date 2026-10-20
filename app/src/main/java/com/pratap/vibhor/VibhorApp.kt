@@ -45,6 +45,7 @@ import com.pratap.vibhor.core.ui.animation.rememberMotionEnabled
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
 import com.pratap.vibhor.feature.apps.AppDrawerViewModel
 import com.pratap.vibhor.feature.apps.UnifiedAppsScreen
+import com.pratap.vibhor.feature.blackout.BlackoutScreen
 import com.pratap.vibhor.feature.cockpit.CockpitViewModel
 import com.pratap.vibhor.feature.home.HomeScreen
 import com.pratap.vibhor.feature.home.HomeViewModel
@@ -64,7 +65,8 @@ object LauncherTestTags {
  * and owns the existing Home-intent reset flow (homeRequestToken). Never wraps
  * around the ends, and snap transitions target roughly 260 ms with the
  * per-page effect of the persisted animation style. Settings open as a
- * full-screen overlay above the pager.
+ * full-screen overlay above the pager; Blackout opens as the topmost
+ * pitch-black now-playing page.
  */
 @Composable
 fun VibhorApp(
@@ -84,6 +86,7 @@ fun VibhorApp(
     }
     val scope = rememberCoroutineScope()
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
+    var blackoutVisible by rememberSaveable { mutableStateOf(false) }
 
     // Status bar visibility follows the persisted setting and is re-applied
     // whenever the composition (re)enters, covering process recreation and
@@ -107,14 +110,14 @@ fun VibhorApp(
     }
 
     val view = LocalView.current
-    LaunchedEffect(statusBarVisible) {
+    LaunchedEffect(statusBarVisible, blackoutVisible) {
         val controller = WindowCompat.getInsetsController(
             (view.context as android.app.Activity).window,
             view,
         )
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        if (statusBarVisible) {
+        if (statusBarVisible && !blackoutVisible) {
             controller.show(WindowInsetsCompat.Type.statusBars())
         } else {
             controller.hide(WindowInsetsCompat.Type.statusBars())
@@ -126,6 +129,7 @@ fun VibhorApp(
             // A Home press while Settings is open should complete the reset,
             // not scroll the pager behind an invisible overlay.
             settingsVisible = false
+            blackoutVisible = false
             if (pagerState.settledPage != homeButtonPage.ordinal) {
                 pagerState.animateScrollToPage(
                     page = homeButtonPage.ordinal,
@@ -151,6 +155,12 @@ fun VibhorApp(
         settingsVisible = false
     }
 
+    // Blackout is the topmost layer, so it receives Back before Settings or
+    // the pager while it is visible.
+    BackHandler(enabled = blackoutVisible) {
+        blackoutVisible = false
+    }
+
     HorizontalPager(
         state = pagerState,
         modifier = Modifier
@@ -164,6 +174,7 @@ fun VibhorApp(
             state = pagerState,
             snapAnimationSpec = pageAnimationSpec,
         ),
+        userScrollEnabled = !settingsVisible && !blackoutVisible,
     ) { page ->
         Box(
             modifier = Modifier
@@ -179,6 +190,7 @@ fun VibhorApp(
                 LauncherPage.Apps -> AppsRoute(
                     appLauncher = appLauncher,
                     onOpenSettings = { settingsVisible = true },
+                    onOpenBlackout = { blackoutVisible = true },
                 )
                 LauncherPage.Home -> HomeRoute()
                 LauncherPage.Music -> MusicRoute()
@@ -188,6 +200,10 @@ fun VibhorApp(
 
     if (settingsVisible) {
         SettingsRoute(onClose = { settingsVisible = false })
+    }
+
+    if (blackoutVisible) {
+        BlackoutRoute(onDismiss = { blackoutVisible = false })
     }
 }
 
@@ -209,6 +225,7 @@ private fun HomeRoute(
 private fun AppsRoute(
     appLauncher: AppLauncher,
     onOpenSettings: () -> Unit,
+    onOpenBlackout: () -> Unit,
     appViewModel: AppDrawerViewModel = viewModel(factory = AppDrawerViewModel.Factory),
     controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
 ) {
@@ -234,6 +251,7 @@ private fun AppsRoute(
         },
         onToggleNightMode = controlViewModel::toggleNightMode,
         onToggleMute = controlViewModel::toggleMute,
+        onOpenBlackout = onOpenBlackout,
         onOpenSettings = onOpenSettings,
         onRequestSystemBrightnessPermission = {
             runCatching {
@@ -292,11 +310,27 @@ private fun MusicRoute(
 }
 
 @Composable
+private fun BlackoutRoute(
+    onDismiss: () -> Unit,
+    controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
+    musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory),
+) {
+    val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
+    val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
+    BlackoutScreen(
+        timeText = controlState.timeText,
+        trackTitle = musicState.track?.title,
+        onDismiss = onDismiss,
+    )
+}
+
+@Composable
 private fun SettingsRoute(
     onClose: () -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     SettingsScreen(
         state = state,
         onClockScaleChange = viewModel::setClockScale,
@@ -312,6 +346,11 @@ private fun SettingsRoute(
         onBackgroundOpacityChange = viewModel::setBackgroundOpacity,
         onAnimationStyleChange = viewModel::setAnimationStyle,
         onHomeButtonTargetChange = viewModel::setHomeButtonTarget,
+        onChangeWallpaper = {
+            runCatching {
+                context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER))
+            }
+        },
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,
     )

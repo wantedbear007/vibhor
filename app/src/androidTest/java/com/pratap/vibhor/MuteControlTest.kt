@@ -46,6 +46,7 @@ class MuteControlTest {
                     onOpenWifiSettings = {},
                     onToggleNightMode = {},
                     onToggleMute = { muted = !muted },
+                    onOpenBlackout = {},
                     onOpenSettings = {},
                     onRequestSystemBrightnessPermission = {},
                     onAppClick = {},

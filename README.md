@@ -13,7 +13,9 @@ controls beside the installed-app launcher). The system wallpaper is rendered by
 Android behind the window, so no storage permission is required and no wallpaper
 bitmap is ever decoded. A **Settings** overlay is reachable from the Apps quick
 controls, and persists every tunable option — including the launcher-wide accent
-color and surface background — through `SharedPreferences`.
+color and surface background — through `SharedPreferences`. A full-width
+**Blackout** quick action opens an immersive black now-playing page with only
+the time, the current media title, and an exit button.
 
 ## Target device
 
@@ -113,7 +115,7 @@ Home button.
 |---|---|
 | **Home** (default clock) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
-| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Mute tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, Bluetooth / Wi-Fi / Night mode / Mute tiles, and a full-width **Blackout** action) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
@@ -195,6 +197,13 @@ adapter state. On Android 9 the legacy normal permissions allow those
 toggles. Night mode is a persisted launcher-page dimming layer, because toggling
 the system Night Light requires privileged access.
 
+The full-width **Blackout** action opens a pure-black page above the whole
+launcher. Its small clock and the active media title are centered; the compact
+**Turn off** button sits in the bottom-right corner. The title is read from the
+same real media session as the Music page, with **No music playing** shown when
+no session is active. The status bar is hidden while Blackout is open, the
+pager stops accepting gestures, and Back or Home also dismisses the page.
+
 Settings opens from the compact gear beside the Apps clock.
 
 ## Settings
@@ -210,6 +219,7 @@ button beside the Apps clock. It contains:
 | Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
+| System wallpaper | Android wallpaper picker | — | Opens the system wallpaper chooser from the Appearance card; no wallpaper data is read by Vibhor |
 | Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
 | Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the Music page, unified Apps page, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
@@ -220,13 +230,15 @@ button beside the Apps clock. It contains:
 
 Settings are grouped into seven accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
-visibility), **Appearance** (accent color, status bar), **Home & apps**
+visibility), **Appearance** (accent color, status bar, system wallpaper), **Home & apps**
 (Favourites button size, app icon size), **Home button** (default screen), and
 **Swipe animation** (seven selectable preview cards, four per row on wide
 screens and two per row on narrow ones). On wide
 landscape displays the Clock card spans the top, Clock backdrop / Launcher
 background / Appearance share a row, and Home & apps / Home button / Swipe
-animation run full width; narrow screens stack every card. Clock face previews
+animation run full width; narrow screens stack every card. The Appearance card
+also hosts the **System wallpaper** action, which launches Android's wallpaper
+picker. Clock face previews
 form a single row in the Clock card and scroll horizontally only when space is
 tight.
 
@@ -268,7 +280,9 @@ size** and **Reset** apply to all of them):
 - The system wallpaper is shown behind the Home page via the window flag
   (`windowShowWallpaper`). This requires no storage permission and never decodes
   a wallpaper bitmap. On devices where no wallpaper is available the screen
-  falls back to a dark background.
+  falls back to a dark background. **Settings → Appearance → System wallpaper**
+  opens `Intent.ACTION_SET_WALLPAPER` so the user can change it with the system
+  picker; Vibhor still never reads the wallpaper itself.
 - Clock blur requires Android 12+; on Android 9 the darkness layer still works.
 - The Music page and the Apps page share the same real volume control. Volume
   drives the media stream through `AudioManager`; both sliders follow external
@@ -316,7 +330,7 @@ size** and **Reset** apply to all of them):
 ```text
 app/src/main/java/com/pratap/vibhor/
 ├── MainActivity.kt              # Launcher entry point, edge-to-edge, home-reset, accent theme host
-├── VibhorApp.kt                 # Pager host (Music/Home/Apps) + Settings overlay
+├── VibhorApp.kt                 # Pager host (Music/Home/Apps) + Settings/Blackout overlays
 ├── core/
 │   ├── platform/                # App discovery, launcher, clock ticker, settings store, accent/device controls
 │   │   └── media/               # Real media-session reader + notification-listener access
@@ -329,6 +343,7 @@ app/src/main/java/com/pratap/vibhor/
 └── feature/
     ├── home/                    # Wallpaper + clock + Favourites button (HomeViewModel, screen)
     ├── music/                   # Media player + astronaut stage (MusicViewModel, screen)
+    ├── blackout/                # Immersive black now-playing page (stateless screen)
     ├── cockpit/                 # Device-control view model shared by Music and Apps
     ├── apps/                    # Favourites/All tabs over the installed-app grid (AppDrawerViewModel, screen)
     └── settings/                # Every persisted launcher setting (SettingsViewModel, screen)
