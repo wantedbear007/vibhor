@@ -19,8 +19,8 @@
     <string name="apps_favourite_action">Toggle favourite</string>
     <string name="apps_tab_favourites">Favourites</string>
     <string name="apps_tab_all">All</string>
-    <string name="apps_volume">Sound volume</string>
-    <string name="apps_brightness">Screen brightness</string>
+    <string name="apps_volume">Volume</string>
+    <string name="apps_brightness">Brightness</string>
     <string name="apps_quick_bluetooth">Bluetooth</string>
     <string name="apps_quick_wifi">Wi-Fi</string>
     <string name="apps_quick_night">Night mode</string>

@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeLeft
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
 import com.pratap.vibhor.feature.settings.SettingsTestTags
@@ -19,7 +19,7 @@ class UnifiedAppsScreenTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun swipeRightOpensControlsAndAppsTogether() {
+    fun swipeLeftOpensControlsAndAppsTogether() {
         openUnifiedApps()
 
         composeRule.onNodeWithTag(UnifiedAppsTestTags.ControlPanel).assertIsDisplayed()
@@ -51,7 +51,7 @@ class UnifiedAppsScreenTest {
     }
 
     private fun openUnifiedApps() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
+        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
         composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
     }
 }

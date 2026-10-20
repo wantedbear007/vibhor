@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeLeft
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -26,7 +26,7 @@ class AppDiscoveryTest {
 
     @Test
     fun installedAppsAppearInTheGrid() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
+        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
 
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule

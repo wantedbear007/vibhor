@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.feature.cockpit.CockpitTestTags
 import com.pratap.vibhor.feature.settings.SettingsTestTags
@@ -22,7 +22,7 @@ class SettingsScreenTest {
 
     @Test
     fun settingsPageShowsGroupedSections() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
+        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
         composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Settings").performClick()
 

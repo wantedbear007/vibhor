@@ -103,19 +103,19 @@ adb shell am start -n com.pratap.vibhor/.MainActivity
 
 ## Launcher screens and gestures
 
-The launcher is a three-page horizontal pager. Page order is **Apps → Home →
-Cockpit**, with Home as the default (middle) page.
+The launcher is a three-page horizontal pager. Page order is **Cockpit → Home →
+Apps**, with Home as the default (middle) page.
 
 | Page | Content |
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | Unified right-swipe screen: a fixed quick-control panel at roughly 30% width (clock/date, Settings shortcut, tall sound and brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a rounded search field, and an adaptive grid of rounded app tiles; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (centered bold clock/date, Settings shortcut, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a rounded search field, and an adaptive grid of rounded app tiles; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
-- **Swipe left** (finger left) → Cockpit.
-- **Swipe right** (finger right) → unified Apps page.
+- **Swipe left** (finger left) → unified Apps page.
+- **Swipe right** (finger right) → Cockpit.
 - Paging does **not wrap** past the Apps or Cockpit edge.
 - **Back** from Cockpit or Apps returns to Home; Back on Home is left to the system.
 - Snap transitions target ~180 ms.
@@ -123,14 +123,16 @@ Navigation gestures:
 
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
-the same Material 3 styling as Settings: a large digital clock, a pill-shaped
-search field, segmented Favourites/All tabs, and rounded tonal app tiles with
-subtle pressed feedback. The app columns and tile sizes adapt to the available
-width and the persisted app-icon-size setting; labels stay on one line and
-ellipsize when needed. The page surface follows the persisted launcher
-background, so it can share the Home wallpaper at low visibility. The app grid
-uses compact tiles sized for the right-hand panel, with large icons and centered
-labels.
+the same Material 3 styling as Settings: a centered, bold digital clock,
+labelled Volume and Brightness sliders, a pill-shaped search field, segmented
+Favourites/All tabs, and rounded app tiles with subtle pressed feedback. Both
+sliders use the active accent color. Quick tiles are accent-tinted when off and
+fill solid with the accent when active. The app columns and tile sizes adapt to
+the available width and the persisted app-icon-size setting; labels stay on one
+line and ellipsize when needed. The page background is exactly the persisted
+launcher background at its configured opacity, with no decorative gradient; at
+low visibility it shares the Home wallpaper. The app grid uses compact tiles
+sized for the right-hand panel, with large icons and centered labels.
 
 Sound and brightness read and write the same real device channels as Cockpit.
 Wi-Fi and Bluetooth reflect actual adapter state and request real state changes;
@@ -156,7 +158,7 @@ page. It contains:
 | Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
-| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, selection states, and app highlights; the Apps brightness pill keeps its pink/violet reference gradient |
+| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
 | Launcher background | Midnight / Slate / Graphite / Black / Navy / Ocean | Midnight | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
@@ -198,9 +200,8 @@ size** and **Reset** apply to all of them):
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
-  never hardcoded in a screen, so new primary UI automatically follows the
-  choice. The unified Apps brightness pill uses the theme's fixed pink/violet
-  secondary gradient to keep the blue/pink reference contrast.
+  never hardcoded in a screen, so new UI automatically follows the choice. Both
+  Apps sliders, active quick tiles, and primary controls use that accent.
 - Scales are multipliers on sizes computed per screen, so the same settings
   work across densities and orientations.
 - **Back** (or the close button) dismisses Settings without leaving Home.

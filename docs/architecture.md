@@ -3,7 +3,7 @@
 Vibhor is a single-module Android app with feature-oriented packages. The
 architecture is deliberately small: MVVM with a unidirectional state flow, no
 dependency injection framework, no database, and no navigation library. The
-launcher UI is a three-page horizontal pager (Apps, Home, Cockpit); the Apps
+launcher UI is a three-page horizontal pager (Cockpit, Home, Apps); the Apps
 page combines fixed quick controls with the installed-app launcher.
 
 ## Package responsibilities
@@ -12,13 +12,13 @@ page combines fixed quick controls with the installed-app launcher.
 |---|---|
 | `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset, accent theme host) and `VibhorApp` (horizontal pager host + Settings overlay). |
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
-| `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Apps, Home, Cockpit). |
+| `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Cockpit, Home, Apps). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
 | `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
 | `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
-| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the right-swipe page). |
+| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
 
 UI code does not access Android system services directly. All system
@@ -28,24 +28,25 @@ they can be faked in unit tests.
 
 ## Pager and screen host
 
-`VibhorApp` hosts a `HorizontalPager` with page order **Apps (0) → Home (1) →
-Cockpit (2)**. Home is the default page. The pager does not wrap past the
+`VibhorApp` hosts a `HorizontalPager` with page order **Cockpit (0) → Home (1) →
+Apps (2)**. Home is the default page. The pager does not wrap past the
 first or last page. Snap transitions target ~180 ms.
 
 ```text
 VibhorApp (HorizontalPager)
-├── LauncherPage.Apps    → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
-│                          ├── fixed quick-control rail (clock, sound, brightness, radio tiles)
-│                          └── embedded AppDrawerContent (search, tabs, app grid)
+├── LauncherPage.Cockpit → CockpitScreen + CockpitViewModel
 ├── LauncherPage.Home    → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
-└── LauncherPage.Cockpit → CockpitScreen + CockpitViewModel
-       ├── gear button (side rail) ─┐
-       └── Apps quick controls ─────┴─→ SettingsScreen + SettingsViewModel (overlay)
+└── LauncherPage.Apps    → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
+       ├── fixed quick-control rail (clock, sound, brightness, radio tiles)
+       └── embedded AppDrawerContent (search, tabs, app grid)
+
+SettingsScreen + SettingsViewModel (overlay) opens from the Cockpit gear
+or the Apps quick-control panel.
 ```
 
-- **Swipe left** (finger left) advances toward Cockpit; **swipe right** opens
-  the unified Apps page. This follows standard pager index semantics for the
-  chosen page order.
+- **Swipe left** (finger left) opens the unified Apps page; **swipe right**
+  opens Cockpit. This follows standard pager index semantics for the chosen
+  page order.
 - **Back** from Cockpit or Apps animates back to Home. Back on Home is disabled
   so the system default applies.
 - A repeated **Home press** delivers `onNewIntent`; `MainActivity` bumps
@@ -172,18 +173,25 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
 
 ### Unified Apps quick controls
 
-`UnifiedAppsScreen` splits the right-swipe page into a fixed control rail and
+`UnifiedAppsScreen` splits the left-swipe page into a fixed control rail and
 the embedded `AppDrawerContent`. The rail is about 30% of the usable landscape
 width (with a 38% fallback in portrait), separated from the app grid by a
 one-pixel gradient divider. The launcher grid scrolls independently; the rail
 does not.
 
-- The rail renders the clock and date from `CockpitUiState`, a compact Settings
-  shortcut, the same real media-volume and window-brightness values as Cockpit,
-  and a 2×2 tile grid for Bluetooth, Wi-Fi, Night mode, and Settings.
+- The rail renders a centered bold clock and date from `CockpitUiState`, a
+  compact Settings shortcut, the same real media-volume and window-brightness
+  values as Cockpit with visible **Volume** and **Brightness** labels, and a
+  2×2 tile grid for Bluetooth, Wi-Fi, Night mode, and Settings.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume
   changes still arrive through the shared `CockpitViewModel`, so the left rail
   and Cockpit stay consistent.
+- Both pill sliders use the active accent color. Inactive quick tiles use an
+  accent-tinted surface, border, icon, and status text; active tiles fill with
+  the solid accent and switch their content to the accent-on color.
+- The page background is exactly the persisted launcher background at the
+  configured opacity, with no decorative backdrop gradient. At low opacity the
+  system wallpaper shows through.
 - `QuickControls` exposes `state()` plus legacy Wi-Fi/Bluetooth setters and an
   `observeChanges()` broadcast flow for `WIFI_STATE_CHANGED_ACTION` and
   `BluetoothAdapter.ACTION_STATE_CHANGED`. `AndroidQuickControls` uses the API 28
@@ -193,13 +201,12 @@ does not.
 - Toggles are never optimistic. After a request, `CockpitViewModel` requests a
   fresh real-state read and the broadcast receiver publishes subsequent
   transitions.
-- **Night mode** is a persisted launcher-page dimming layer (black plus a faint
-  violet tint) because Android 9 does not allow a normal app to toggle system
+- **Night mode** is a persisted launcher-page dimming layer (a black overlay)
+  because Android 9 does not allow a normal app to toggle system
   Night Light or global dark mode. It applies only to the unified Apps page so
   Home and Cockpit remain unchanged.
-- The unified page uses a fixed pink/violet gradient for the brightness pill and
-  pink Night-mode highlight, while the active accent still drives Bluetooth,
-  Wi-Fi, search, tabs, and app highlights.
+- The active accent drives both sliders, the radio tiles, the Night-mode
+  highlight, search, tabs, and app highlights.
 
 ### Accent color and theming
 
@@ -221,12 +228,8 @@ MainActivity ── VibhorTheme(accentColor) ── MaterialTheme.primary
 
 Screens must read accents from `VibhorThemeColors.accent` (or
 `MaterialTheme.colorScheme.primary`); hardcoded accent literals are not used
-anywhere in feature code. The unified Apps page intentionally uses the fixed
-pink/violet secondary palette for the brightness slider and Night-mode
-highlight to preserve the reference design's blue/pink contrast; primary
-interactive states still follow the selected accent. A new accent option is
-added once in `AccentColor`, once in the theme palette, and once in the
-Settings swatch row.
+anywhere in feature code. A new accent option is added once in `AccentColor`,
+once in the theme palette, and once in the Settings swatch row.
 
 ### Settings persistence
 

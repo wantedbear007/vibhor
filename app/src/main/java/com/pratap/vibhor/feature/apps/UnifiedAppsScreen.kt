@@ -47,7 +47,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -59,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -67,8 +67,6 @@ import androidx.compose.ui.unit.sp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.platform.LauncherBackground
-import com.pratap.vibhor.core.ui.theme.AccentPink
-import com.pratap.vibhor.core.ui.theme.AccentPurple
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
@@ -95,7 +93,7 @@ object UnifiedAppsTestTags {
 }
 
 /**
- * The right-swipe screen: a fixed quick-control rail (clock, settings, sound,
+ * The left-swipe screen: a fixed quick-control rail (clock, settings, sound,
  * brightness, connectivity tiles) beside the existing app launcher. The Home
  * page remains untouched and minimal.
  */
@@ -126,7 +124,6 @@ fun UnifiedAppsScreen(
             val controlWeight = if (landscape) 0.30f else 0.38f
 
             Box(modifier = Modifier.fillMaxSize()) {
-                AppsAtmosphere()
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -196,32 +193,38 @@ private fun QuickControlPanel(
             .sp
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(if (narrow) 8.dp else 12.dp),
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     Text(
                         text = state.timeText,
                         fontFamily = FontFamily.SansSerif,
-                        fontWeight = FontWeight.Light,
+                        fontWeight = FontWeight.Bold,
                         fontSize = clockSize,
                         lineHeight = clockSize * 1.04f,
                         letterSpacing = (-1.5).sp,
                         color = PrimaryText,
+                        textAlign = TextAlign.Center,
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
-                        modifier = Modifier.testTag(UnifiedAppsTestTags.Clock),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(UnifiedAppsTestTags.Clock),
                     )
                     Text(
                         text = state.dateText,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = SecondaryText,
+                        textAlign = TextAlign.Center,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
+                            .fillMaxWidth()
                             .padding(top = 4.dp)
                             .testTag(UnifiedAppsTestTags.Date),
                     )
@@ -230,6 +233,7 @@ private fun QuickControlPanel(
                     onClick = onOpenSettings,
                     buttonSize = if (narrow) 40.dp else 48.dp,
                     iconSize = if (narrow) 18.dp else 20.dp,
+                    modifier = Modifier.align(Alignment.TopEnd),
                 )
             }
 
@@ -269,8 +273,8 @@ private fun QuickControlPanel(
                         iconRes = R.drawable.ic_brightness,
                         label = stringResource(R.string.apps_brightness),
                         fillColors = listOf(
-                            AccentPink,
-                            AccentPurple,
+                            VibhorThemeColors.accent,
+                            VibhorThemeColors.accent.copy(alpha = 0.58f),
                         ),
                         testTag = UnifiedAppsTestTags.BrightnessSlider,
                         modifier = Modifier
@@ -347,108 +351,123 @@ private fun VerticalPillSlider(
     val percent = (dragValue.coerceIn(0f, 1f) * 100f).roundToInt()
     val trackShape = RoundedCornerShape(999.dp)
 
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .clip(trackShape)
-                .background(Color.Black.copy(alpha = 0.28f))
-                .border(1.dp, PrimaryText.copy(alpha = 0.08f), trackShape)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
-                        fun updateValue(y: Float) {
-                            val next = (1f - (y / size.height).coerceIn(0f, 1f))
-                                .coerceIn(0f, 1f)
-                            dragValue = next
-                            onValueChange(next)
-                        }
-                        dragging = true
-                        updateValue(down.position.y)
-                        down.consume()
-                        try {
-                            drag(down.id) { change ->
-                                updateValue(change.position.y)
-                                change.consume()
-                            }
-                        } finally {
-                            dragging = false
-                        }
-                    }
-                }
-                .semantics {
-                    contentDescription = label
-                    progressBarRangeInfo = ProgressBarRangeInfo(
-                        current = dragValue.coerceIn(0f, 1f),
-                        range = 0f..1f,
-                    )
-                    setProgress { target ->
-                        val next = target.coerceIn(0f, 1f)
-                        dragValue = next
-                        onValueChange(next)
-                        true
-                    }
-                }
-                .testTag(testTag),
+                .fillMaxWidth()
+                .weight(1f),
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val fillHeight = size.height * fillFraction
-                if (fillHeight > 0f) {
-                    drawRoundRect(
-                        brush = Brush.verticalGradient(
-                            colors = fillColors,
-                            startY = size.height - fillHeight,
-                            endY = size.height,
-                        ),
-                        topLeft = Offset(0f, size.height - fillHeight),
-                        size = Size(size.width, fillHeight),
-                        cornerRadius = CornerRadius(size.width / 2f, size.width / 2f),
-                    )
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.55f),
-                        start = Offset(size.width * 0.16f, size.height - fillHeight),
-                        end = Offset(size.width * 0.84f, size.height - fillHeight),
-                        strokeWidth = 2.dp.toPx(),
-                        cap = StrokeCap.Round,
-                    )
-                }
-            }
-
             Box(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-                    .size(38.dp)
-                    .background(Midnight.copy(alpha = 0.42f), CircleShape)
-                    .border(1.dp, PrimaryText.copy(alpha = 0.08f), CircleShape),
-                contentAlignment = Alignment.Center,
+                    .fillMaxSize()
+                    .clip(trackShape)
+                    .background(Color.Black.copy(alpha = 0.28f))
+                    .border(1.dp, PrimaryText.copy(alpha = 0.08f), trackShape)
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            fun updateValue(y: Float) {
+                                val next = (1f - (y / size.height).coerceIn(0f, 1f))
+                                    .coerceIn(0f, 1f)
+                                dragValue = next
+                                onValueChange(next)
+                            }
+                            dragging = true
+                            updateValue(down.position.y)
+                            down.consume()
+                            try {
+                                drag(down.id) { change ->
+                                    updateValue(change.position.y)
+                                    change.consume()
+                                }
+                            } finally {
+                                dragging = false
+                            }
+                        }
+                    }
+                    .semantics {
+                        contentDescription = label
+                        progressBarRangeInfo = ProgressBarRangeInfo(
+                            current = dragValue.coerceIn(0f, 1f),
+                            range = 0f..1f,
+                        )
+                        setProgress { target ->
+                            val next = target.coerceIn(0f, 1f)
+                            dragValue = next
+                            onValueChange(next)
+                            true
+                        }
+                    }
+                    .testTag(testTag),
             ) {
-                Icon(
-                    painter = painterResource(iconRes),
-                    contentDescription = null,
-                    tint = PrimaryText,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val fillHeight = size.height * fillFraction
+                    if (fillHeight > 0f) {
+                        drawRoundRect(
+                            brush = Brush.verticalGradient(
+                                colors = fillColors,
+                                startY = size.height - fillHeight,
+                                endY = size.height,
+                            ),
+                            topLeft = Offset(0f, size.height - fillHeight),
+                            size = Size(size.width, fillHeight),
+                            cornerRadius = CornerRadius(size.width / 2f, size.width / 2f),
+                        )
+                    }
+                }
 
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-                shape = CircleShape,
-                color = Midnight.copy(alpha = 0.62f),
-                border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.10f)),
-            ) {
-                Text(
-                    text = stringResource(R.string.apps_slider_value, percent),
-                    color = PrimaryText,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                        .size(38.dp)
+                        .background(Midnight.copy(alpha = 0.42f), CircleShape)
+                        .border(1.dp, PrimaryText.copy(alpha = 0.08f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        tint = PrimaryText,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp),
+                    shape = CircleShape,
+                    color = Midnight.copy(alpha = 0.62f),
+                    border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.10f)),
+                ) {
+                    Text(
+                        text = stringResource(R.string.apps_slider_value, percent),
+                        color = PrimaryText,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                    )
+                }
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium,
+            color = PrimaryText,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -508,7 +527,7 @@ private fun QuickControlGrid(
                 status = if (state.nightMode) on else off,
                 active = state.nightMode,
                 enabled = true,
-                highlight = AccentPink,
+                highlight = VibhorThemeColors.accent,
                 onClick = onToggleNightMode,
                 testTag = UnifiedAppsTestTags.NightTile,
                 modifier = Modifier.weight(1f),
@@ -541,28 +560,36 @@ private fun QuickControlTile(
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(20.dp)
+    val accentOn = VibhorThemeColors.accentOn
     val containerColor by animateColorAsState(
-        targetValue = if (active) {
-            highlight.copy(alpha = 0.16f)
-        } else {
-            PrimaryText.copy(alpha = 0.045f)
+        targetValue = when {
+            active -> highlight
+            enabled -> highlight.copy(alpha = 0.07f)
+            else -> PrimaryText.copy(alpha = 0.035f)
         },
         animationSpec = tween(durationMillis = 160),
         label = "quick-tile-container",
     )
     val borderColor by animateColorAsState(
-        targetValue = if (active) {
-            highlight.copy(alpha = 0.42f)
-        } else {
-            PrimaryText.copy(alpha = 0.07f)
+        targetValue = when {
+            active -> highlight
+            enabled -> highlight.copy(alpha = 0.22f)
+            else -> PrimaryText.copy(alpha = 0.06f)
         },
         animationSpec = tween(durationMillis = 160),
         label = "quick-tile-border",
     )
     val contentColor = when {
         !enabled -> SecondaryText.copy(alpha = 0.55f)
-        active -> highlight
-        else -> SecondaryText
+        active -> accentOn
+        else -> highlight
+    }
+    val labelColor = if (active) accentOn else PrimaryText
+    val statusColor = if (active) accentOn.copy(alpha = 0.72f) else contentColor
+    val iconBackground = when {
+        active -> accentOn.copy(alpha = 0.16f)
+        enabled -> highlight.copy(alpha = 0.12f)
+        else -> PrimaryText.copy(alpha = 0.05f)
     }
 
     Surface(
@@ -592,11 +619,7 @@ private fun QuickControlTile(
                         modifier = Modifier
                             .size(24.dp)
                             .background(
-                                color = if (active) {
-                                    highlight.copy(alpha = 0.16f)
-                                } else {
-                                    PrimaryText.copy(alpha = 0.05f)
-                                },
+                                color = iconBackground,
                                 shape = CircleShape,
                             ),
                         contentAlignment = Alignment.Center,
@@ -613,7 +636,7 @@ private fun QuickControlTile(
                         text = label,
                         style = MaterialTheme.typography.titleMedium,
                         fontSize = 11.sp,
-                        color = PrimaryText,
+                        color = labelColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -621,7 +644,7 @@ private fun QuickControlTile(
                         text = status,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 9.sp,
-                        color = contentColor,
+                        color = statusColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -638,11 +661,7 @@ private fun QuickControlTile(
                         modifier = Modifier
                             .size(if (compact) 26.dp else 32.dp)
                             .background(
-                                color = if (active) {
-                                    highlight.copy(alpha = 0.16f)
-                                } else {
-                                    PrimaryText.copy(alpha = 0.05f)
-                                },
+                                color = iconBackground,
                                 shape = CircleShape,
                             ),
                         contentAlignment = Alignment.Center,
@@ -659,7 +678,7 @@ private fun QuickControlTile(
                             text = label,
                             style = MaterialTheme.typography.titleMedium,
                             fontSize = if (compact) 13.sp else 15.sp,
-                            color = PrimaryText,
+                            color = labelColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -667,7 +686,7 @@ private fun QuickControlTile(
                             text = status,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = if (compact) 10.sp else 11.sp,
-                            color = contentColor,
+                            color = statusColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -695,39 +714,6 @@ private fun PanelDivider(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AppsAtmosphere() {
-    val accent = VibhorThemeColors.accent
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    Midnight.copy(alpha = 0.22f),
-                ),
-            ),
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(accent.copy(alpha = 0.10f), Color.Transparent),
-                center = Offset(size.width * 0.16f, size.height * 0.12f),
-                radius = size.width * 0.34f,
-            ),
-            radius = size.width * 0.34f,
-            center = Offset(size.width * 0.16f, size.height * 0.12f),
-        )
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(AccentPink.copy(alpha = 0.055f), Color.Transparent),
-                center = Offset(size.width * 0.78f, size.height * 0.86f),
-                radius = size.width * 0.28f,
-            ),
-            radius = size.width * 0.28f,
-            center = Offset(size.width * 0.78f, size.height * 0.86f),
-        )
-    }
-}
-
-@Composable
 private fun NightModeOverlay(enabled: Boolean) {
     val dim by animateFloatAsState(
         targetValue = if (enabled) 0.26f else 0f,
@@ -738,7 +724,6 @@ private fun NightModeOverlay(enabled: Boolean) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = dim))
-            .background(AccentPurple.copy(alpha = dim * 0.10f))
             .testTag(UnifiedAppsTestTags.NightOverlay),
     )
 }

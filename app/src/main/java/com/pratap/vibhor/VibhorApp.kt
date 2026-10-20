@@ -44,7 +44,7 @@ object LauncherTestTags {
 }
 
 /**
- * Three-page launcher. Page order is [Apps, Home, Cockpit]; the pager starts
+ * Three-page launcher. Page order is [Cockpit, Home, Apps]; the pager starts
  * on Home, never wraps around the ends, and snap transitions target roughly
  * 180 ms. The existing Home-intent reset flow (homeRequestToken) scrolls the
  * pager back to Home. Settings open as a full-screen overlay above the pager.

@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
+import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
 import com.pratap.vibhor.feature.cockpit.CockpitTestTags
 import org.junit.Rule
 import org.junit.Test
@@ -18,22 +19,23 @@ class LauncherPagerTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun swipeLeftFromHomeOpensCockpit() {
+    fun swipeLeftFromHomeOpensUnifiedApps() {
         composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
+
+        composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.ControlPanel).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites).assertIsDisplayed()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).assertIsDisplayed()
+    }
+
+    @Test
+    fun swipeRightFromHomeOpensCockpit() {
+        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
 
         composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
         composeRule.onNodeWithTag(CockpitTestTags.VolumeSlider).assertIsDisplayed()
         composeRule.onNodeWithTag(CockpitTestTags.BrightnessSlider).assertIsDisplayed()
         composeRule.onNodeWithText("Navigation").assertDoesNotExist()
-    }
-
-    @Test
-    fun swipeRightFromHomeOpensApps() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
-
-        composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithTag(AppDrawerTestTags.Search).assertIsDisplayed()
-        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites).assertIsDisplayed()
-        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).assertIsDisplayed()
     }
 }
