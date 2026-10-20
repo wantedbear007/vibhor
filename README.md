@@ -109,7 +109,7 @@ Apps**, with Home as the default (middle) page.
 | Page | Content |
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
-| **Music** | A lightweight Canvas astronaut on a moon (left), the real active media session in a rounded player card (centre), tall volume/brightness pills (right), and a compact favourites strip (bottom). Never shows fabricated tracks or playback state. |
+| **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card, tall volume/brightness pills on the right, and a compact favourites strip at the bottom. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
@@ -139,10 +139,10 @@ The selected style is saved and applied immediately; the **Swipe animation**
 settings card shows a compact preview for each option, and tapping the selected
 preview replays it.
 
-The Music page keeps the reference hierarchy: the astronaut stage on the left,
-the player card in the centre, and the two tall pills on the right, with the
-favourites strip spanning the bottom. Album art, title, artist, position,
-duration, and transport availability all come from the active session. The
+The Music page keeps the reference hierarchy: the astronaut stage above the
+player card, and the two tall pills on the right, with the favourites strip
+spanning the bottom. Album art, title, artist, position, duration, and transport
+availability all come from the active session. The
 astronaut bobs, nods, taps its feet, and twinkles only while a real session is
 playing and the page is visible; when playback pauses the scene settles to a
 still pose and the equalizer stops animating. The page is a plain Canvas plus

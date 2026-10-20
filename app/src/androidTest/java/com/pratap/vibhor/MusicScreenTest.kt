@@ -5,6 +5,7 @@ import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.provider.Settings
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pratap.vibhor.feature.music.MusicTestTags
 import org.junit.Assert.assertEquals
@@ -39,6 +41,25 @@ class MusicScreenTest {
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
+
+    @Test
+    fun astronautIsStackedAboveThePlayerCard() {
+        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000L) {
+            composeRule.onAllNodesWithTag(MusicTestTags.Card)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val astronautBottom = composeRule.onNodeWithTag(MusicTestTags.Astronaut)
+            .fetchSemanticsNode().boundsInRoot.bottom
+        val cardTop = composeRule.onNodeWithTag(MusicTestTags.Card)
+            .fetchSemanticsNode().boundsInRoot.top
+
+        assertTrue(
+            "The astronaut stage must sit above the player card",
+            astronautBottom <= cardTop,
+        )
+    }
 
     @Test
     fun activeMediaSessionDrivesThePlayer() {
@@ -95,6 +116,8 @@ class MusicScreenTest {
 
             composeRule.onNodeWithText("Test Track").assertIsDisplayed()
             composeRule.onNodeWithText("Test Artist").assertIsDisplayed()
+            composeRule.onNodeWithTag(MusicTestTags.ProgressBar)
+                .assertHeightIsAtLeast(12.dp)
 
             composeRule.onNodeWithTag(MusicTestTags.PlayPause).performClick()
             composeRule.waitUntil(timeoutMillis = 3_000L) { pauseCalls.get() == 1 }

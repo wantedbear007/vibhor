@@ -80,6 +80,7 @@ object MusicTestTags {
     const val TrackTitle = "music_track_title"
     const val TrackArtist = "music_track_artist"
     const val Progress = "music_progress"
+    const val ProgressBar = "music_progress_bar"
     const val Equalizer = "music_equalizer"
     const val PlayPause = "music_play_pause"
     const val Next = "music_next"
@@ -92,10 +93,10 @@ object MusicTestTags {
 }
 
 /**
- * Music page: astronaut stage on the left, the real media session in the
- * centre, the device volume/brightness pills on the right, and a compact
- * favourites strip along the bottom. The layout keeps the reference
- * hierarchy in landscape and stacks cleanly in portrait.
+ * Music page: the astronaut stage above the real media session, the device
+ * volume/brightness pills on the right, and a compact favourites strip along
+ * the bottom. The layout keeps that hierarchy in landscape and stacks the
+ * stage, player, and pills cleanly in portrait.
  */
 @Composable
 fun MusicScreen(
@@ -128,7 +129,7 @@ fun MusicScreen(
         ) {
             val landscape = maxWidth > maxHeight
             val sliderColumnWidth = (maxWidth * 0.20f).coerceIn(180.dp, 264.dp)
-            val card: @Composable (Modifier) -> Unit = { cardModifier ->
+            val card: @Composable (Modifier, Boolean) -> Unit = { cardModifier, fillHeight ->
                 MusicCard(
                     track = track,
                     hasAccess = musicState.hasAccess,
@@ -136,6 +137,7 @@ fun MusicScreen(
                     onNext = onNext,
                     onPrevious = onPrevious,
                     onEnableMediaAccess = onEnableMediaAccess,
+                    fillHeight = fillHeight,
                     modifier = cardModifier,
                 )
             }
@@ -148,17 +150,23 @@ fun MusicScreen(
                             .weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
                     ) {
-                        AstronautScene(
-                            playing = playing,
+                        Column(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight(),
-                        )
-                        card(
-                            Modifier
-                                .weight(1.15f)
-                                .fillMaxHeight(),
-                        )
+                            verticalArrangement = Arrangement.spacedBy(VibhorSpacing.lg),
+                        ) {
+                            AstronautScene(
+                                playing = playing,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                            )
+                            card(
+                                Modifier.fillMaxWidth(),
+                                false,
+                            )
+                        }
                         SliderPair(
                             state = controlState,
                             onVolumeChange = onVolumeChange,
@@ -189,6 +197,7 @@ fun MusicScreen(
                         Modifier
                             .fillMaxWidth()
                             .weight(1f),
+                        true,
                     )
                     SliderPair(
                         state = controlState,
@@ -216,6 +225,7 @@ private fun MusicCard(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     onEnableMediaAccess: () -> Unit,
+    fillHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -226,7 +236,7 @@ private fun MusicCard(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .then(if (fillHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
                 .padding(horizontal = 26.dp, vertical = 22.dp),
             verticalArrangement = Arrangement.Center,
         ) {
@@ -433,9 +443,10 @@ private fun PlaybackProgress(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(12.dp)
                 .clip(trackShape)
-                .background(PrimaryText.copy(alpha = 0.12f)),
+                .background(PrimaryText.copy(alpha = 0.12f))
+                .testTag(MusicTestTags.ProgressBar),
         ) {
             Box(
                 modifier = Modifier
