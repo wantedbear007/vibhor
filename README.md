@@ -109,7 +109,7 @@ Apps**, with Home as the default (middle) page.
 | Page | Content |
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
-| **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card, with a tall volume pill on the right. Never shows fabricated tracks or playback state. |
+| **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
@@ -140,20 +140,20 @@ settings card shows a compact preview for each option, and tapping the selected
 preview replays it.
 
 The Music page keeps the reference hierarchy: the astronaut stage above the
-player card, and the tall volume pill on the right. Album art, title, artist,
-position, duration, and transport availability all come from the active
-session. The player card fills at least half the stage in landscape and gives
-the thumbnail the left 30% at full content height, with matching 20 dp insets
-on the left, top, and bottom, stacking metadata, progress, and transport
-controls in the remaining 70%. The astronaut bounces
-on the beat, sways, alternates toe-out dance steps, and pumps its arms while
-the stars twinkle — only while a real session is playing and the page is
-visible; when playback pauses the scene settles to a still pose and the
-equalizer stops animating. The transport uses large, rounded iOS-style glyphs
-sized for tablet touch inside a rounded-square play/pause surface. The page is a plain Canvas plus Compose shapes — no
-3D scene, no blur pass, no audio capture. The player card shows an honest idle
-state when no session can be read, and an **Open settings** action when Vibhor
-is missing notification access.
+player card, and the compact tall volume pill on the right. Album art, title,
+artist, position, duration, and transport availability all come from the
+active session. The player card fills at least half the stage in landscape and
+gives the thumbnail the left 30% at full content height, with matching 20 dp
+insets on the left, top, and bottom, stacking metadata, progress, and transport
+controls in the remaining 70%. The astronaut bounces on the beat, sways,
+alternates toe-out dance steps, and pumps its arms while the stars twinkle —
+only while a real session is playing and the page is visible; when playback
+pauses the scene settles to a still pose and the equalizer stops animating. The
+transport uses large, rounded iOS-style glyphs sized for tablet touch inside a
+rounded-square play/pause surface. The page is a plain Canvas plus Compose
+shapes — no 3D scene, no blur pass, no audio capture. The player card shows an
+honest idle state when no session can be read, and an **Open settings** action
+when Vibhor is missing notification access.
 
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows

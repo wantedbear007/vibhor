@@ -137,7 +137,6 @@ fun MusicScreen(
                 .padding(horizontal = VibhorSpacing.xl, vertical = VibhorSpacing.lg),
         ) {
             val landscape = maxWidth > maxHeight
-            val sliderColumnWidth = (maxWidth * 0.20f).coerceIn(180.dp, 264.dp)
             val card: @Composable (Modifier, Boolean, Dp) -> Unit = { cardModifier, fillHeight, minContentHeight ->
                 MusicCard(
                     track = track,
@@ -186,7 +185,7 @@ fun MusicScreen(
                             state = controlState,
                             onVolumeChange = onVolumeChange,
                             modifier = Modifier
-                                .width(sliderColumnWidth)
+                                .width(VolumePillWidth)
                                 .fillMaxHeight(),
                         )
                     }
@@ -730,13 +729,14 @@ private fun VolumePill(
             fillColors = listOf(accent, accent.copy(alpha = 0.58f)),
             testTag = MusicTestTags.VolumeSlider,
             modifier = Modifier
-                .width(132.dp)
+                .width(VolumePillWidth)
                 .fillMaxHeight(),
         )
     }
 }
 
 private val PlayerCardPadding = 20.dp
+private val VolumePillWidth = 132.dp
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
 private const val SEEK_MATCH_WINDOW_MS = 1_000L
 private const val SEEK_TIMEOUT_MILLIS = 3_000L

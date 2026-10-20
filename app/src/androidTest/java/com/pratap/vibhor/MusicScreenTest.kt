@@ -64,6 +64,17 @@ class MusicScreenTest {
             "The player card should be taller than the astronaut stage",
             card.height > astronaut.height,
         )
+        val volume = composeRule.onNodeWithTag(MusicTestTags.VolumeSlider)
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "The volume pill should sit to the right of the player card",
+            volume.left >= card.right,
+        )
+        assertEquals(
+            24f / 132f,
+            (volume.left - card.right) / volume.width,
+            0.02f,
+        )
     }
 
     @Test

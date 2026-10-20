@@ -235,6 +235,10 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   the seek bar, and the transport controls. The landscape card keeps the
   half-stage minimum height, with the thumbnail filling that full inner height
   and a uniform 20 dp content gutter.
+- In landscape the volume pill column is exactly the 132 dp pill width, with
+  only the row gap beside the card; it no longer reserves an oversized column
+  with extra gutters on both sides. The player therefore takes the remaining
+  width.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises. The transport
   glyphs are rounded, iOS-style shapes, with an 80 dp rounded-square play/pause
