@@ -240,12 +240,14 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   value falls back after a short timeout.
 - `refresh()` is re-run on `ON_RESUME` from the Music route, so granting or
   revoking notification access in system settings takes effect on return.
-- `AstronautScene` is a single Canvas. The infinite transitions (bob, nod, foot
-  tap, star twinkle, glow, equalizer sweep) are read **inside the draw pass**
-  and only while `isPlaying` is true; when playback pauses, nothing is read,
-  nothing redraws, and the pose settles to neutral. The page is not composed
-  when it is off-screen, and Compose's frame clock stops while the app is
-  backgrounded, so no stage animation runs when it cannot be seen.
+- `AstronautScene` is a single Canvas. A four-second, 120 BPM groove drives the
+  body bounce, side sway, alternating toe-out steps, cross-body arm pumps, and
+  beat-reactive chest/visor lights. The groove, star twinkle, glow, and
+  equalizer transitions are read **inside the draw pass** and only while
+  `isPlaying` is true; when playback pauses, nothing is read, nothing redraws,
+  and the pose settles to neutral. The page is not composed when it is
+  off-screen, and Compose's frame clock stops while the app is backgrounded, so
+  no stage animation runs when it cannot be seen.
 
 ### Device controls (Music + Apps)
 

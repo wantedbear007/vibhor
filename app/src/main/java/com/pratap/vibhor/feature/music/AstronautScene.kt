@@ -26,6 +26,8 @@ import androidx.compose.ui.platform.testTag
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -67,40 +69,24 @@ private val Sparkles = listOf(
 )
 
 /**
- * Hand-drawn astronaut sitting on a moon, wearing headphones. All motion is
- * derived from infinite transitions that are only read inside the draw pass
- * while [playing] is true, so a paused page performs no rendering work and
+ * Hand-drawn astronaut sitting on a moon, wearing headphones. While music
+ * plays it grooves: it bounces on the beat, sways, alternates toe-out dance
+ * steps, pumps its arms, and pulses its chest and visor lights. The dance
+ * motion comes from one infinite groove loop that is only read inside the draw
+ * pass while [playing] is true, so a paused page performs no rendering work and
  * the illustration itself stays a cheap Canvas layer.
  */
 @Composable
 fun AstronautScene(playing: Boolean, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "astronaut")
-    val bob by transition.animateFloat(
+    val groove by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2_400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "bob",
-    )
-    val nod by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1_800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "nod",
-    )
-    val tap by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 520, easing = LinearEasing),
+            animation = tween(durationMillis = DANCE_LOOP_MILLIS, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "tap",
+        label = "groove",
     )
     val twinkle by transition.animateFloat(
         initialValue = 0f,
@@ -130,12 +116,24 @@ fun AstronautScene(playing: Boolean, modifier: Modifier = Modifier) {
         fun ny(fraction: Float) = top + fraction * side
         fun n(fraction: Float) = fraction * side
 
+        // One four-second loop of eight beats (120 BPM). The body lands on
+        // every beat boundary; the alternating step values open and close
+        // between beats, so one foot lifts while the other keeps the rhythm.
+        val dance = if (playing) groove else 0f
+        val beat = dance * DANCE_BEATS
+        val bounce = if (playing) abs(sin(beat * PI_F)) else 0f
+        val sway = if (playing) sin(dance * TWO_PI * 2f) else 0f
+        val leftStep = if (playing) max(0f, sin(beat * PI_F)) else 0f
+        val rightStep = if (playing) max(0f, -sin(beat * PI_F)) else 0f
+        val torsoLean = sway * 4f
+        val headTilt = -torsoLean * 0.45f + sin(beat * PI_F) * 3f
+
         // Ambient stage lighting. Two soft radial washes, never a blur pass.
-        val pulse = if (playing) glow else 0f
+        val pulse = if (playing) glow * 0.55f + bounce * 0.45f else 0f
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    accent.copy(alpha = 0.11f + 0.05f * pulse),
+                    accent.copy(alpha = 0.11f + 0.06f * pulse),
                     Color.Transparent,
                 ),
                 center = Offset(nx(0.5f), ny(0.46f)),
@@ -147,7 +145,7 @@ fun AstronautScene(playing: Boolean, modifier: Modifier = Modifier) {
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    HeadphonePink.copy(alpha = 0.06f + 0.04f * pulse),
+                    HeadphonePink.copy(alpha = 0.06f + 0.05f * pulse),
                     Color.Transparent,
                 ),
                 center = Offset(nx(0.34f), ny(0.62f)),
@@ -216,27 +214,30 @@ fun AstronautScene(playing: Boolean, modifier: Modifier = Modifier) {
             size = Size(n(0.06f), n(0.020f)),
         )
 
-        // Contact shadow stays on the moon while the body bobs above it.
+        // The contact shadow tightens while the astronaut hops above it.
+        val shadowScale = 1f - 0.20f * bounce
         drawOval(
-            color = Color.Black.copy(alpha = 0.18f),
-            topLeft = Offset(nx(0.5f) - n(0.19f), ny(0.672f)),
-            size = Size(n(0.38f), n(0.040f)),
+            color = Color.Black.copy(alpha = 0.18f - 0.06f * bounce),
+            topLeft = Offset(nx(0.5f) - n(0.19f) * shadowScale, ny(0.672f)),
+            size = Size(n(0.38f) * shadowScale, n(0.040f)),
         )
 
-        val bobOffset = if (playing) (bob - 0.5f) * 2f * n(0.012f) else 0f
-        val nodAngle = if (playing) (nod - 0.5f) * 2f * 3.2f else 0f
-        val tapAngle = if (playing) sin(tap * TWO_PI) * 9f else 0f
-
-        translate(top = bobOffset) {
-            // Feet stay at the moon contact point; the figure is drawn at
-            // 1.32x so it stays the clear focal point of the stage.
+        translate(
+            left = sway * n(0.014f),
+            top = -bounce * n(0.020f),
+        ) {
+            // The figure is drawn at 1.32x so it stays the clear focal point
+            // of the stage while it dances.
             drawAstronaut(
                 centerX = nx(0.5f),
                 centerY = ny(0.469f),
                 unit = n(1.32f),
                 accent = accent,
-                nodAngle = nodAngle,
-                tapAngle = tapAngle,
+                torsoLean = torsoLean,
+                headTilt = headTilt,
+                leftStep = leftStep,
+                rightStep = rightStep,
+                beatPulse = bounce,
             )
         }
     }
@@ -247,138 +248,229 @@ private fun DrawScope.drawAstronaut(
     centerY: Float,
     unit: Float,
     accent: Color,
-    nodAngle: Float,
-    tapAngle: Float,
+    torsoLean: Float,
+    headTilt: Float,
+    leftStep: Float,
+    rightStep: Float,
+    beatPulse: Float,
 ) {
     fun u(fraction: Float) = fraction * unit
+    fun mix(from: Float, to: Float, amount: Float) = from + (to - from) * amount
 
-    // Backpack peeking out behind the suit.
-    drawRoundRect(
-        color = Backpack,
-        topLeft = Offset(centerX - u(0.050f), centerY - u(0.098f)),
-        size = Size(u(0.168f), u(0.190f)),
-        cornerRadius = CornerRadius(u(0.050f)),
+    // Legs bend outward and lift in alternation. The body lands on every
+    // beat, so one foot is stepping while the other keeps the rhythm.
+    val leftHip = Offset(centerX - u(0.050f), centerY + u(0.088f))
+    val rightHip = Offset(centerX + u(0.050f), centerY + u(0.088f))
+    val leftKnee = Offset(
+        centerX - u(0.068f) - u(0.017f) * leftStep,
+        centerY + u(0.108f) - u(0.010f) * leftStep,
+    )
+    val rightKnee = Offset(
+        centerX + u(0.068f) + u(0.017f) * rightStep,
+        centerY + u(0.108f) - u(0.010f) * rightStep,
+    )
+    val leftAnkle = Offset(
+        centerX - u(0.062f) - u(0.046f) * leftStep,
+        centerY + u(0.125f) - u(0.039f) * leftStep,
+    )
+    val rightAnkle = Offset(
+        centerX + u(0.062f) + u(0.046f) * rightStep,
+        centerY + u(0.125f) - u(0.039f) * rightStep,
     )
 
-    // Legs.
     drawLine(
         color = Suit,
-        start = Offset(centerX - u(0.050f), centerY + u(0.088f)),
-        end = Offset(centerX - u(0.062f), centerY + u(0.125f)),
+        start = leftHip,
+        end = leftKnee,
         strokeWidth = u(0.046f),
         cap = StrokeCap.Round,
     )
     drawLine(
         color = Suit,
-        start = Offset(centerX + u(0.050f), centerY + u(0.088f)),
-        end = Offset(centerX + u(0.062f), centerY + u(0.125f)),
+        start = leftKnee,
+        end = leftAnkle,
+        strokeWidth = u(0.046f),
+        cap = StrokeCap.Round,
+    )
+    drawLine(
+        color = Suit,
+        start = rightHip,
+        end = rightKnee,
+        strokeWidth = u(0.046f),
+        cap = StrokeCap.Round,
+    )
+    drawLine(
+        color = Suit,
+        start = rightKnee,
+        end = rightAnkle,
         strokeWidth = u(0.046f),
         cap = StrokeCap.Round,
     )
 
-    // Feet tap around the ankle while music plays.
-    drawFoot(centerX - u(0.062f), centerY + u(0.125f), u(1f), u(0.075f), u(0.034f), tapAngle)
-    drawFoot(centerX + u(0.062f), centerY + u(0.125f), u(1f), u(0.075f), u(0.034f), -tapAngle * 0.7f)
-
-    // Torso.
-    drawRoundRect(
-        color = Suit,
-        topLeft = Offset(centerX - u(0.095f), centerY - u(0.100f)),
-        size = Size(u(0.190f), u(0.200f)),
-        cornerRadius = CornerRadius(u(0.068f)),
+    // Alternating toe-out steps.
+    drawFoot(
+        ankleX = leftAnkle.x,
+        ankleY = leftAnkle.y,
+        unit = u(1f),
+        width = u(0.075f),
+        height = u(0.034f),
+        angle = 22f * leftStep,
     )
-    drawRoundRect(
-        color = SuitShade.copy(alpha = 0.55f),
-        topLeft = Offset(centerX - u(0.095f), centerY - u(0.100f)),
-        size = Size(u(0.190f), u(0.200f)),
-        cornerRadius = CornerRadius(u(0.068f)),
-        style = Stroke(width = u(0.0035f)),
-    )
-    // Chest control panel.
-    drawRoundRect(
-        color = SuitShade,
-        topLeft = Offset(centerX - u(0.046f), centerY + u(0.002f)),
-        size = Size(u(0.092f), u(0.046f)),
-        cornerRadius = CornerRadius(u(0.016f)),
-    )
-    drawCircle(
-        color = accent,
-        radius = u(0.010f),
-        center = Offset(centerX - u(0.022f), centerY + u(0.025f)),
-    )
-    drawCircle(
-        color = HeadphonePink.copy(alpha = 0.9f),
-        radius = u(0.006f),
-        center = Offset(centerX + u(0.020f), centerY + u(0.025f)),
+    drawFoot(
+        ankleX = rightAnkle.x,
+        ankleY = rightAnkle.y,
+        unit = u(1f),
+        width = u(0.075f),
+        height = u(0.034f),
+        angle = -22f * rightStep,
     )
 
-    // Arms resting on the knees.
-    drawLine(
-        color = Suit,
-        start = Offset(centerX - u(0.080f), centerY - u(0.055f)),
-        end = Offset(centerX - u(0.128f), centerY + u(0.040f)),
-        strokeWidth = u(0.043f),
-        cap = StrokeCap.Round,
-    )
-    drawLine(
-        color = Suit,
-        start = Offset(centerX + u(0.080f), centerY - u(0.055f)),
-        end = Offset(centerX + u(0.128f), centerY + u(0.040f)),
-        strokeWidth = u(0.043f),
-        cap = StrokeCap.Round,
-    )
-    drawCircle(Suit, radius = u(0.025f), center = Offset(centerX - u(0.128f), centerY + u(0.042f)))
-    drawCircle(Suit, radius = u(0.025f), center = Offset(centerX + u(0.128f), centerY + u(0.042f)))
+    // The upper body leans into the groove while the hips and feet stay put.
+    rotate(degrees = torsoLean, pivot = Offset(centerX, centerY + u(0.085f))) {
+        // Backpack peeking out behind the suit.
+        drawRoundRect(
+            color = Backpack,
+            topLeft = Offset(centerX - u(0.050f), centerY - u(0.098f)),
+            size = Size(u(0.168f), u(0.190f)),
+            cornerRadius = CornerRadius(u(0.050f)),
+        )
 
-    // Helmet nods gently around the neck.
-    rotate(degrees = nodAngle, pivot = Offset(centerX, centerY - u(0.090f))) {
-        val helmetCenter = Offset(centerX, centerY - u(0.185f))
-        drawCircle(color = Suit, radius = u(0.116f), center = helmetCenter)
-        drawCircle(
-            color = SuitShade,
-            radius = u(0.116f),
-            center = helmetCenter,
+        // Torso.
+        drawRoundRect(
+            color = Suit,
+            topLeft = Offset(centerX - u(0.095f), centerY - u(0.100f)),
+            size = Size(u(0.190f), u(0.200f)),
+            cornerRadius = CornerRadius(u(0.068f)),
+        )
+        drawRoundRect(
+            color = SuitShade.copy(alpha = 0.55f),
+            topLeft = Offset(centerX - u(0.095f), centerY - u(0.100f)),
+            size = Size(u(0.190f), u(0.200f)),
+            cornerRadius = CornerRadius(u(0.068f)),
             style = Stroke(width = u(0.0035f)),
         )
-        // Visor.
+        // Chest control panel with beat-reactive lights.
         drawRoundRect(
-            brush = Brush.linearGradient(
-                colors = listOf(VisorTop, VisorBottom),
-                start = Offset(centerX - u(0.085f), centerY - u(0.225f)),
-                end = Offset(centerX + u(0.085f), centerY - u(0.115f)),
-            ),
-            topLeft = Offset(centerX - u(0.085f), centerY - u(0.225f)),
-            size = Size(u(0.170f), u(0.106f)),
-            cornerRadius = CornerRadius(u(0.053f)),
+            color = SuitShade,
+            topLeft = Offset(centerX - u(0.046f), centerY + u(0.002f)),
+            size = Size(u(0.092f), u(0.046f)),
+            cornerRadius = CornerRadius(u(0.016f)),
         )
         drawCircle(
-            color = Color.White.copy(alpha = 0.16f),
-            radius = u(0.026f),
-            center = Offset(centerX - u(0.038f), centerY - u(0.194f)),
+            color = accent,
+            radius = u(0.010f) * (1f + 0.30f * beatPulse),
+            center = Offset(centerX - u(0.022f), centerY + u(0.025f)),
         )
         drawCircle(
-            color = accent.copy(alpha = 0.55f),
-            radius = u(0.007f),
-            center = Offset(centerX - u(0.028f), centerY - u(0.170f)),
-        )
-        drawCircle(
-            color = accent.copy(alpha = 0.55f),
-            radius = u(0.007f),
-            center = Offset(centerX + u(0.016f), centerY - u(0.172f)),
+            color = HeadphonePink.copy(alpha = 0.9f),
+            radius = u(0.006f) * (1f + 0.35f * beatPulse),
+            center = Offset(centerX + u(0.020f), centerY + u(0.025f)),
         )
 
-        // Headphones: band over the helmet plus two ear cups.
-        drawArc(
-            color = accent,
-            startAngle = 195f,
-            sweepAngle = 150f,
-            useCenter = false,
-            topLeft = Offset(centerX - u(0.137f), centerY - u(0.312f)),
-            size = Size(u(0.274f), u(0.274f)),
-            style = Stroke(width = u(0.020f), cap = StrokeCap.Round),
+        // Arms rest on the knees, then pump up alternately with the steps.
+        val leftShoulder = Offset(centerX - u(0.080f), centerY - u(0.055f))
+        val rightShoulder = Offset(centerX + u(0.080f), centerY - u(0.055f))
+        val leftArmLift = rightStep
+        val rightArmLift = leftStep
+        val leftElbow = Offset(
+            mix(centerX - u(0.105f), centerX - u(0.135f), leftArmLift),
+            mix(centerY - u(0.005f), centerY - u(0.095f), leftArmLift),
         )
-        drawEarCup(centerX - u(0.152f), centerY - u(0.230f), u(1f), accent)
-        drawEarCup(centerX + u(0.102f), centerY - u(0.230f), u(1f), accent)
+        val rightElbow = Offset(
+            mix(centerX + u(0.105f), centerX + u(0.135f), rightArmLift),
+            mix(centerY - u(0.005f), centerY - u(0.095f), rightArmLift),
+        )
+        val leftHand = Offset(
+            mix(centerX - u(0.128f), centerX - u(0.165f), leftArmLift),
+            mix(centerY + u(0.040f), centerY - u(0.150f), leftArmLift),
+        )
+        val rightHand = Offset(
+            mix(centerX + u(0.128f), centerX + u(0.165f), rightArmLift),
+            mix(centerY + u(0.040f), centerY - u(0.150f), rightArmLift),
+        )
+
+        drawLine(
+            color = Suit,
+            start = leftShoulder,
+            end = leftElbow,
+            strokeWidth = u(0.043f),
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = Suit,
+            start = leftElbow,
+            end = leftHand,
+            strokeWidth = u(0.043f),
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = Suit,
+            start = rightShoulder,
+            end = rightElbow,
+            strokeWidth = u(0.043f),
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = Suit,
+            start = rightElbow,
+            end = rightHand,
+            strokeWidth = u(0.043f),
+            cap = StrokeCap.Round,
+        )
+        drawCircle(Suit, radius = u(0.025f), center = leftHand)
+        drawCircle(Suit, radius = u(0.025f), center = rightHand)
+
+        // Helmet bobs on the beat around the neck.
+        rotate(degrees = headTilt, pivot = Offset(centerX, centerY - u(0.090f))) {
+            val helmetCenter = Offset(centerX, centerY - u(0.185f))
+            drawCircle(color = Suit, radius = u(0.116f), center = helmetCenter)
+            drawCircle(
+                color = SuitShade,
+                radius = u(0.116f),
+                center = helmetCenter,
+                style = Stroke(width = u(0.0035f)),
+            )
+            // Visor.
+            drawRoundRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(VisorTop, VisorBottom),
+                    start = Offset(centerX - u(0.085f), centerY - u(0.225f)),
+                    end = Offset(centerX + u(0.085f), centerY - u(0.115f)),
+                ),
+                topLeft = Offset(centerX - u(0.085f), centerY - u(0.225f)),
+                size = Size(u(0.170f), u(0.106f)),
+                cornerRadius = CornerRadius(u(0.053f)),
+            )
+            drawCircle(
+                color = Color.White.copy(alpha = 0.16f),
+                radius = u(0.026f),
+                center = Offset(centerX - u(0.038f), centerY - u(0.194f)),
+            )
+            val eyeRadius = u(0.007f) * (1f + 0.35f * beatPulse)
+            drawCircle(
+                color = accent.copy(alpha = 0.55f + 0.35f * beatPulse),
+                radius = eyeRadius,
+                center = Offset(centerX - u(0.028f), centerY - u(0.170f)),
+            )
+            drawCircle(
+                color = accent.copy(alpha = 0.55f + 0.35f * beatPulse),
+                radius = eyeRadius,
+                center = Offset(centerX + u(0.016f), centerY - u(0.172f)),
+            )
+
+            // Headphones: band over the helmet plus two ear cups.
+            drawArc(
+                color = accent,
+                startAngle = 195f,
+                sweepAngle = 150f,
+                useCenter = false,
+                topLeft = Offset(centerX - u(0.137f), centerY - u(0.312f)),
+                size = Size(u(0.274f), u(0.274f)),
+                style = Stroke(width = u(0.020f), cap = StrokeCap.Round),
+            )
+            drawEarCup(centerX - u(0.152f), centerY - u(0.230f), u(1f), accent)
+            drawEarCup(centerX + u(0.102f), centerY - u(0.230f), u(1f), accent)
+        }
     }
 }
 
@@ -443,4 +535,7 @@ private fun DrawScope.sparkle(center: Offset, radius: Float, color: Color) {
     )
 }
 
+private const val DANCE_LOOP_MILLIS = 4_000
+private const val DANCE_BEATS = 8f
+private val PI_F = PI.toFloat()
 private val TWO_PI = (2.0 * PI).toFloat()

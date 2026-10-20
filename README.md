@@ -140,11 +140,11 @@ settings card shows a compact preview for each option, and tapping the selected
 preview replays it.
 
 The Music page keeps the reference hierarchy: the astronaut stage above the
-player card, and the two tall pills on the right. Album art, title, artist,
+player card, and the tall volume pill on the right. Album art, title, artist,
 position, duration, and transport availability all come from the active
-session. The
-astronaut bobs, nods, taps its feet, and twinkles only while a real session is
-playing and the page is visible; when playback pauses the scene settles to a
+session. The astronaut bounces on the beat, sways, alternates toe-out dance
+steps, and pumps its arms while the stars twinkle — only while a real session
+is playing and the page is visible; when playback pauses the scene settles to a
 still pose and the equalizer stops animating. The page is a plain Canvas plus
 Compose shapes — no 3D scene, no blur pass, no audio capture. The player card
 shows an honest idle state when no session can be read, and an **Open settings**
