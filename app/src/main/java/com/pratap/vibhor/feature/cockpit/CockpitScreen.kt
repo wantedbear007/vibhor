@@ -173,7 +173,7 @@ private fun ControlCluster(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xxl),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SoundControl(
