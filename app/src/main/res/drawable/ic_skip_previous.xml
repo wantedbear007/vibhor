@@ -4,8 +4,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Skip-previous symbol -->
+    <!-- iOS-style backward double triangle, without a skip bar -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M18,5l-10,7 10,7z M5,5h2v14h-2z" />
+        android:pathData="M20,6.1 Q20,4.8 19.07,5.71 L13.63,11.09 Q12.7,12 13.63,12.91 L19.07,18.29 Q20,19.2 20,17.9 Z M11.3,6.1 Q11.3,4.8 10.37,5.71 L4.93,11.09 Q4,12 4.93,12.91 L10.37,18.29 Q11.3,19.2 11.3,17.9 Z" />
 </vector>

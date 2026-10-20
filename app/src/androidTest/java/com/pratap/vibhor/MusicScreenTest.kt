@@ -153,7 +153,7 @@ class MusicScreenTest {
             val trackHeight = composeRule
                 .onNodeWithTag(MusicTestTags.ProgressTrack, useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot.height
-            assertEquals(2f, playedHeight / trackHeight, 0.05f)
+            assertEquals(1f, playedHeight / trackHeight, 0.05f)
 
             composeRule.onNodeWithTag(MusicTestTags.PlayPause).performClick()
             composeRule.waitUntil(timeoutMillis = 3_000L) { pauseCalls.get() == 1 }

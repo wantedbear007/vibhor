@@ -4,8 +4,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Pause symbol -->
+    <!-- iOS-style rounded pause glyph -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M6,5h4v14h-4z M14,5h4v14h-4z" />
+        android:pathData="M8.75,5 L9.25,5 Q10.75,5 10.75,6.5 L10.75,17.5 Q10.75,19 9.25,19 L8.75,19 Q7.25,19 7.25,17.5 L7.25,6.5 Q7.25,5 8.75,5 Z M14.75,5 L15.25,5 Q16.75,5 16.75,6.5 L16.75,17.5 Q16.75,19 15.25,19 L14.75,19 Q13.25,19 13.25,17.5 L13.25,6.5 Q13.25,5 14.75,5 Z" />
 </vector>

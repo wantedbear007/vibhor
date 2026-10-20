@@ -543,7 +543,7 @@ private fun PlaybackProgress(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .fillMaxWidth()
-                            .height(16.dp)
+                            .height(24.dp)
                             .clip(trackShape)
                             .background(PrimaryText.copy(alpha = 0.12f))
                             .testTag(MusicTestTags.ProgressTrack),
@@ -552,7 +552,7 @@ private fun PlaybackProgress(
                         modifier = Modifier
                             .align(Alignment.CenterStart)
                             .fillMaxWidth(sliderState.coercedValueAsFraction)
-                            .height(32.dp)
+                            .height(24.dp)
                             .clip(trackShape)
                             .background(
                                 Brush.horizontalGradient(
@@ -602,7 +602,7 @@ private fun PlayPauseButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
-            .size(64.dp)
+            .size(80.dp)
             .testTag(MusicTestTags.PlayPause),
         colors = IconButtonDefaults.filledIconButtonColors(
             containerColor = VibhorThemeColors.accent,
@@ -618,7 +618,7 @@ private fun PlayPauseButton(
             contentDescription = stringResource(
                 if (playing) R.string.music_pause else R.string.music_play,
             ),
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(40.dp),
         )
     }
 }
@@ -636,7 +636,7 @@ private fun TransportButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
-            .size(56.dp)
+            .size(72.dp)
             .testTag(testTag),
         colors = IconButtonDefaults.iconButtonColors(
             contentColor = PrimaryText,
@@ -646,7 +646,7 @@ private fun TransportButton(
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
-            modifier = Modifier.size(30.dp),
+            modifier = Modifier.size(36.dp),
         )
     }
 }

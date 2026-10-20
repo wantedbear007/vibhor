@@ -4,8 +4,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Skip-next symbol -->
+    <!-- iOS-style forward double triangle, without a skip bar -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M6,5l10,7 -10,7z M17,5h2v14h-2z" />
+        android:pathData="M4,6.1 Q4,4.8 4.93,5.71 L10.37,11.09 Q11.3,12 10.37,12.91 L4.93,18.29 Q4,19.2 4,17.9 Z M12.7,6.1 Q12.7,4.8 13.63,5.71 L19.07,11.09 Q20,12 19.07,12.91 L13.63,18.29 Q12.7,19.2 12.7,17.9 Z" />
 </vector>
