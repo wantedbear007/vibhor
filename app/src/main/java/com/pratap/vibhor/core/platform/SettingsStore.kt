@@ -25,6 +25,7 @@ data class LauncherSettings(
     val backgroundOpacity: Float = DEFAULT_BACKGROUND_OPACITY,
     val nightMode: Boolean = DEFAULT_NIGHT_MODE,
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
+    val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -77,6 +78,7 @@ interface SettingsStore {
     fun setBackgroundOpacity(opacity: Float)
     fun setNightMode(enabled: Boolean)
     fun setAnimationStyle(style: AnimationStyle)
+    fun setHomeButtonTarget(target: HomeButtonTarget)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -205,6 +207,10 @@ class InMemorySettingsStore(
 
     override fun setAnimationStyle(style: AnimationStyle) {
         state.update { it.copy(animationStyle = style) }
+    }
+
+    override fun setHomeButtonTarget(target: HomeButtonTarget) {
+        state.update { it.copy(homeButtonTarget = target) }
     }
 
     override fun addFavourite(packageName: String) {

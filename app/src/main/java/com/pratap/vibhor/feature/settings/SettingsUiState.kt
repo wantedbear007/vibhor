@@ -4,6 +4,7 @@ import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 
@@ -20,6 +21,7 @@ data class SettingsUiState(
     val background: LauncherBackground = LauncherBackground.DEFAULT,
     val backgroundOpacity: Float = LauncherSettings.DEFAULT_BACKGROUND_OPACITY,
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
+    val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
 )
 
 object LauncherDefaults {

@@ -49,6 +49,7 @@
     <string name="settings_section_launcher_background">Launcher background</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_home_apps">Home &amp; apps</string>
+    <string name="settings_section_home_button">Home button</string>
     <string name="settings_section_animations">Swipe animation</string>
     <string name="settings_clock_size">Clock size</string>
     <string name="settings_clock_face">Clock face</string>
@@ -70,6 +71,10 @@
     <string name="settings_status_bar_summary">Hide for a cleaner Home; swipe down to reveal</string>
     <string name="settings_app_icon_size">App icon size</string>
     <string name="settings_quick_button_size">Favourites button size</string>
+    <string name="settings_home_button_target">Default screen</string>
+    <string name="settings_home_button_summary">Choose the screen the Home button returns to.</string>
+    <string name="settings_home_button_clock">Clock screen</string>
+    <string name="settings_home_button_player">Player screen</string>
     <string name="settings_accent_color">Accent color</string>
     <string name="settings_accent_blue">Blue</string>
     <string name="settings_accent_teal">Teal</string>

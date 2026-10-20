@@ -16,7 +16,7 @@ media session.
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
 | `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Music, Home, Apps). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face and `formatPlaybackTime` for media positions). |
-| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
+| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, `LauncherBackground`, and `HomeButtonTarget` enums. |
 | `core.platform.media` | `MediaControls` interface, `AndroidMediaControls` (platform `MediaSessionManager`/`MediaController`), the `NowPlaying` snapshot, and the opt-in `VibhorNotificationListenerService` that makes the package trusted for session access. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `core.ui.components` | Shared controls: the horizontal settings `PillSlider` and the vertical `VerticalPillSlider` used by both the Apps rail and the Music page. |
@@ -34,8 +34,11 @@ they can be faked in unit tests.
 ## Pager and screen host
 
 `VibhorApp` hosts a `HorizontalPager` with page order **Music (0) → Home (1) →
-Apps (2)**. Home is the default page. The pager does not wrap past the
-first or last page. Snap transitions target ~260 ms.
+Apps (2)**. The Clock page is the default Home-button target, but
+`LauncherSettings.homeButtonTarget` can select Player (Music) instead; when the
+activity is created from the system Home intent, that target seeds
+`rememberPagerState`. The pager does not wrap past the first or last page. Snap
+transitions target ~260 ms.
 
 ```text
 VibhorApp (HorizontalPager)
@@ -54,8 +57,10 @@ SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
 - **Back** from Music or Apps animates back to Home. Back on Home is disabled
   so the system default applies.
 - A repeated **Home press** delivers `onNewIntent`; `MainActivity` bumps
-  `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` scrolls the pager
-  back to Home. This launcher-reset behavior is unchanged from the foundation.
+  `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` closes the Settings
+  overlay, then scrolls the pager to the persisted `homeButtonTarget` (Clock or
+  Player). When the activity is created from the system Home intent, the same
+  target supplies the pager's initial page.
 - **Settings** is an overlay (not a pager page) toggled from the Apps clock
   gear. `settingsVisible` is held in
   `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
@@ -375,8 +380,8 @@ SettingsStore (core.platform interface)
   `clockFormat`, `accentColor`, and `background`, the launcher
   `backgroundOpacity` (0–1), the launcher-only `nightMode` flag, the
   clock-backdrop values (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1),
-  `showStatusBar`, the selected `animationStyle`, and the favourite
-  package-name set.
+  `showStatusBar`, the selected `animationStyle`, the `homeButtonTarget`
+  (Clock or Player), and the favourite package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
@@ -384,8 +389,8 @@ SettingsStore (core.platform interface)
   `clock_scale`, `app_icon_scale`, `clock_face`, `clock_format`,
   `clock_blur_radius`, `background_darkness`, `show_status_bar`,
   `quick_button_scale`, `accent_color`, `background_color`,
-  `background_opacity`, `night_mode`, `animation_style`, and
-  `favourite_package_names`. The
+  `background_opacity`, `night_mode`, `animation_style`,
+  `home_button_target`, and `favourite_package_names`. The
   in-memory `StateFlow` is updated synchronously and the preference write is
   flushed with `apply()`. Enum keys store the stable string id and fall back to
   the default on unknown values.
@@ -410,10 +415,11 @@ SettingsStore (core.platform interface)
   the pure, unit-tested `snapToSteps` helper.
 - `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
   `Clock backdrop`, `Launcher background`, `Appearance`, `Home & apps`,
-  `Swipe animation`). A
+  `Home button`, `Swipe animation`). A
   `BoxWithConstraints` breakpoint at 900dp switches from a stacked layout to a
   landscape dashboard: full-width Clock, Clock backdrop / Launcher background /
-  Appearance side by side, then full-width Home & apps and Swipe animation. The
+  Appearance side by side, then full-width Home & apps, Home button, and Swipe
+  animation. The
   clock-face row and both swatch grids adapt to their own available width instead
   of fixed screen sizes.
 

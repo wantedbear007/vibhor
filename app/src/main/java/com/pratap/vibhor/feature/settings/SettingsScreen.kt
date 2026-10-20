@@ -64,6 +64,7 @@ import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.ui.animation.pageTransitionValues
@@ -104,8 +105,10 @@ object SettingsTestTags {
     const val SectionLauncherBackground = "settings_section_launcher_background"
     const val SectionAppearance = "settings_section_appearance"
     const val SectionHomeApps = "settings_section_home_apps"
+    const val SectionHomeButton = "settings_section_home_button"
     const val SectionAnimations = "settings_section_animations"
     const val AnimationOptionPrefix = "settings_animation_style_"
+    const val HomeButtonOptionPrefix = "settings_home_button_"
     const val Close = "settings_close"
     const val Reset = "settings_reset"
 }
@@ -130,6 +133,7 @@ fun SettingsScreen(
     onBackgroundChange: (LauncherBackground) -> Unit,
     onBackgroundOpacityChange: (Float) -> Unit,
     onAnimationStyleChange: (AnimationStyle) -> Unit,
+    onHomeButtonTargetChange: (HomeButtonTarget) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -228,6 +232,11 @@ fun SettingsScreen(
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
                         )
+                        HomeButtonSettingsSection(
+                            state = state,
+                            onHomeButtonTargetChange = onHomeButtonTargetChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionHomeButton),
+                        )
                         AnimationSettingsSection(
                             state = state,
                             onAnimationStyleChange = onAnimationStyleChange,
@@ -266,6 +275,11 @@ fun SettingsScreen(
                             onQuickButtonScaleChange = onQuickButtonScaleChange,
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
+                        )
+                        HomeButtonSettingsSection(
+                            state = state,
+                            onHomeButtonTargetChange = onHomeButtonTargetChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionHomeButton),
                         )
                         AnimationSettingsSection(
                             state = state,
@@ -473,6 +487,141 @@ private fun HomeAppsSettingsSection(
         }
     }
 }
+
+@Composable
+private fun HomeButtonSettingsSection(
+    state: SettingsUiState,
+    onHomeButtonTargetChange: (HomeButtonTarget) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_home_button),
+        modifier = modifier,
+    ) {
+        HomeButtonTargetSetting(
+            selected = state.homeButtonTarget,
+            onSelect = onHomeButtonTargetChange,
+        )
+    }
+}
+
+@Composable
+private fun HomeButtonTargetSetting(
+    selected: HomeButtonTarget,
+    onSelect: (HomeButtonTarget) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        if (maxWidth >= 700.dp) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                HomeButtonTargetLabels(modifier = Modifier.weight(1f))
+                HomeButtonTargetOptions(
+                    selected = selected,
+                    onSelect = onSelect,
+                    expanded = false,
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm)) {
+                HomeButtonTargetLabels()
+                HomeButtonTargetOptions(
+                    selected = selected,
+                    onSelect = onSelect,
+                    expanded = true,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeButtonTargetLabels(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_home_button_target),
+            style = MaterialTheme.typography.titleMedium,
+            color = PrimaryText,
+        )
+        Text(
+            text = stringResource(R.string.settings_home_button_summary),
+            style = MaterialTheme.typography.bodyMedium,
+            color = SecondaryText,
+        )
+    }
+}
+
+@Composable
+private fun HomeButtonTargetOptions(
+    selected: HomeButtonTarget,
+    onSelect: (HomeButtonTarget) -> Unit,
+    expanded: Boolean,
+) {
+    Row(
+        modifier = if (expanded) Modifier.fillMaxWidth() else Modifier,
+        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        HomeButtonTarget.entries.forEach { target ->
+            HomeButtonTargetChip(
+                target = target,
+                selected = target == selected,
+                onClick = { onSelect(target) },
+                modifier = if (expanded) Modifier.weight(1f) else Modifier.width(160.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeButtonTargetChip(
+    target: HomeButtonTarget,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val label = stringResource(target.labelRes)
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.small,
+        color = if (selected) {
+            VibhorThemeColors.accent.copy(alpha = 0.16f)
+        } else {
+            DeepSlate
+        },
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) VibhorThemeColors.accent else DeepSlate,
+        ),
+        modifier = modifier
+            .height(56.dp)
+            .testTag(SettingsTestTags.HomeButtonOptionPrefix + target.id)
+            .semantics {
+                this.selected = selected
+                contentDescription = label
+            },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selected) VibhorThemeColors.accent else SecondaryText,
+            )
+        }
+    }
+}
+
+private val HomeButtonTarget.labelRes: Int
+    get() = when (this) {
+        HomeButtonTarget.Clock -> R.string.settings_home_button_clock
+        HomeButtonTarget.Player -> R.string.settings_home_button_player
+    }
 
 @Composable
 private fun AnimationSettingsSection(
@@ -1310,6 +1459,7 @@ private fun SettingsLandscapePreview() {
             onBackgroundChange = {},
             onBackgroundOpacityChange = {},
             onAnimationStyleChange = {},
+            onHomeButtonTargetChange = {},
             onResetToDefaults = {},
             onClose = {},
         )

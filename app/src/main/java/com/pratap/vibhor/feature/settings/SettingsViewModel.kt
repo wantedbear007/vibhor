@@ -9,6 +9,7 @@ import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.platform.SettingsStore
@@ -42,6 +43,7 @@ class SettingsViewModel(
                 background = settings.background,
                 backgroundOpacity = settings.backgroundOpacity,
                 animationStyle = settings.animationStyle,
+                homeButtonTarget = settings.homeButtonTarget,
             )
         }
         .stateIn(
@@ -75,6 +77,9 @@ class SettingsViewModel(
 
     fun setAnimationStyle(style: AnimationStyle) = settingsStore.setAnimationStyle(style)
 
+    fun setHomeButtonTarget(target: HomeButtonTarget) =
+        settingsStore.setHomeButtonTarget(target)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
@@ -89,6 +94,7 @@ class SettingsViewModel(
         settingsStore.setBackgroundOpacity(LauncherSettings.DEFAULT_BACKGROUND_OPACITY)
         settingsStore.setNightMode(LauncherSettings.DEFAULT_NIGHT_MODE)
         settingsStore.setAnimationStyle(AnimationStyle.DEFAULT)
+        settingsStore.setHomeButtonTarget(HomeButtonTarget.DEFAULT)
     }
 
     companion object {

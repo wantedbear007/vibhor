@@ -107,6 +107,11 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(animationStyle = style) }
     }
 
+    override fun setHomeButtonTarget(target: HomeButtonTarget) {
+        prefs.edit { putString(KEY_HOME_BUTTON_TARGET, target.id) }
+        state.update { it.copy(homeButtonTarget = target) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -186,6 +191,9 @@ class SharedPreferencesSettingsStore private constructor(
         animationStyle = AnimationStyle.fromId(
             prefs.getString(KEY_ANIMATION_STYLE, null),
         ),
+        homeButtonTarget = HomeButtonTarget.fromId(
+            prefs.getString(KEY_HOME_BUTTON_TARGET, null),
+        ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -216,6 +224,7 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_BACKGROUND_OPACITY = "background_opacity"
         private const val KEY_NIGHT_MODE = "night_mode"
         private const val KEY_ANIMATION_STYLE = "animation_style"
+        private const val KEY_HOME_BUTTON_TARGET = "home_button_target"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

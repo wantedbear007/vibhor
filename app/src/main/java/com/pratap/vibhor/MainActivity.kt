@@ -34,7 +34,10 @@ class MainActivity : ComponentActivity() {
             }
             val settings by settingsStore.settings.collectAsStateWithLifecycle()
             VibhorTheme(accentColor = settings.accentColor) {
-                VibhorApp(homeRequestToken = homeRequestToken)
+                VibhorApp(
+                    homeRequestToken = homeRequestToken,
+                    startOnHomeTarget = intent.hasCategory(Intent.CATEGORY_HOME),
+                )
             }
         }
     }

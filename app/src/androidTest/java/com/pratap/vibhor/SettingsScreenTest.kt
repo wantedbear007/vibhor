@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pratap.vibhor.core.platform.AnimationStyle
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
@@ -27,10 +28,14 @@ class SettingsScreenTest {
 
     /** Opens the non-Home Apps page and taps its gear. */
     private fun openSettings() {
-        if (composeRule.onAllNodesWithTag(AppDrawerTestTags.Page)
-                .fetchSemanticsNodes().isEmpty()
-        ) {
-            composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
+        repeat(2) {
+            if (composeRule.onAllNodesWithTag(AppDrawerTestTags.Page)
+                    .fetchSemanticsNodes().isEmpty()
+            ) {
+                composeRule.onNodeWithTag(LauncherTestTags.Pager)
+                    .performTouchInput { swipeLeft() }
+                composeRule.waitForIdle()
+            }
         }
         composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
         composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).performClick()
@@ -46,6 +51,7 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag(SettingsTestTags.SectionLauncherBackground).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAppearance).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionHomeApps).assertExists()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionHomeButton).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.ClockSlider).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionLauncherBackground)
@@ -54,6 +60,34 @@ class SettingsScreenTest {
             .assertExists()
         composeRule.onNodeWithTag(
             SettingsTestTags.BackgroundOptionPrefix + LauncherBackground.NAVY.id,
+        )
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+    }
+
+    @Test
+    fun homeButtonTargetCanBeSelectedAndPersists() {
+        openSettings()
+
+        composeRule.onNodeWithTag(SettingsTestTags.SectionHomeButton).performScrollTo()
+        composeRule.onNodeWithTag(
+            SettingsTestTags.HomeButtonOptionPrefix + HomeButtonTarget.Player.id,
+        )
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val stored = context
+            .getSharedPreferences("vibhor_launcher_settings", Context.MODE_PRIVATE)
+            .getString("home_button_target", null)
+        assertEquals(HomeButtonTarget.Player.id, stored)
+
+        // Leave the shared preferences on the default so pager tests that
+        // start from the clock page remain deterministic.
+        composeRule.onNodeWithTag(
+            SettingsTestTags.HomeButtonOptionPrefix + HomeButtonTarget.Clock.id,
         )
             .performScrollTo()
             .performClick()

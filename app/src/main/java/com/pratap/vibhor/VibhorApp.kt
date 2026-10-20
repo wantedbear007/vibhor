@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pratap.vibhor.core.platform.AndroidAppLauncher
 import com.pratap.vibhor.core.platform.AppLauncher
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.ui.animation.PageTransitionDurationMillis
 import com.pratap.vibhor.core.ui.animation.pageTransition
@@ -58,18 +59,26 @@ object LauncherTestTags {
 }
 
 /**
- * Three-page launcher. Page order is [Music, Home, Apps]; the pager starts
- * on Home, never wraps around the ends, and snap transitions target roughly
- * 260 ms with the per-page effect of the persisted animation style. The
- * existing Home-intent reset flow (homeRequestToken) scrolls the pager back
- * to Home. Settings open as a full-screen overlay above the pager.
+ * Three-page launcher. Page order is [Music, Home, Apps]; the persisted
+ * Home-button target seeds the pager when launched from the system Home intent,
+ * and owns the existing Home-intent reset flow (homeRequestToken). Never wraps
+ * around the ends, and snap transitions target roughly 260 ms with the
+ * per-page effect of the persisted animation style. Settings open as a
+ * full-screen overlay above the pager.
  */
 @Composable
-fun VibhorApp(homeRequestToken: Int = 0) {
-    val pagerState = rememberPagerState(initialPage = LauncherPage.Home.ordinal) {
+fun VibhorApp(
+    homeRequestToken: Int = 0,
+    startOnHomeTarget: Boolean = false,
+) {
+    val context = LocalContext.current
+    val settingsStore = remember(context) { SharedPreferencesSettingsStore.get(context) }
+    val launcherSettings by settingsStore.settings.collectAsStateWithLifecycle()
+    val homeButtonPage = launcherSettings.homeButtonTarget.toLauncherPage()
+    val initialPage = if (startOnHomeTarget) homeButtonPage else LauncherPage.Home
+    val pagerState = rememberPagerState(initialPage = initialPage.ordinal) {
         LauncherPage.entries.size
     }
-    val context = LocalContext.current
     val appLauncher = remember(context) {
         AndroidAppLauncher(context.applicationContext)
     }
@@ -83,8 +92,6 @@ fun VibhorApp(homeRequestToken: Int = 0) {
     // when hidden, a swipe still reveals the status bar temporarily. The
     // swipe animation style comes from the same settings flow and applies
     // immediately without recreating the pager.
-    val settingsStore = remember(context) { SharedPreferencesSettingsStore.get(context) }
-    val launcherSettings by settingsStore.settings.collectAsStateWithLifecycle()
     val statusBarVisible = launcherSettings.showStatusBar
     val animationStyle = launcherSettings.animationStyle
     val motionEnabled = rememberMotionEnabled()
@@ -115,13 +122,16 @@ fun VibhorApp(homeRequestToken: Int = 0) {
     }
 
     LaunchedEffect(homeRequestToken) {
-        if (homeRequestToken > 0 &&
-            pagerState.settledPage != LauncherPage.Home.ordinal
-        ) {
-            pagerState.animateScrollToPage(
-                page = LauncherPage.Home.ordinal,
-                animationSpec = pageAnimationSpec,
-            )
+        if (homeRequestToken > 0) {
+            // A Home press while Settings is open should complete the reset,
+            // not scroll the pager behind an invisible overlay.
+            settingsVisible = false
+            if (pagerState.settledPage != homeButtonPage.ordinal) {
+                pagerState.animateScrollToPage(
+                    page = homeButtonPage.ordinal,
+                    animationSpec = pageAnimationSpec,
+                )
+            }
         }
     }
 
@@ -300,7 +310,13 @@ private fun SettingsRoute(
         onBackgroundChange = viewModel::setBackground,
         onBackgroundOpacityChange = viewModel::setBackgroundOpacity,
         onAnimationStyleChange = viewModel::setAnimationStyle,
+        onHomeButtonTargetChange = viewModel::setHomeButtonTarget,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,
     )
+}
+
+private fun HomeButtonTarget.toLauncherPage(): LauncherPage = when (this) {
+    HomeButtonTarget.Clock -> LauncherPage.Home
+    HomeButtonTarget.Player -> LauncherPage.Music
 }

@@ -104,11 +104,14 @@ adb shell am start -n com.pratap.vibhor/.MainActivity
 ## Launcher screens and gestures
 
 The launcher is a three-page horizontal pager. Page order is **Music → Home →
-Apps**, with Home as the default (middle) page.
+Apps**, with the **Clock** screen as the default. The Home button target is
+configurable in **Settings → Home button**; choosing **Player** makes Music the
+screen the Home button returns to, including when the launcher starts from the
+Home button.
 
 | Page | Content |
 |---|---|
-| **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
+| **Home** (default clock) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
@@ -120,7 +123,9 @@ Navigation gestures:
 - **Back** from Music or Apps returns to Home; Back on Home is left to the system.
 - Snap transitions target ~260 ms and use the selected **swipe animation
   style** (Settings → **Swipe animation**).
-- Pressing **Home** (launcher reset) always returns to the Home page, even from another page or after resume. This behavior is preserved unchanged from the foundation milestone.
+- Pressing **Home** returns to the screen selected under Settings → **Home
+  button** (Clock by default, or Player). The same target applies when the
+  launcher is started from the Home button.
 
 Swipe animation styles (all apply to every pager transition, in both
 directions, and respect the system animation setting):
@@ -206,17 +211,20 @@ button beside the Apps clock. It contains:
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Favourites button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Favourites button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
+| Home button default screen | Clock / Player | Clock | Screen the Home button returns to, including when launching from Home |
 | Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Music, Home, and Apps; each option shows a compact preview |
 
-Settings are grouped into six accent-marked cards: **Clock** (size, face,
+Settings are grouped into seven accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
 visibility), **Appearance** (accent color, status bar), **Home & apps**
-(Favourites button size, app icon size), and **Swipe animation** (seven selectable
-preview cards, four per row on wide screens and two per row on narrow ones). On wide
+(Favourites button size, app icon size), **Home button** (default screen), and
+**Swipe animation** (seven selectable preview cards, four per row on wide
+screens and two per row on narrow ones). On wide
 landscape displays the Clock card spans the top, Clock backdrop / Launcher
-background / Appearance share a row, and Home & apps and Swipe animation run
-full width; narrow screens stack every card. Clock face previews form a single
-row in the Clock card and scroll horizontally only when space is tight.
+background / Appearance share a row, and Home & apps / Home button / Swipe
+animation run full width; narrow screens stack every card. Clock face previews
+form a single row in the Clock card and scroll horizontally only when space is
+tight.
 
 The launcher background applies to the Music page, the unified Apps page, and
 Settings surfaces. Home continues to show the system wallpaper with its own
@@ -241,7 +249,7 @@ size** and **Reset** apply to all of them):
   Home is visible.
 
 - **Reset to defaults** restores every setting, including the accent color,
-  launcher background, and swipe animation.
+  launcher background, swipe animation, and Home button target.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),

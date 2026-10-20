@@ -4,6 +4,7 @@ import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.LauncherBackground
 import kotlinx.coroutines.Dispatchers
@@ -242,6 +243,46 @@ class SettingsViewModelTest {
             advanceUntilIdle()
 
             assertEquals(AnimationStyle.DEFAULT, viewModel.uiState.value.animationStyle)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `home button target updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(HomeButtonTarget.DEFAULT, viewModel.uiState.value.homeButtonTarget)
+
+            viewModel.setHomeButtonTarget(HomeButtonTarget.Player)
+            advanceUntilIdle()
+
+            assertEquals(HomeButtonTarget.Player, viewModel.uiState.value.homeButtonTarget)
+            assertEquals(HomeButtonTarget.Player, store.settings.value.homeButtonTarget)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the clock home button target`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setHomeButtonTarget(HomeButtonTarget.Player)
+            advanceUntilIdle()
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertEquals(HomeButtonTarget.DEFAULT, viewModel.uiState.value.homeButtonTarget)
+            assertEquals(HomeButtonTarget.Clock, store.settings.value.homeButtonTarget)
 
             collection.cancel()
         }
