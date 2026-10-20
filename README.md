@@ -137,6 +137,14 @@ button in the Cockpit side rail. It contains:
 | Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
 
+Settings are grouped into four accent-marked cards: **Clock** (size, face,
+format), **Background** (blur, darkness), **Appearance** (accent color, status
+bar), and **Home & apps** (Quick + button size, app icon size). On wide
+landscape displays the Clock card spans the top, Background and Appearance
+share a row, and Home & apps runs full width with its two sliders side by
+side; narrow screens stack every card. Clock face previews form a single row
+in the Clock card and scroll horizontally only when space is tight.
+
 Every slider on this screen uses the same thick pill track as the Cockpit
 volume and brightness controls: tap or drag anywhere on the pill, with values
 snapping to the supported stops.

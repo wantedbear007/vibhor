@@ -12,6 +12,10 @@
     <string name="apps_tab_all">All</string>
     <string name="settings_title">Settings</string>
     <string name="settings_close">Close settings</string>
+    <string name="settings_section_clock">Clock</string>
+    <string name="settings_section_background">Background</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_home_apps">Home &amp; apps</string>
     <string name="settings_clock_size">Clock size</string>
     <string name="settings_clock_face">Clock face</string>
     <string name="settings_clock_face_classic">Classic</string>
@@ -24,7 +28,6 @@
     <string name="settings_clock_format_system">System</string>
     <string name="settings_clock_format_12">12-hour</string>
     <string name="settings_clock_format_24">24-hour</string>
-    <string name="settings_clock_backdrop">Clock backdrop</string>
     <string name="settings_clock_blur">Blur</string>
     <string name="settings_background_darkness">Darkness</string>
     <string name="settings_blur_value">%1$d</string>

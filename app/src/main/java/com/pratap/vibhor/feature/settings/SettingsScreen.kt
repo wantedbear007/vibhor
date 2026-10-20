@@ -5,7 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
@@ -72,6 +76,10 @@ object SettingsTestTags {
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
     const val AccentOptionPrefix = "settings_accent_"
+    const val SectionClock = "settings_section_clock"
+    const val SectionBackground = "settings_section_background"
+    const val SectionAppearance = "settings_section_appearance"
+    const val SectionHomeApps = "settings_section_home_apps"
     const val Close = "settings_close"
     const val Reset = "settings_reset"
 }
@@ -140,53 +148,80 @@ fun SettingsScreen(
                 }
             }
 
-            ScaleSetting(
-                title = stringResource(R.string.settings_clock_size),
-                value = state.clockScale,
-                onValueChange = onClockScaleChange,
-                modifier = Modifier.testTag(SettingsTestTags.ClockSlider),
-            )
-
-            ClockFaceSetting(
-                selected = state.clockFace,
-                onSelect = onClockFaceChange,
-            )
-
-            ClockFormatSetting(
-                selected = state.clockFormat,
-                onSelect = onClockFormatChange,
-            )
-
-            ClockBackdropSetting(
-                blurRadius = state.clockBlurRadius,
-                darkness = state.backgroundDarkness,
-                onBlurChange = onClockBlurChange,
-                onDarknessChange = onBackgroundDarknessChange,
-            )
-
-            StatusBarSetting(
-                show = state.showStatusBar,
-                onToggle = onShowStatusBarChange,
-            )
-
-            AccentColorSetting(
-                selected = state.accentColor,
-                onSelect = onAccentColorChange,
-            )
-
-            ScaleSetting(
-                title = stringResource(R.string.settings_quick_button_size),
-                value = state.quickButtonScale,
-                onValueChange = onQuickButtonScaleChange,
-                modifier = Modifier.testTag(SettingsTestTags.QuickButtonSlider),
-            )
-
-            ScaleSetting(
-                title = stringResource(R.string.settings_app_icon_size),
-                value = state.appIconScale,
-                onValueChange = onAppIconScaleChange,
-                modifier = Modifier.testTag(SettingsTestTags.IconSlider),
-            )
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                // Wide car displays get a dashboard-style layout: the clock
+                // card spans the width, then Background/Appearance sit side by
+                // side, with the sizing controls below. Narrow screens simply
+                // stack every section.
+                val wide = maxWidth >= 900.dp
+                if (wide) {
+                    Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xl)) {
+                        ClockSettingsSection(
+                            state = state,
+                            onClockScaleChange = onClockScaleChange,
+                            onClockFaceChange = onClockFaceChange,
+                            onClockFormatChange = onClockFormatChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionClock),
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+                            verticalAlignment = Alignment.Top,
+                        ) {
+                            BackgroundSettingsSection(
+                                state = state,
+                                onClockBlurChange = onClockBlurChange,
+                                onBackgroundDarknessChange = onBackgroundDarknessChange,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag(SettingsTestTags.SectionBackground),
+                            )
+                            AppearanceSettingsSection(
+                                state = state,
+                                onShowStatusBarChange = onShowStatusBarChange,
+                                onAccentColorChange = onAccentColorChange,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag(SettingsTestTags.SectionAppearance),
+                            )
+                        }
+                        HomeAppsSettingsSection(
+                            state = state,
+                            onQuickButtonScaleChange = onQuickButtonScaleChange,
+                            onAppIconScaleChange = onAppIconScaleChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
+                        )
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xl)) {
+                        ClockSettingsSection(
+                            state = state,
+                            onClockScaleChange = onClockScaleChange,
+                            onClockFaceChange = onClockFaceChange,
+                            onClockFormatChange = onClockFormatChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionClock),
+                        )
+                        BackgroundSettingsSection(
+                            state = state,
+                            onClockBlurChange = onClockBlurChange,
+                            onBackgroundDarknessChange = onBackgroundDarknessChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionBackground),
+                        )
+                        AppearanceSettingsSection(
+                            state = state,
+                            onShowStatusBarChange = onShowStatusBarChange,
+                            onAccentColorChange = onAccentColorChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionAppearance),
+                        )
+                        HomeAppsSettingsSection(
+                            state = state,
+                            onQuickButtonScaleChange = onQuickButtonScaleChange,
+                            onAppIconScaleChange = onAppIconScaleChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
+                        )
+                    }
+                }
+            }
 
             TextButton(
                 onClick = onResetToDefaults,
@@ -196,6 +231,171 @@ fun SettingsScreen(
                     text = stringResource(R.string.settings_reset),
                     color = VibhorThemeColors.accent,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = PrimaryText.copy(alpha = 0.04f),
+        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.10f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(VibhorSpacing.xl),
+            verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 4.dp, height = 20.dp)
+                        .background(
+                            color = VibhorThemeColors.accent,
+                            shape = RoundedCornerShape(2.dp),
+                        ),
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = PrimaryText,
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ClockSettingsSection(
+    state: SettingsUiState,
+    onClockScaleChange: (Float) -> Unit,
+    onClockFaceChange: (ClockFace) -> Unit,
+    onClockFormatChange: (ClockFormat) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_clock),
+        modifier = modifier,
+    ) {
+        ScaleSetting(
+            title = stringResource(R.string.settings_clock_size),
+            value = state.clockScale,
+            onValueChange = onClockScaleChange,
+            modifier = Modifier.testTag(SettingsTestTags.ClockSlider),
+        )
+        ClockFaceSetting(
+            selected = state.clockFace,
+            onSelect = onClockFaceChange,
+        )
+        ClockFormatSetting(
+            selected = state.clockFormat,
+            onSelect = onClockFormatChange,
+        )
+    }
+}
+
+@Composable
+private fun BackgroundSettingsSection(
+    state: SettingsUiState,
+    onClockBlurChange: (Int) -> Unit,
+    onBackgroundDarknessChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_background),
+        modifier = modifier,
+    ) {
+        ClockBackdropSetting(
+            blurRadius = state.clockBlurRadius,
+            darkness = state.backgroundDarkness,
+            onBlurChange = onClockBlurChange,
+            onDarknessChange = onBackgroundDarknessChange,
+        )
+    }
+}
+
+@Composable
+private fun AppearanceSettingsSection(
+    state: SettingsUiState,
+    onShowStatusBarChange: (Boolean) -> Unit,
+    onAccentColorChange: (AccentColor) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_appearance),
+        modifier = modifier,
+    ) {
+        AccentColorSetting(
+            selected = state.accentColor,
+            onSelect = onAccentColorChange,
+        )
+        StatusBarSetting(
+            show = state.showStatusBar,
+            onToggle = onShowStatusBarChange,
+        )
+    }
+}
+
+@Composable
+private fun HomeAppsSettingsSection(
+    state: SettingsUiState,
+    onQuickButtonScaleChange: (Float) -> Unit,
+    onAppIconScaleChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_home_apps),
+        modifier = modifier,
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            if (maxWidth >= 700.dp) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    ScaleSetting(
+                        title = stringResource(R.string.settings_quick_button_size),
+                        value = state.quickButtonScale,
+                        onValueChange = onQuickButtonScaleChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(SettingsTestTags.QuickButtonSlider),
+                    )
+                    ScaleSetting(
+                        title = stringResource(R.string.settings_app_icon_size),
+                        value = state.appIconScale,
+                        onValueChange = onAppIconScaleChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag(SettingsTestTags.IconSlider),
+                    )
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xl)) {
+                    ScaleSetting(
+                        title = stringResource(R.string.settings_quick_button_size),
+                        value = state.quickButtonScale,
+                        onValueChange = onQuickButtonScaleChange,
+                        modifier = Modifier.testTag(SettingsTestTags.QuickButtonSlider),
+                    )
+                    ScaleSetting(
+                        title = stringResource(R.string.settings_app_icon_size),
+                        value = state.appIconScale,
+                        onValueChange = onAppIconScaleChange,
+                        modifier = Modifier.testTag(SettingsTestTags.IconSlider),
+                    )
+                }
             }
         }
     }
@@ -218,14 +418,8 @@ private fun ClockBackdropSetting(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
     ) {
-        Text(
-            text = stringResource(R.string.settings_clock_backdrop),
-            style = MaterialTheme.typography.titleMedium,
-            color = PrimaryText,
-        )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -345,51 +539,79 @@ private fun AccentColorSetting(
             style = MaterialTheme.typography.titleMedium,
             color = PrimaryText,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
-        ) {
-            AccentColor.entries.forEach { accent ->
-                val isSelected = accent == selected
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag(SettingsTestTags.AccentOptionPrefix + accent.id),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
-                ) {
-                    Surface(
-                        onClick = { onSelect(accent) },
-                        shape = CircleShape,
-                        color = accent.toColor(),
-                        border = BorderStroke(
-                            width = if (isSelected) 3.dp else 1.dp,
-                            color = if (isSelected) {
-                                PrimaryText
-                            } else {
-                                SecondaryText.copy(alpha = 0.35f)
-                            },
-                        ),
-                        modifier = Modifier.size(44.dp),
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val columns = if (maxWidth >= 480.dp) 6 else 3
+            val swatchSize = (
+                (maxWidth - VibhorSpacing.sm * (columns - 1)) / columns -
+                    VibhorSpacing.xs
+                ).coerceIn(28.dp, 48.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm)) {
+                AccentColor.entries.chunked(columns).forEach { rowAccents ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            if (isSelected) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .background(Midnight, CircleShape),
-                                )
-                            }
+                        rowAccents.forEach { accent ->
+                            AccentSwatch(
+                                accent = accent,
+                                selected = accent == selected,
+                                onClick = { onSelect(accent) },
+                                swatchSize = swatchSize,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        repeat(columns - rowAccents.size) {
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
-                    Text(
-                        text = stringResource(accent.labelRes),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isSelected) PrimaryText else SecondaryText,
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccentSwatch(
+    accent: AccentColor,
+    selected: Boolean,
+    onClick: () -> Unit,
+    swatchSize: Dp,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.testTag(SettingsTestTags.AccentOptionPrefix + accent.id),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
+    ) {
+        Surface(
+            onClick = onClick,
+            shape = CircleShape,
+            color = accent.toColor(),
+            border = BorderStroke(
+                width = if (selected) 3.dp else 1.dp,
+                color = if (selected) {
+                    PrimaryText
+                } else {
+                    SecondaryText.copy(alpha = 0.35f)
+                },
+            ),
+            modifier = Modifier.size(swatchSize),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .size(swatchSize / 4)
+                            .background(Midnight, CircleShape),
                     )
                 }
             }
         }
+        Text(
+            text = stringResource(accent.labelRes),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) PrimaryText else SecondaryText,
+        )
     }
 }
 
@@ -460,18 +682,37 @@ private fun ClockFaceSetting(
             style = MaterialTheme.typography.titleMedium,
             color = PrimaryText,
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
-        ) {
-            ClockFace.entries.forEach { face ->
-                ClockFaceCard(
-                    face = face,
-                    selected = face == selected,
-                    onClick = { onSelect(face) },
-                )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            if (maxWidth >= 600.dp) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+                ) {
+                    ClockFace.entries.forEach { face ->
+                        ClockFaceCard(
+                            face = face,
+                            selected = face == selected,
+                            onClick = { onSelect(face) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+                ) {
+                    ClockFace.entries.forEach { face ->
+                        ClockFaceCard(
+                            face = face,
+                            selected = face == selected,
+                            onClick = { onSelect(face) },
+                            modifier = Modifier.width(160.dp),
+                        )
+                    }
+                }
             }
         }
     }
@@ -493,7 +734,6 @@ private fun ClockFaceCard(
             color = if (selected) VibhorThemeColors.accent else DeepSlate,
         ),
         modifier = modifier
-            .width(160.dp)
             .height(110.dp)
             .testTag(SettingsTestTags.ClockFaceCardPrefix + face.id),
     ) {

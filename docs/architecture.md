@@ -211,6 +211,12 @@ SettingsStore (core.platform interface)
   the horizontal counterpart of the Cockpit track: a 48dp fully rounded pill,
   accent fill, translucent track, tap or drag to change, and step snapping via
   the pure, unit-tested `snapToSteps` helper.
+- `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
+  `Background`, `Appearance`, `Home & apps`). A `BoxWithConstraints` breakpoint
+  at 900dp switches from a stacked layout to a landscape dashboard: full-width
+  Clock, Background and Appearance side by side, then full-width Home & apps.
+  The clock-face row and the accent swatch grid adapt to their own available
+  width instead of fixed screen sizes.
 
 ### Clock faces (Home)
 
