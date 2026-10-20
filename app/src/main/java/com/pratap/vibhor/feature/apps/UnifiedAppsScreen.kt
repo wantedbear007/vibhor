@@ -28,9 +28,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -107,12 +109,16 @@ fun UnifiedAppsScreen(
     onToggleBluetooth: () -> Unit,
     onToggleNightMode: () -> Unit,
     onOpenSettings: () -> Unit,
+    onRequestSystemBrightnessPermission: () -> Unit,
     onAppClick: (InstalledApp) -> Unit,
     onTabSelected: (AppDrawerTab) -> Unit,
     onAppLongPress: (InstalledApp) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showBrightnessSyncDialog by remember { mutableStateOf(false) }
+    var brightnessPromptShown by remember { mutableStateOf(false) }
+
     Surface(
         modifier = modifier
             .fillMaxSize()
@@ -138,7 +144,15 @@ fun UnifiedAppsScreen(
                     QuickControlPanel(
                         state = controlState,
                         onVolumeChange = onVolumeChange,
-                        onBrightnessChange = onBrightnessChange,
+                        onBrightnessChange = { level ->
+                            onBrightnessChange(level)
+                            if (!controlState.brightnessPermissionGranted &&
+                                !brightnessPromptShown
+                            ) {
+                                brightnessPromptShown = true
+                                showBrightnessSyncDialog = true
+                            }
+                        },
                         onToggleWifi = onToggleWifi,
                         onToggleBluetooth = onToggleBluetooth,
                         onToggleNightMode = onToggleNightMode,
@@ -170,6 +184,35 @@ fun UnifiedAppsScreen(
                 NightModeOverlay(enabled = controlState.nightMode)
             }
         }
+    }
+
+    if (showBrightnessSyncDialog) {
+        AlertDialog(
+            onDismissRequest = { showBrightnessSyncDialog = false },
+            title = {
+                Text(text = stringResource(R.string.brightness_sync_title))
+            },
+            text = {
+                Text(text = stringResource(R.string.brightness_sync_message))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showBrightnessSyncDialog = false
+                        onRequestSystemBrightnessPermission()
+                    },
+                ) {
+                    Text(text = stringResource(R.string.brightness_sync_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showBrightnessSyncDialog = false },
+                ) {
+                    Text(text = stringResource(R.string.brightness_sync_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -747,6 +790,7 @@ private fun UnifiedAppsLandscapePreview() {
                 dateText = "Monday, 19 October",
                 volumeLevel = 0.62f,
                 brightnessLevel = 0.48f,
+                brightnessPermissionGranted = true,
                 wifiSupported = true,
                 wifiEnabled = true,
                 bluetoothSupported = true,
@@ -761,6 +805,7 @@ private fun UnifiedAppsLandscapePreview() {
             onToggleBluetooth = {},
             onToggleNightMode = {},
             onOpenSettings = {},
+            onRequestSystemBrightnessPermission = {},
             onAppClick = {},
             onTabSelected = {},
             onAppLongPress = {},

@@ -145,8 +145,9 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
 - `AppDrawerViewModel` filters the active tab by label (case-insensitive, after
   trimming the query) and exposes the result as `displayedApps`; the persisted
   `appIconScale` still drives icon, label, and column sizing. `AppDrawerScreen`
-  keeps the Material 3 header, pill search field, segmented tabs, and rounded
-  tonal tiles, with every color sourced from the theme and persisted accent.
+  keeps the Material 3 header, filled search field, primary tab row, and tonal
+  Material 3 app cards with the standard ripple, with every color sourced from
+  the theme and persisted accent.
 - `AppDrawerContent` is the reusable, background-free part of that screen. The
   standalone `AppDrawerScreen` wraps it for previews/tests, while
   `UnifiedAppsScreen` embeds it in the right-hand panel with compact tile
@@ -160,13 +161,17 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
 
 - **Volume** reads and writes `AudioManager.STREAM_MUSIC`. Slider fraction →
   index mapping is a pure function (`DeviceLevels`) and is unit tested. A
-  runtime receiver for `android.media.VOLUME_CHANGED_ACTION` keeps the UI in
-  sync when hardware keys or another app change the stream.
-- **Brightness** uses the current activity's window attribute
-  (`screenBrightness`), never `WRITE_SETTINGS` and never the global system
-  brightness. Because it is window-scoped, it disappears with the window. The
-  effective value falls back to the system brightness scale when no override
-  exists.
+  runtime receiver for `android.media.VOLUME_CHANGED_ACTION` plus a lightweight
+  fallback poll keeps the UI in sync when hardware keys or another app change
+  the stream.
+- **Brightness** writes the global `Settings.System.SCREEN_BRIGHTNESS` value
+  when the user has granted the special **Modify system settings** access. On a
+  successful global write the activity's window override is cleared so system
+  brightness remains authoritative; if the write is refused, the launcher
+  applies a window-scoped override instead. A `ContentObserver` on the
+  brightness setting plus the same fallback poll reflects external changes.
+  The Apps page asks for that access in context the first time the Brightness
+  slider is used; declining leaves the fallback in place.
 - The sliders are custom Canvas composables (`VerticalControlSlider`) with
   `detectDragGestures`: the top of the track is the maximum, the bottom the
   minimum. No third-party slider library is used.
@@ -180,7 +185,7 @@ one-pixel gradient divider. The launcher grid scrolls independently; the rail
 does not.
 
 - The rail renders a centered bold clock and date from `CockpitUiState`, a
-  compact Settings shortcut, the same real media-volume and window-brightness
+  compact Settings shortcut, the same real media-volume and system-brightness
   values as Cockpit with visible **Volume** and **Brightness** labels, and a
   2×2 tile grid for Bluetooth, Wi-Fi, Night mode, and Settings.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume

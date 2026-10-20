@@ -1,8 +1,6 @@
 package com.pratap.vibhor.feature.apps
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -11,11 +9,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,36 +30,40 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -79,9 +78,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.InstalledApp
-import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.PrimaryText
-import com.pratap.vibhor.core.ui.theme.SecondaryText
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.toColor
 import kotlin.math.PI
@@ -224,7 +220,7 @@ private fun AppDrawerHeader(
             Text(
                 text = stringResource(R.string.apps_title),
                 style = MaterialTheme.typography.headlineMedium,
-                color = PrimaryText,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.weight(1f))
             if (!state.isLoading && state.apps.isNotEmpty()) {
@@ -284,15 +280,14 @@ private fun AppCountPill(
     )
     Surface(
         modifier = modifier,
-        shape = CircleShape,
-        color = PrimaryText.copy(alpha = 0.05f),
-        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.06f)),
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = SecondaryText,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         )
     }
 }
@@ -306,174 +301,105 @@ private fun AppSearchField(
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
-    val accent = VibhorThemeColors.accent
-
-    val containerColor by animateColorAsState(
-        targetValue = if (focused) DeepSlate else PrimaryText.copy(alpha = 0.05f),
-        animationSpec = tween(durationMillis = 160),
-        label = "search-container",
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (focused) {
-            accent.copy(alpha = 0.65f)
-        } else {
-            PrimaryText.copy(alpha = 0.08f)
-        },
-        animationSpec = tween(durationMillis = 160),
-        label = "search-border",
-    )
-    val glyphColor by animateColorAsState(
-        targetValue = if (focused || query.isNotEmpty()) accent else SecondaryText,
-        animationSpec = tween(durationMillis = 160),
-        label = "search-glyph",
-    )
     val clearLabel = stringResource(R.string.apps_search_clear)
     val placeholder = stringResource(R.string.apps_search_hint)
+    val colorScheme = MaterialTheme.colorScheme
 
-    Surface(
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = containerColor,
-        border = BorderStroke(1.dp, borderColor),
-    ) {
-        BasicTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier
-                .fillMaxSize()
-                .semantics { contentDescription = placeholder }
-                .testTag(AppDrawerTestTags.Search),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = PrimaryText),
-            singleLine = true,
-            cursorBrush = SolidColor(accent),
-            interactionSource = interactionSource,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = { focusManager.clearFocus() },
-            ),
-            decorationBox = { innerTextField ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .testTag(AppDrawerTestTags.Search),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = colorScheme.onSurface),
+        placeholder = {
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.bodyLarge,
+                color = colorScheme.onSurfaceVariant,
+            )
+        },
+        leadingIcon = {
+            SearchGlyph(
+                tint = if (focused) colorScheme.primary else colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
+        },
+        trailingIcon = if (query.isNotEmpty()) {
+            {
+                IconButton(
+                    onClick = {
+                        onQueryChange("")
+                        focusManager.clearFocus()
+                    },
+                    modifier = Modifier.testTag(AppDrawerTestTags.SearchClear),
                 ) {
-                    SearchGlyph(
-                        tint = glyphColor,
-                        modifier = Modifier.size(20.dp),
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close),
+                        contentDescription = clearLabel,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
                     )
-                    Box(
-                        modifier = Modifier.weight(1f),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        if (query.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = SecondaryText.copy(alpha = 0.75f),
-                            )
-                        }
-                        innerTextField()
-                    }
-                    Box(
-                        modifier = Modifier.size(48.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val clearAlpha by animateFloatAsState(
-                            targetValue = if (query.isNotEmpty()) 1f else 0f,
-                            animationSpec = tween(durationMillis = 140),
-                            label = "search-clear-alpha",
-                        )
-                        if (clearAlpha > 0f) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .alpha(clearAlpha)
-                                    .clip(CircleShape)
-                                    .background(PrimaryText.copy(alpha = 0.06f), CircleShape)
-                                    .clickable(
-                                        onClick = {
-                                            onQueryChange("")
-                                            focusManager.clearFocus()
-                                        },
-                                        role = Role.Button,
-                                    )
-                                    .semantics { contentDescription = clearLabel }
-                                    .testTag(AppDrawerTestTags.SearchClear),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                ClearGlyph(
-                                    tint = SecondaryText,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        }
-                    }
                 }
-            },
-        )
-    }
+            }
+        } else {
+            null
+        },
+        singleLine = true,
+        shape = CircleShape,
+        interactionSource = interactionSource,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(
+            onSearch = { focusManager.clearFocus() },
+        ),
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = colorScheme.onSurface,
+            unfocusedTextColor = colorScheme.onSurface,
+            focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.80f),
+            unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.55f),
+            cursorColor = colorScheme.primary,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+            focusedPlaceholderColor = colorScheme.onSurfaceVariant,
+            unfocusedPlaceholderColor = colorScheme.onSurfaceVariant,
+            focusedLeadingIconColor = colorScheme.primary,
+            unfocusedLeadingIconColor = colorScheme.onSurfaceVariant,
+            focusedTrailingIconColor = colorScheme.onSurfaceVariant,
+            unfocusedTrailingIconColor = colorScheme.onSurfaceVariant,
+        ),
+    )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppDrawerTabs(
     selectedTab: AppDrawerTab,
     onTabSelected: (AppDrawerTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = VibhorThemeColors.accent
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp),
-        color = PrimaryText.copy(alpha = 0.04f),
-        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.08f)),
+    PrimaryTabRow(
+        selectedTabIndex = selectedTab.ordinal,
+        modifier = modifier,
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.primary,
+        divider = {},
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp)
-                .selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            AppDrawerTab.entries.forEach { tab ->
-                val selected = tab == selectedTab
-                val background by animateColorAsState(
-                    targetValue = if (selected) accent.copy(alpha = 0.16f) else Color.Transparent,
-                    animationSpec = tween(durationMillis = 160),
-                    label = "tab-background",
-                )
-                val contentColor by animateColorAsState(
-                    targetValue = if (selected) accent else SecondaryText,
-                    animationSpec = tween(durationMillis = 160),
-                    label = "tab-content",
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(background)
-                        .selectable(
-                            selected = selected,
-                            onClick = { onTabSelected(tab) },
-                            role = Role.Tab,
-                        )
-                        .testTag(tab.testTag),
-                    contentAlignment = Alignment.Center,
-                ) {
+        AppDrawerTab.entries.forEach { tab ->
+            Tab(
+                selected = tab == selectedTab,
+                onClick = { onTabSelected(tab) },
+                modifier = Modifier.testTag(tab.testTag),
+                text = {
                     Text(
                         text = stringResource(tab.labelRes),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = contentColor,
                         maxLines = 1,
                     )
-                }
-            }
+                },
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -496,7 +422,7 @@ private fun LoadingContent(modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(R.string.apps_loading),
                 style = MaterialTheme.typography.bodyLarge,
-                color = SecondaryText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -530,19 +456,21 @@ private fun EmptyContent(
         }
     }
     val accent = VibhorThemeColors.accent
+    val colorScheme = MaterialTheme.colorScheme
 
     Box(
         modifier = modifier.padding(horizontal = 24.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
+        Card(
             modifier = Modifier
                 .widthIn(max = 560.dp)
                 .fillMaxWidth()
                 .testTag(AppDrawerTestTags.Empty),
-            shape = RoundedCornerShape(28.dp),
-            color = PrimaryText.copy(alpha = 0.035f),
-            border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.07f)),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = colorScheme.surfaceVariant.copy(alpha = 0.38f),
+            ),
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 32.dp, vertical = 36.dp),
@@ -552,7 +480,7 @@ private fun EmptyContent(
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .background(accent.copy(alpha = 0.12f), CircleShape),
+                        .background(accent.copy(alpha = 0.14f), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     icon(accent, Modifier.size(24.dp))
@@ -560,13 +488,13 @@ private fun EmptyContent(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
-                    color = PrimaryText,
+                    color = colorScheme.onSurface,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = body,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = SecondaryText,
+                    color = colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.widthIn(max = 420.dp),
                 )
@@ -641,41 +569,17 @@ private fun AppTile(
     modifier: Modifier = Modifier,
 ) {
     val accent = VibhorThemeColors.accent
+    val colorScheme = MaterialTheme.colorScheme
     val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
-    val shape = RoundedCornerShape(24.dp)
-    val containerColor by animateColorAsState(
-        targetValue = if (pressed) DeepSlate else DeepSlate.copy(alpha = 0.55f),
-        animationSpec = tween(durationMillis = 120),
-        label = "tile-container",
-    )
-    val pressScale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "tile-press",
-    )
+    val shape = MaterialTheme.shapes.medium
     val favouriteLabel = stringResource(R.string.apps_favourite)
     val favouriteAction = stringResource(R.string.apps_favourite_action)
     val indication = LocalIndication.current
 
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
             .clip(shape)
-            .background(containerColor)
-            .border(
-                width = 1.dp,
-                color = if (isFavourite) {
-                    accent.copy(alpha = 0.30f)
-                } else {
-                    PrimaryText.copy(alpha = 0.06f)
-                },
-                shape = shape,
-            )
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = indication,
@@ -684,11 +588,26 @@ private fun AppTile(
                 onLongClick = onLongPress,
                 onClick = onClick,
             )
-            .padding(horizontal = 14.dp, vertical = 14.dp)
             .testTag(AppDrawerTestTags.Item),
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFavourite) {
+                colorScheme.primary.copy(alpha = 0.12f)
+            } else {
+                colorScheme.surfaceVariant.copy(alpha = 0.38f)
+            },
+        ),
+        border = if (isFavourite) {
+            BorderStroke(1.dp, accent.copy(alpha = 0.45f))
+        } else {
+            null
+        },
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val icon = remember(app.packageName, app.activityName) {
@@ -701,15 +620,16 @@ private fun AppTile(
                     modifier = Modifier.size(iconSize),
                 )
             } else {
+                val fallbackShape = RoundedCornerShape(iconSize * 0.24f)
                 Box(
                     modifier = Modifier
                         .size(iconSize)
-                        .clip(RoundedCornerShape(iconSize * 0.24f))
-                        .background(DeepSlate)
+                        .clip(fallbackShape)
+                        .background(colorScheme.surface)
                         .border(
                             width = 1.dp,
-                            color = PrimaryText.copy(alpha = 0.08f),
-                            shape = RoundedCornerShape(iconSize * 0.24f),
+                            color = colorScheme.outlineVariant.copy(alpha = 0.8f),
+                            shape = fallbackShape,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -732,7 +652,7 @@ private fun AppTile(
                     style = MaterialTheme.typography.labelLarge,
                     fontSize = labelSize,
                     lineHeight = labelLineHeight,
-                    color = PrimaryText,
+                    color = colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
@@ -770,30 +690,6 @@ private fun SearchGlyph(
             color = tint,
             start = Offset(size.width * 0.64f, size.height * 0.64f),
             end = Offset(size.width * 0.88f, size.height * 0.88f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-@Composable
-private fun ClearGlyph(
-    tint: Color,
-    modifier: Modifier = Modifier,
-) {
-    Canvas(modifier = modifier) {
-        val strokeWidth = size.minDimension * 0.12f
-        drawLine(
-            color = tint,
-            start = Offset(size.width * 0.22f, size.height * 0.22f),
-            end = Offset(size.width * 0.78f, size.height * 0.78f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round,
-        )
-        drawLine(
-            color = tint,
-            start = Offset(size.width * 0.78f, size.height * 0.22f),
-            end = Offset(size.width * 0.22f, size.height * 0.78f),
             strokeWidth = strokeWidth,
             cap = StrokeCap.Round,
         )

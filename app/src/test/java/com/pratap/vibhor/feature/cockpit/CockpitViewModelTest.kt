@@ -11,6 +11,7 @@ import com.pratap.vibhor.core.time.ClockTicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -63,6 +64,31 @@ class CockpitViewModelTest {
         assertEquals("6:42 PM", viewModel.uiState.value.timeText)
         assertEquals(0.4f, viewModel.uiState.value.volumeLevel)
         assertEquals(0.6f, viewModel.uiState.value.brightnessLevel)
+        assertEquals(true, viewModel.uiState.value.brightnessPermissionGranted)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `external device changes refresh the slider state`() = runTest(dispatcher) {
+        val controls = FakeDeviceControls(volume = 0.4f, brightness = 0.6f)
+        val viewModel = CockpitViewModel(
+            clockTicker = FakeClockTicker(ZonedDateTime.now()),
+            settingsStore = InMemorySettingsStore(),
+            deviceControls = controls,
+            quickControls = FakeQuickControls(),
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        controls.volume = 0.85f
+        controls.brightness = 0.15f
+        controls.emitChange()
+        advanceUntilIdle()
+
+        assertEquals(0.85f, viewModel.uiState.value.volumeLevel)
+        assertEquals(0.15f, viewModel.uiState.value.brightnessLevel)
 
         collection.cancel()
     }
@@ -230,7 +256,14 @@ class CockpitViewModelTest {
     private class FakeDeviceControls(
         var volume: Float = 0.5f,
         var brightness: Float = 0.5f,
+        var canWriteBrightness: Boolean = true,
     ) : DeviceControls {
+        private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        fun emitChange() {
+            changes.tryEmit(Unit)
+        }
+
         override fun mediaVolume(): Float = volume
 
         override fun setMediaVolume(fraction: Float) {
@@ -243,7 +276,9 @@ class CockpitViewModelTest {
             brightness = fraction
         }
 
-        override fun observeChanges(): Flow<Unit> = flowOf(Unit)
+        override fun canWriteSystemBrightness(): Boolean = canWriteBrightness
+
+        override fun observeChanges(): Flow<Unit> = changes
     }
 
     private class FakeQuickControls(

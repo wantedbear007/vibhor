@@ -63,6 +63,7 @@ class CockpitViewModel(
             dateText = formatClockDate(now),
             volumeLevel = deviceControls.mediaVolume(),
             brightnessLevel = deviceControls.screenBrightness(),
+            brightnessPermissionGranted = deviceControls.canWriteSystemBrightness(),
             wifiSupported = connectivity.wifiSupported,
             wifiEnabled = connectivity.wifiEnabled,
             bluetoothSupported = connectivity.bluetoothSupported,

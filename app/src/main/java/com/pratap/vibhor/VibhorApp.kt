@@ -1,5 +1,8 @@
 package com.pratap.vibhor
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
@@ -162,6 +165,7 @@ private fun AppsRoute(
 ) {
     val appState by appViewModel.uiState.collectAsStateWithLifecycle()
     val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     UnifiedAppsScreen(
         appState = appState,
         controlState = controlState,
@@ -171,6 +175,16 @@ private fun AppsRoute(
         onToggleBluetooth = controlViewModel::toggleBluetooth,
         onToggleNightMode = controlViewModel::toggleNightMode,
         onOpenSettings = onOpenSettings,
+        onRequestSystemBrightnessPermission = {
+            runCatching {
+                context.startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                        Uri.parse("package:${context.packageName}"),
+                    ),
+                )
+            }
+        },
         onAppClick = { app ->
             appLauncher.launch(app.packageName, app.activityName)
         },

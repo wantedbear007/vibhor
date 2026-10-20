@@ -110,7 +110,7 @@ Apps**, with Home as the default (middle) page.
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (centered bold clock/date, Settings shortcut, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a rounded search field, and an adaptive grid of rounded app tiles; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (centered bold clock/date, Settings shortcut, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
@@ -124,22 +124,28 @@ Navigation gestures:
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
 the same Material 3 styling as Settings: a centered, bold digital clock,
-labelled Volume and Brightness sliders, a pill-shaped search field, segmented
-Favourites/All tabs, and rounded app tiles with subtle pressed feedback. Both
-sliders use the active accent color. Quick tiles are accent-tinted when off and
-fill solid with the accent when active. The app columns and tile sizes adapt to
-the available width and the persisted app-icon-size setting; labels stay on one
-line and ellipsize when needed. The page background is exactly the persisted
-launcher background at its configured opacity, with no decorative gradient; at
-low visibility it shares the Home wallpaper. The app grid uses compact tiles
-sized for the right-hand panel, with large icons and centered labels.
+labelled Volume and Brightness sliders, a filled Material 3 search field,
+primary Favourites/All tabs, and tonal Material 3 app cards with the standard
+ripple. Both sliders use the active accent color. Quick tiles are accent-tinted
+when off and fill solid with the accent when active. The app columns and tile
+sizes adapt to the available width and the persisted app-icon-size setting;
+labels stay on one line and ellipsize when needed. The page background is
+exactly the persisted launcher background at its configured opacity, with no
+decorative gradient; at low visibility it shares the Home wallpaper. The app
+grid uses compact cards sized for the right-hand panel, with large icons and
+centered labels.
 
 Sound and brightness read and write the same real device channels as Cockpit.
-Wi-Fi and Bluetooth reflect actual adapter state and request real state changes;
-unsupported radios are shown as unavailable rather than fabricated. On Android
-9 the legacy normal permissions allow those toggles. Night mode is a persisted
-launcher-page dimming layer, because toggling the system Night Light requires
-privileged access.
+Volume changes made with hardware keys or by another app are reflected live;
+brightness observes the global system setting. On first use the Brightness
+slider offers to grant the special **Modify system settings** access so it can
+write system brightness and stay in sync. If that access is declined, the
+slider falls back to the previous window-level override and continues to work
+only while Vibhor is visible. Wi-Fi and Bluetooth reflect actual adapter state
+and request real state changes; unsupported radios are shown as unavailable
+rather than fabricated. On Android 9 the legacy normal permissions allow those
+toggles. Night mode is a persisted launcher-page dimming layer, because toggling
+the system Night Light requires privileged access.
 
 Settings opens from the Cockpit rail and from both the compact gear beside the
 Apps clock and the Settings quick tile.
@@ -213,10 +219,14 @@ size** and **Reset** apply to all of them):
   a wallpaper bitmap. On devices where no wallpaper is available the screen
   falls back to a dark background.
 - Clock blur requires Android 12+; on Android 9 the darkness layer still works.
-- Cockpit volume drives the media stream through `AudioManager`; brightness is
-  a window-level override for the current activity (no `WRITE_SETTINGS`), so it
-  resets once the window is gone. First-party hard keys stay in sync through a
-  runtime volume-change receiver. The unified Apps page uses the same controls.
+- Cockpit volume drives the media stream through `AudioManager`; both sliders
+  follow external system changes through live platform observers. Brightness
+  writes the global `Settings.System.SCREEN_BRIGHTNESS` value when the user
+  grants the special **Modify system settings** access, which is requested in
+  context from the Brightness slider on the Apps page. Without that access it
+  falls back to a window-level override for the current activity, so it resets
+  once the window is gone. First-party hard keys stay in sync through a runtime
+  volume-change receiver. The unified Apps page uses the same controls.
 - Wi-Fi and Bluetooth quick controls use the legacy API 28 normal permissions.
   Their state comes from the actual system services and changes are never
   applied optimistically. Newer Android versions restrict Wi-Fi enabling and

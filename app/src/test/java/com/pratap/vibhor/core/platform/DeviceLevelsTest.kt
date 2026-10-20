@@ -29,6 +29,15 @@ class DeviceLevelsTest {
     }
 
     @Test
+    fun `slider fraction maps onto the system brightness scale`() {
+        assertEquals(0, DeviceLevels.fractionToSystemBrightness(0f))
+        assertEquals(128, DeviceLevels.fractionToSystemBrightness(0.5f))
+        assertEquals(255, DeviceLevels.fractionToSystemBrightness(1f))
+        assertEquals(255, DeviceLevels.fractionToSystemBrightness(2f))
+        assertEquals(0, DeviceLevels.fractionToSystemBrightness(-1f))
+    }
+
+    @Test
     fun `negative window brightness means follow the system`() {
         assertEquals(null, DeviceLevels.windowBrightnessToFraction(-1f))
         assertEquals(0.4f, DeviceLevels.windowBrightnessToFraction(0.4f) ?: 0f, 0.001f)

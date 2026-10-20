@@ -17,6 +17,14 @@
         android:maxSdkVersion="30" />
 
     <!--
+        Special app access (not a runtime permission) requested in context when
+        the brightness slider is first used. With it, brightness is written to
+        the global system setting and external changes stay in sync. Without
+        it, the launcher falls back to a window-level override.
+    -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!--
         Narrow package-visibility declarations required from Android 11
         (targetSdk 37) so the launcher can see launcher apps and navigation
         apps. Ignored on API 28-29. QUERY_ALL_PACKAGES is deliberately not

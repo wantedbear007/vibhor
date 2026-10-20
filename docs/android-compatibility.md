@@ -60,9 +60,17 @@ Notes:
   system broadcasts such as `ACTION_TIME_CHANGED` and
   `ACTION_TIMEZONE_CHANGED` are delivered.
 - **Background restrictions.** Android 9 restricts background services and
-  implicit broadcasts. Vibhor avoids both; it registers the time receiver and
-  the Wi-Fi/Bluetooth state receivers only while their state flows are
-  collected.
+  implicit broadcasts. Vibhor avoids both; it registers the time receiver, the
+  volume/brightness observers, and the Wi-Fi/Bluetooth state receivers only
+  while their state flows are collected.
+- **System brightness access.** Writing `Settings.System.SCREEN_BRIGHTNESS`
+  requires the special `WRITE_SETTINGS` app access, which the user grants
+  through Settings rather than a runtime-permission dialog. The manifest
+  declares `WRITE_SETTINGS`; the Brightness slider explains the access in
+  context and opens `ACTION_MANAGE_WRITE_SETTINGS`. When the access is granted,
+  brightness is written globally and external changes are observed; otherwise
+  the launcher falls back to a window-level override. No system Night Light or
+  global dark-mode write is attempted.
 - **Wi-Fi and Bluetooth toggles.** On API 28 the manifest declares the legacy
   normal permissions `ACCESS_WIFI_STATE`, `CHANGE_WIFI_STATE`, `BLUETOOTH`, and
   `BLUETOOTH_ADMIN`; these are granted at install time and allow the quick
@@ -102,7 +110,9 @@ verified against API 28 behavior:
   `READ_EXTERNAL_STORAGE` on API 28.** The wallpaper service enforces this
   permission when reading the wallpaper for a caller, so reading it directly
   would require a broad storage permission. This project deliberately requests
-  no runtime permissions.
+  no runtime permissions. (`WRITE_SETTINGS` for system brightness is a special
+  app access, not a runtime permission, and is only used after an explicit
+  in-context opt-in.)
 - **Newer platforms restrict it further.** From Android 13 the wallpaper
   read APIs throw `SecurityException` for apps without special permissions,
   and from Android 14 they are generally unavailable to normal apps. Using the
@@ -143,6 +153,9 @@ for this use case.
   on newer devices
 - System Night Light / global dark-mode writes, which require privileged
   permissions on API 28 and are not attempted by the launcher
+- Unrestricted system-settings writes: global brightness is only written after
+  the user grants the special `WRITE_SETTINGS` access; otherwise the app keeps
+  its window-level fallback
 
 When adding a feature, check the API level of every platform API used and
 guard newer APIs with `Build.VERSION.SDK_INT` or use AndroidX compatibility
