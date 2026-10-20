@@ -48,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -461,7 +460,7 @@ private fun VerticalPillSlider(
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val fillHeight = size.height * fillFraction
                     if (fillHeight > 0f) {
-                        drawRoundRect(
+                        drawRect(
                             brush = Brush.verticalGradient(
                                 colors = fillColors,
                                 startY = size.height - fillHeight,
@@ -469,7 +468,6 @@ private fun VerticalPillSlider(
                             ),
                             topLeft = Offset(0f, size.height - fillHeight),
                             size = Size(size.width, fillHeight),
-                            cornerRadius = CornerRadius(size.width / 2f, size.width / 2f),
                         )
                     }
                 }

@@ -3,6 +3,7 @@ package com.pratap.vibhor.feature.home
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,11 +20,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -127,19 +130,52 @@ fun HomeScreen(
                     .align(Alignment.BottomEnd)
                     .padding(VibhorSpacing.md),
             ) {
-                FloatingActionButton(
+                val scale = state.quickButtonScale
+                val shape = RoundedCornerShape(18.dp * scale)
+                Surface(
                     onClick = { quickMenuExpanded = true },
-                    containerColor = Midnight.copy(alpha = 0.7f),
+                    shape = shape,
+                    color = Midnight.copy(alpha = 0.64f),
                     contentColor = PrimaryText,
+                    border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
                     modifier = Modifier
-                        .padding(VibhorSpacing.md)
+                        .padding(VibhorSpacing.md * scale)
                         .testTag(HomeTestTags.QuickButton),
                 ) {
-                    Text(
-                        text = "Quick +",
-                        fontSize = (18 * state.quickButtonScale).sp,
-                        modifier = Modifier.padding(horizontal = VibhorSpacing.md * state.quickButtonScale),
-                    )
+                    Row(
+                        modifier = Modifier.padding(
+                            horizontal = VibhorSpacing.lg * scale,
+                            vertical = VibhorSpacing.md * scale,
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp * scale)
+                                .background(PrimaryText.copy(alpha = 0.06f), CircleShape)
+                                .border(
+                                    width = 1.dp,
+                                    color = PrimaryText.copy(alpha = 0.10f),
+                                    shape = CircleShape,
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_favourite),
+                                contentDescription = null,
+                                tint = PrimaryText,
+                                modifier = Modifier.size(18.dp * scale),
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.home_quick_button),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = (14 * scale).sp,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 DropdownMenu(
                     expanded = quickMenuExpanded,
