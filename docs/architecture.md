@@ -237,6 +237,12 @@ Screens must read accents from `VibhorThemeColors.accent` (or
 anywhere in feature code. A new accent option is added once in `AccentColor`,
 once in the theme palette, and once in the Settings swatch row.
 
+The shipped defaults are `AccentColor.BLUE` and `LauncherBackground.BLACK`.
+The accent palette uses bright Material tones that stay legible on black, while
+the background palette remains dark and low-chroma for the same reason.
+Material surfaces are neutral rather than tinted, so a pure-black launcher
+surface keeps clean, readable card separation.
+
 ### Settings persistence
 
 ```text

@@ -6,6 +6,11 @@ import org.junit.Test
 class LauncherBackgroundTest {
 
     @Test
+    fun `black is the default background`() {
+        assertEquals(LauncherBackground.BLACK, LauncherBackground.DEFAULT)
+    }
+
+    @Test
     fun `every background id round trips`() {
         LauncherBackground.entries.forEach { background ->
             assertEquals(background, LauncherBackground.fromId(background.id))

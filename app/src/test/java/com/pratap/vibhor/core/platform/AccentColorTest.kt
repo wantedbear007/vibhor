@@ -6,6 +6,11 @@ import org.junit.Test
 class AccentColorTest {
 
     @Test
+    fun `blue is the default accent`() {
+        assertEquals(AccentColor.BLUE, AccentColor.DEFAULT)
+    }
+
+    @Test
     fun `every accent id round trips`() {
         AccentColor.entries.forEach { accent ->
             assertEquals(accent, AccentColor.fromId(accent.id))

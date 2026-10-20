@@ -16,7 +16,7 @@ import com.pratap.vibhor.core.platform.AccentColor
  * [MaterialTheme.colorScheme.primary], which is derived from the same value)
  * rather than hardcoding a color.
  */
-val LocalAccentColor = staticCompositionLocalOf { ElectricBlue }
+val LocalAccentColor = staticCompositionLocalOf { AccentBlue }
 
 /** Typed accessors for the launcher palette. */
 object VibhorThemeColors {
@@ -28,7 +28,7 @@ object VibhorThemeColors {
     val accentOn: Color
         @Composable
         @ReadOnlyComposable
-        get() = Midnight
+        get() = BackgroundBlack
 }
 
 /**
@@ -44,19 +44,19 @@ fun VibhorTheme(
     val colorScheme = remember(accent) {
         darkColorScheme(
             primary = accent,
-            onPrimary = Midnight,
+            onPrimary = BackgroundBlack,
             primaryContainer = DeepSlate,
             onPrimaryContainer = accent,
             secondary = accent,
-            onSecondary = Midnight,
-            background = Midnight,
+            onSecondary = BackgroundBlack,
+            background = BackgroundBlack,
             onBackground = PrimaryText,
             surface = DeepSlate,
             onSurface = PrimaryText,
-            surfaceVariant = DeepSlate,
+            surfaceVariant = SurfaceElevated,
             onSurfaceVariant = SecondaryText,
             outline = SecondaryText,
-            outlineVariant = DeepSlate,
+            outlineVariant = SurfaceElevated,
         )
     }
     CompositionLocalProvider(LocalAccentColor provides accent) {

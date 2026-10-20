@@ -123,10 +123,11 @@ Navigation gestures:
 
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
-the same Material 3 styling as Settings: a centered, bold digital clock,
+the same Material 3 styling as Settings: a compact, left-aligned digital clock,
 labelled Volume and Brightness sliders, a filled Material 3 search field,
 primary Favourites/All tabs, and tonal Material 3 app cards with the standard
-ripple. Both sliders use the active accent color. Quick tiles are accent-tinted
+ripple. The default appearance is a vivid blue accent on a true-black surface;
+both sliders use the active accent color. Quick tiles are accent-tinted
 when off and fill solid with the accent when active. The app columns and tile
 sizes adapt to the available width and the persisted app-icon-size setting;
 labels stay on one line and ellipsize when needed. The page background is
@@ -165,7 +166,7 @@ contains:
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
 | Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
-| Launcher background | Midnight / Slate / Graphite / Black / Navy / Ocean | Midnight | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
+| Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |

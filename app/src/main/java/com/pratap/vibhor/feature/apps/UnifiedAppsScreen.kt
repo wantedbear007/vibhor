@@ -72,6 +72,7 @@ import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
+import com.pratap.vibhor.core.ui.theme.SurfaceElevated
 import com.pratap.vibhor.core.ui.theme.VibhorSpacing
 import com.pratap.vibhor.core.ui.theme.VibhorTheme
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
@@ -405,8 +406,8 @@ private fun VerticalPillSlider(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(trackShape)
-                    .background(Color.Black.copy(alpha = 0.28f))
-                    .border(1.dp, PrimaryText.copy(alpha = 0.08f), trackShape)
+                    .background(SurfaceElevated.copy(alpha = 0.72f))
+                    .border(1.dp, PrimaryText.copy(alpha = 0.10f), trackShape)
                     .pointerInput(Unit) {
                         awaitEachGesture {
                             val down = awaitFirstDown(requireUnconsumed = false)
@@ -779,7 +780,7 @@ private fun UnifiedAppsLandscapePreview() {
                 bluetoothSupported = true,
                 bluetoothEnabled = true,
                 nightMode = false,
-                background = LauncherBackground.MIDNIGHT,
+                background = LauncherBackground.BLACK,
                 backgroundOpacity = 1f,
             ),
             onVolumeChange = {},

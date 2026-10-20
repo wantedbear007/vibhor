@@ -281,7 +281,7 @@ private fun AppCountPill(
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f),
     ) {
         Text(
             text = text,
@@ -355,8 +355,8 @@ private fun AppSearchField(
         colors = TextFieldDefaults.colors(
             focusedTextColor = colorScheme.onSurface,
             unfocusedTextColor = colorScheme.onSurface,
-            focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.80f),
-            unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.55f),
+            focusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.88f),
+            unfocusedContainerColor = colorScheme.surfaceVariant.copy(alpha = 0.72f),
             cursorColor = colorScheme.primary,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
@@ -469,7 +469,7 @@ private fun EmptyContent(
                 .testTag(AppDrawerTestTags.Empty),
             shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
-                containerColor = colorScheme.surfaceVariant.copy(alpha = 0.38f),
+                containerColor = colorScheme.surfaceVariant.copy(alpha = 0.58f),
             ),
         ) {
             Column(
@@ -592,9 +592,9 @@ private fun AppTile(
         shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = if (isFavourite) {
-                colorScheme.primary.copy(alpha = 0.12f)
+                colorScheme.primary.copy(alpha = 0.16f)
             } else {
-                colorScheme.surfaceVariant.copy(alpha = 0.38f)
+                colorScheme.surfaceVariant.copy(alpha = 0.68f)
             },
         ),
         border = if (isFavourite) {
