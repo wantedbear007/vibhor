@@ -232,9 +232,10 @@ private fun QuickAppItem(
 ) {
     DropdownMenuItem(
         text = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
             ) {
                 val icon = remember(app.packageName, app.activityName) {
                     app.icon?.asImageBitmap()
@@ -259,6 +260,7 @@ private fun QuickAppItem(
                     color = PrimaryText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
                 )
             }
         },
