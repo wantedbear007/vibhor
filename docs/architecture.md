@@ -234,8 +234,8 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   equalizer, the seek bar, and the transport controls.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises. The transport
-  glyphs are rounded, iOS-style shapes, with an 80 dp play/pause target and
-  72 dp previous/next targets sized for tablet touch.
+  glyphs are rounded, iOS-style shapes, with an 80 dp rounded-square play/pause
+  surface and 72 dp previous/next targets sized for tablet touch.
 - The progress bar is a `Slider` bound to the real session. The played and
   remaining portions share the same 24 dp height, with a larger thumb for
   touch. Dragging updates the displayed position immediately, and releasing calls

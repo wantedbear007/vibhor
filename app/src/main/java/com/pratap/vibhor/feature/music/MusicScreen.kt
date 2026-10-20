@@ -339,7 +339,7 @@ private fun TrackPlayer(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(
-                    VibhorSpacing.lg,
+                    VibhorSpacing.xl,
                     Alignment.CenterHorizontally,
                 ),
                 verticalAlignment = Alignment.CenterVertically,
@@ -604,6 +604,7 @@ private fun PlayPauseButton(
         modifier = modifier
             .size(80.dp)
             .testTag(MusicTestTags.PlayPause),
+        shape = RoundedCornerShape(24.dp),
         colors = IconButtonDefaults.filledIconButtonColors(
             containerColor = VibhorThemeColors.accent,
             contentColor = VibhorThemeColors.accentOn,
@@ -618,7 +619,7 @@ private fun PlayPauseButton(
             contentDescription = stringResource(
                 if (playing) R.string.music_pause else R.string.music_play,
             ),
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(48.dp),
         )
     }
 }
@@ -646,7 +647,7 @@ private fun TransportButton(
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(44.dp),
         )
     }
 }

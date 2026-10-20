@@ -148,7 +148,7 @@ on the beat, sways, alternates toe-out dance steps, and pumps its arms while
 the stars twinkle — only while a real session is playing and the page is
 visible; when playback pauses the scene settles to a still pose and the
 equalizer stops animating. The transport uses large, rounded iOS-style glyphs
-sized for tablet touch. The page is a plain Canvas plus Compose shapes — no
+sized for tablet touch inside a rounded-square play/pause surface. The page is a plain Canvas plus Compose shapes — no
 3D scene, no blur pass, no audio capture. The player card shows an honest idle
 state when no session can be read, and an **Open settings** action when Vibhor
 is missing notification access.
