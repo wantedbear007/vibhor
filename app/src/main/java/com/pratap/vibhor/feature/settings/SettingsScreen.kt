@@ -36,9 +36,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +52,7 @@ import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.ui.clock.AnalogClockFace
 import com.pratap.vibhor.core.ui.clock.BoldClockFace
@@ -76,8 +82,11 @@ object SettingsTestTags {
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
     const val AccentOptionPrefix = "settings_accent_"
+    const val BackgroundOptionPrefix = "settings_background_"
+    const val BackgroundVisibilitySlider = "settings_background_visibility"
     const val SectionClock = "settings_section_clock"
-    const val SectionBackground = "settings_section_background"
+    const val SectionClockBackdrop = "settings_section_clock_backdrop"
+    const val SectionLauncherBackground = "settings_section_launcher_background"
     const val SectionAppearance = "settings_section_appearance"
     const val SectionHomeApps = "settings_section_home_apps"
     const val Close = "settings_close"
@@ -101,6 +110,8 @@ fun SettingsScreen(
     onQuickButtonScaleChange: (Float) -> Unit,
     onAppIconScaleChange: (Float) -> Unit,
     onAccentColorChange: (AccentColor) -> Unit,
+    onBackgroundChange: (LauncherBackground) -> Unit,
+    onBackgroundOpacityChange: (Float) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -109,7 +120,7 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .testTag(SettingsTestTags.Page),
-        color = Midnight,
+        color = state.background.toColor().copy(alpha = state.backgroundOpacity),
     ) {
         Column(
             modifier = Modifier
@@ -150,9 +161,9 @@ fun SettingsScreen(
 
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 // Wide car displays get a dashboard-style layout: the clock
-                // card spans the width, then Background/Appearance sit side by
-                // side, with the sizing controls below. Narrow screens simply
-                // stack every section.
+                // card spans the width, then the three appearance groups sit
+                // side by side, with the sizing controls below. Narrow screens
+                // simply stack every section.
                 val wide = maxWidth >= 900.dp
                 if (wide) {
                     Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xl)) {
@@ -168,13 +179,21 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
                             verticalAlignment = Alignment.Top,
                         ) {
-                            BackgroundSettingsSection(
+                            ClockBackdropSettingsSection(
                                 state = state,
                                 onClockBlurChange = onClockBlurChange,
                                 onBackgroundDarknessChange = onBackgroundDarknessChange,
                                 modifier = Modifier
                                     .weight(1f)
-                                    .testTag(SettingsTestTags.SectionBackground),
+                                    .testTag(SettingsTestTags.SectionClockBackdrop),
+                            )
+                            LauncherBackgroundSettingsSection(
+                                state = state,
+                                onBackgroundChange = onBackgroundChange,
+                                onBackgroundOpacityChange = onBackgroundOpacityChange,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag(SettingsTestTags.SectionLauncherBackground),
                             )
                             AppearanceSettingsSection(
                                 state = state,
@@ -201,11 +220,17 @@ fun SettingsScreen(
                             onClockFormatChange = onClockFormatChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionClock),
                         )
-                        BackgroundSettingsSection(
+                        ClockBackdropSettingsSection(
                             state = state,
                             onClockBlurChange = onClockBlurChange,
                             onBackgroundDarknessChange = onBackgroundDarknessChange,
-                            modifier = Modifier.testTag(SettingsTestTags.SectionBackground),
+                            modifier = Modifier.testTag(SettingsTestTags.SectionClockBackdrop),
+                        )
+                        LauncherBackgroundSettingsSection(
+                            state = state,
+                            onBackgroundChange = onBackgroundChange,
+                            onBackgroundOpacityChange = onBackgroundOpacityChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionLauncherBackground),
                         )
                         AppearanceSettingsSection(
                             state = state,
@@ -305,14 +330,14 @@ private fun ClockSettingsSection(
 }
 
 @Composable
-private fun BackgroundSettingsSection(
+private fun ClockBackdropSettingsSection(
     state: SettingsUiState,
     onClockBlurChange: (Int) -> Unit,
     onBackgroundDarknessChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsSection(
-        title = stringResource(R.string.settings_section_background),
+        title = stringResource(R.string.settings_section_clock_backdrop),
         modifier = modifier,
     ) {
         ClockBackdropSetting(
@@ -320,6 +345,26 @@ private fun BackgroundSettingsSection(
             darkness = state.backgroundDarkness,
             onBlurChange = onClockBlurChange,
             onDarknessChange = onBackgroundDarknessChange,
+        )
+    }
+}
+
+@Composable
+private fun LauncherBackgroundSettingsSection(
+    state: SettingsUiState,
+    onBackgroundChange: (LauncherBackground) -> Unit,
+    onBackgroundOpacityChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_launcher_background),
+        modifier = modifier,
+    ) {
+        LauncherBackgroundSetting(
+            selected = state.background,
+            onSelect = onBackgroundChange,
+            opacity = state.backgroundOpacity,
+            onOpacityChange = onBackgroundOpacityChange,
         )
     }
 }
@@ -539,30 +584,134 @@ private fun AccentColorSetting(
             style = MaterialTheme.typography.titleMedium,
             color = PrimaryText,
         )
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val columns = if (maxWidth >= 480.dp) 6 else 3
-            val swatchSize = (
-                (maxWidth - VibhorSpacing.sm * (columns - 1)) / columns -
-                    VibhorSpacing.xs
-                ).coerceIn(28.dp, 48.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm)) {
-                AccentColor.entries.chunked(columns).forEach { rowAccents ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
-                    ) {
-                        rowAccents.forEach { accent ->
-                            AccentSwatch(
-                                accent = accent,
-                                selected = accent == selected,
-                                onClick = { onSelect(accent) },
-                                swatchSize = swatchSize,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        repeat(columns - rowAccents.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+        PaletteGrid(itemCount = AccentColor.entries.size) { index, swatchSize, itemModifier ->
+            val accent = AccentColor.entries[index]
+            PaletteSwatch(
+                color = accent.toColor(),
+                label = stringResource(accent.labelRes),
+                selected = accent == selected,
+                onClick = { onSelect(accent) },
+                swatchSize = swatchSize,
+                testTag = SettingsTestTags.AccentOptionPrefix + accent.id,
+                modifier = itemModifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LauncherBackgroundSetting(
+    selected: LauncherBackground,
+    onSelect: (LauncherBackground) -> Unit,
+    opacity: Float,
+    onOpacityChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_background_color),
+            style = MaterialTheme.typography.titleMedium,
+            color = PrimaryText,
+        )
+        PaletteGrid(itemCount = LauncherBackground.entries.size) { index, swatchSize, itemModifier ->
+            val background = LauncherBackground.entries[index]
+            PaletteSwatch(
+                color = background.toColor(),
+                label = stringResource(background.labelRes),
+                selected = background == selected,
+                onClick = { onSelect(background) },
+                swatchSize = swatchSize,
+                testTag = SettingsTestTags.BackgroundOptionPrefix + background.id,
+                modifier = itemModifier,
+            )
+        }
+        BackgroundVisibilitySetting(
+            value = opacity,
+            onValueChange = onOpacityChange,
+            modifier = Modifier.padding(top = VibhorSpacing.sm),
+        )
+    }
+}
+
+@Composable
+private fun BackgroundVisibilitySetting(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var sliderValue by remember(value) { mutableFloatStateOf(value) }
+    LaunchedEffect(value) { sliderValue = value }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_background_visibility),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = if (sliderValue <= 0.001f) {
+                    stringResource(R.string.settings_background_transparent)
+                } else {
+                    stringResource(
+                        R.string.settings_scale_value,
+                        (sliderValue * 100).toInt(),
+                    )
+                },
+                style = MaterialTheme.typography.titleMedium,
+                color = VibhorThemeColors.accent,
+            )
+        }
+        PillSlider(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },
+            onValueChangeFinished = { onValueChange(sliderValue) },
+            valueRange = LauncherSettings.MIN_BACKGROUND_OPACITY..
+                LauncherSettings.MAX_BACKGROUND_OPACITY,
+            steps = 19,
+            modifier = Modifier.testTag(SettingsTestTags.BackgroundVisibilitySlider),
+        )
+        Text(
+            text = stringResource(R.string.settings_background_visibility_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = SecondaryText,
+        )
+    }
+}
+
+@Composable
+private fun PaletteGrid(
+    itemCount: Int,
+    modifier: Modifier = Modifier,
+    item: @Composable (index: Int, swatchSize: Dp, modifier: Modifier) -> Unit,
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 480.dp) 6 else 3
+        val swatchSize = (
+            (maxWidth - VibhorSpacing.sm * (columns - 1)) / columns -
+                VibhorSpacing.xs
+            ).coerceIn(28.dp, 48.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm)) {
+            (0 until itemCount).chunked(columns).forEach { rowIndices ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+                ) {
+                    rowIndices.forEach { index ->
+                        item(index, swatchSize, Modifier.weight(1f))
+                    }
+                    repeat(columns - rowIndices.size) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -571,22 +720,24 @@ private fun AccentColorSetting(
 }
 
 @Composable
-private fun AccentSwatch(
-    accent: AccentColor,
+private fun PaletteSwatch(
+    color: Color,
+    label: String,
     selected: Boolean,
     onClick: () -> Unit,
     swatchSize: Dp,
+    testTag: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.testTag(SettingsTestTags.AccentOptionPrefix + accent.id),
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
     ) {
         Surface(
             onClick = onClick,
             shape = CircleShape,
-            color = accent.toColor(),
+            color = color,
             border = BorderStroke(
                 width = if (selected) 3.dp else 1.dp,
                 color = if (selected) {
@@ -595,7 +746,13 @@ private fun AccentSwatch(
                     SecondaryText.copy(alpha = 0.35f)
                 },
             ),
-            modifier = Modifier.size(swatchSize),
+            modifier = Modifier
+                .size(swatchSize)
+                .testTag(testTag)
+                .semantics {
+                    this.selected = selected
+                    contentDescription = label
+                },
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (selected) {
@@ -608,9 +765,10 @@ private fun AccentSwatch(
             }
         }
         Text(
-            text = stringResource(accent.labelRes),
+            text = label,
             style = MaterialTheme.typography.labelSmall,
             color = if (selected) PrimaryText else SecondaryText,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -623,6 +781,16 @@ private val AccentColor.labelRes: Int
         AccentColor.PURPLE -> R.string.settings_accent_purple
         AccentColor.ORANGE -> R.string.settings_accent_orange
         AccentColor.PINK -> R.string.settings_accent_pink
+    }
+
+private val LauncherBackground.labelRes: Int
+    get() = when (this) {
+        LauncherBackground.MIDNIGHT -> R.string.settings_background_midnight
+        LauncherBackground.SLATE -> R.string.settings_background_slate
+        LauncherBackground.GRAPHITE -> R.string.settings_background_graphite
+        LauncherBackground.BLACK -> R.string.settings_background_black
+        LauncherBackground.NAVY -> R.string.settings_background_navy
+        LauncherBackground.OCEAN -> R.string.settings_background_ocean
     }
 
 @Composable
@@ -896,6 +1064,8 @@ private fun SettingsLandscapePreview() {
             onQuickButtonScaleChange = {},
             onAppIconScaleChange = {},
             onAccentColorChange = {},
+            onBackgroundChange = {},
+            onBackgroundOpacityChange = {},
             onResetToDefaults = {},
             onClose = {},
         )

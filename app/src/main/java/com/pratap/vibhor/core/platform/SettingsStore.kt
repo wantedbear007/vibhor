@@ -21,6 +21,8 @@ data class LauncherSettings(
     val showStatusBar: Boolean = DEFAULT_SHOW_STATUS_BAR,
     val quickButtonScale: Float = DEFAULT_QUICK_BUTTON_SCALE,
     val accentColor: AccentColor = AccentColor.DEFAULT,
+    val background: LauncherBackground = LauncherBackground.DEFAULT,
+    val backgroundOpacity: Float = DEFAULT_BACKGROUND_OPACITY,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -37,6 +39,11 @@ data class LauncherSettings(
         const val MIN_DARKNESS = 0f
         const val MAX_DARKNESS = 1f
         const val DEFAULT_DARKNESS = 0.35f
+
+        /** Launcher surface opacity: 0f shows the wallpaper, 1f is solid. */
+        const val MIN_BACKGROUND_OPACITY = 0f
+        const val MAX_BACKGROUND_OPACITY = 1f
+        const val DEFAULT_BACKGROUND_OPACITY = 1f
 
         const val DEFAULT_SHOW_STATUS_BAR = true
 
@@ -61,6 +68,8 @@ interface SettingsStore {
     fun setShowStatusBar(show: Boolean)
     fun setQuickButtonScale(scale: Float)
     fun setAccentColor(color: AccentColor)
+    fun setBackground(background: LauncherBackground)
+    fun setBackgroundOpacity(opacity: Float)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -87,6 +96,10 @@ class InMemorySettingsStore(
             backgroundDarkness = initial.backgroundDarkness.coerceIn(
                 LauncherSettings.MIN_DARKNESS,
                 LauncherSettings.MAX_DARKNESS,
+            ),
+            backgroundOpacity = initial.backgroundOpacity.coerceIn(
+                LauncherSettings.MIN_BACKGROUND_OPACITY,
+                LauncherSettings.MAX_BACKGROUND_OPACITY,
             ),
         ),
     )
@@ -162,6 +175,21 @@ class InMemorySettingsStore(
 
     override fun setAccentColor(color: AccentColor) {
         state.update { it.copy(accentColor = color) }
+    }
+
+    override fun setBackground(background: LauncherBackground) {
+        state.update { it.copy(background = background) }
+    }
+
+    override fun setBackgroundOpacity(opacity: Float) {
+        state.update {
+            it.copy(
+                backgroundOpacity = opacity.coerceIn(
+                    LauncherSettings.MIN_BACKGROUND_OPACITY,
+                    LauncherSettings.MAX_BACKGROUND_OPACITY,
+                ),
+            )
+        }
     }
 
     override fun addFavourite(packageName: String) {

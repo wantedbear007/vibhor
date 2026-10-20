@@ -80,10 +80,10 @@ import androidx.compose.ui.unit.sp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
+import com.pratap.vibhor.core.ui.theme.toColor
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -119,7 +119,7 @@ fun AppDrawerScreen(
         modifier = modifier
             .fillMaxSize()
             .testTag(AppDrawerTestTags.Page),
-        color = Midnight,
+        color = state.background.toColor().copy(alpha = state.backgroundOpacity),
     ) {
         Column(
             modifier = Modifier

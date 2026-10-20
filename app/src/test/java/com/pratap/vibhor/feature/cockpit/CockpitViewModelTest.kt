@@ -3,6 +3,7 @@ package com.pratap.vibhor.feature.cockpit
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.DeviceControls
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
+import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.time.ClockTicker
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +60,28 @@ class CockpitViewModelTest {
         assertEquals("6:42 PM", viewModel.uiState.value.timeText)
         assertEquals(0.4f, viewModel.uiState.value.volumeLevel)
         assertEquals(0.6f, viewModel.uiState.value.brightnessLevel)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `launcher background is exposed to the cockpit`() = runTest(dispatcher) {
+        val viewModel = CockpitViewModel(
+            clockTicker = FakeClockTicker(ZonedDateTime.now()),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(
+                    background = LauncherBackground.OCEAN,
+                    backgroundOpacity = 0.2f,
+                ),
+            ),
+            deviceControls = FakeDeviceControls(),
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(LauncherBackground.OCEAN, viewModel.uiState.value.background)
+        assertEquals(0.2f, viewModel.uiState.value.backgroundOpacity)
 
         collection.cancel()
     }

@@ -51,6 +51,8 @@ class AppDrawerViewModel(
             iconScale = settings.appIconScale,
             searchQuery = query,
             displayedApps = displayedApps,
+            background = settings.background,
+            backgroundOpacity = settings.backgroundOpacity,
         )
     }.stateIn(
         scope = viewModelScope,

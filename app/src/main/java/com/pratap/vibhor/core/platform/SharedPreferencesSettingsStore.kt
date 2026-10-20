@@ -83,6 +83,20 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(accentColor = color) }
     }
 
+    override fun setBackground(background: LauncherBackground) {
+        prefs.edit { putString(KEY_BACKGROUND, background.id) }
+        state.update { it.copy(background = background) }
+    }
+
+    override fun setBackgroundOpacity(opacity: Float) {
+        val clamped = opacity.coerceIn(
+            LauncherSettings.MIN_BACKGROUND_OPACITY,
+            LauncherSettings.MAX_BACKGROUND_OPACITY,
+        )
+        prefs.edit { putFloat(KEY_BACKGROUND_OPACITY, clamped) }
+        state.update { it.copy(backgroundOpacity = clamped) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -148,6 +162,13 @@ class SharedPreferencesSettingsStore private constructor(
             .getFloat(KEY_QUICK_BUTTON_SCALE, LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
             .coerceIn(LauncherSettings.MIN_QUICK_BUTTON_SCALE, LauncherSettings.MAX_QUICK_BUTTON_SCALE),
         accentColor = AccentColor.fromId(prefs.getString(KEY_ACCENT_COLOR, null)),
+        background = LauncherBackground.fromId(prefs.getString(KEY_BACKGROUND, null)),
+        backgroundOpacity = prefs
+            .getFloat(KEY_BACKGROUND_OPACITY, LauncherSettings.DEFAULT_BACKGROUND_OPACITY)
+            .coerceIn(
+                LauncherSettings.MIN_BACKGROUND_OPACITY,
+                LauncherSettings.MAX_BACKGROUND_OPACITY,
+            ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -174,6 +195,8 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_SHOW_STATUS_BAR = "show_status_bar"
         private const val KEY_QUICK_BUTTON_SCALE = "quick_button_scale"
         private const val KEY_ACCENT_COLOR = "accent_color"
+        private const val KEY_BACKGROUND = "background_color"
+        private const val KEY_BACKGROUND_OPACITY = "background_opacity"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

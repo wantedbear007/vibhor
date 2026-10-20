@@ -30,7 +30,8 @@
     <string name="settings_title">Settings</string>
     <string name="settings_close">Close settings</string>
     <string name="settings_section_clock">Clock</string>
-    <string name="settings_section_background">Background</string>
+    <string name="settings_section_clock_backdrop">Clock backdrop</string>
+    <string name="settings_section_launcher_background">Launcher background</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_home_apps">Home &amp; apps</string>
     <string name="settings_clock_size">Clock size</string>
@@ -60,6 +61,16 @@
     <string name="settings_accent_purple">Purple</string>
     <string name="settings_accent_orange">Orange</string>
     <string name="settings_accent_pink">Pink</string>
+    <string name="settings_background_color">Background color</string>
+    <string name="settings_background_midnight">Midnight</string>
+    <string name="settings_background_slate">Slate</string>
+    <string name="settings_background_graphite">Graphite</string>
+    <string name="settings_background_black">Black</string>
+    <string name="settings_background_navy">Navy</string>
+    <string name="settings_background_ocean">Ocean</string>
+    <string name="settings_background_visibility">Visibility</string>
+    <string name="settings_background_transparent">Transparent</string>
+    <string name="settings_background_visibility_hint" formatted="false">0% shows the wallpaper.</string>
     <string name="settings_scale_value">%1$d%%</string>
     <string name="settings_reset">Reset to defaults</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>

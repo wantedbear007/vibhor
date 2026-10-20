@@ -4,6 +4,7 @@ import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
+import com.pratap.vibhor.core.platform.LauncherBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -124,6 +125,68 @@ class SettingsViewModelTest {
 
         collection.cancel()
     }
+
+    @Test
+    fun `launcher background updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setBackground(LauncherBackground.NAVY)
+            viewModel.setBackgroundOpacity(0.4f)
+            advanceUntilIdle()
+
+            assertEquals(LauncherBackground.NAVY, viewModel.uiState.value.background)
+            assertEquals(0.4f, viewModel.uiState.value.backgroundOpacity)
+            assertEquals(LauncherBackground.NAVY, store.settings.value.background)
+            assertEquals(0.4f, store.settings.value.backgroundOpacity)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the default launcher background`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setBackground(LauncherBackground.OCEAN)
+            viewModel.setBackgroundOpacity(0f)
+            advanceUntilIdle()
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertEquals(LauncherBackground.DEFAULT, viewModel.uiState.value.background)
+            assertEquals(1f, viewModel.uiState.value.backgroundOpacity)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `background opacity is clamped to the supported range`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setBackgroundOpacity(2f)
+            advanceUntilIdle()
+            assertEquals(1f, viewModel.uiState.value.backgroundOpacity)
+
+            viewModel.setBackgroundOpacity(-1f)
+            advanceUntilIdle()
+            assertEquals(0f, viewModel.uiState.value.backgroundOpacity)
+
+            collection.cancel()
+        }
 
     @Test
     fun `changing clock face updates ui state and persists to store`() =

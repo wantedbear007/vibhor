@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.platform.SettingsStore
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
@@ -37,6 +38,8 @@ class SettingsViewModel(
                 showStatusBar = settings.showStatusBar,
                 quickButtonScale = settings.quickButtonScale,
                 accentColor = settings.accentColor,
+                background = settings.background,
+                backgroundOpacity = settings.backgroundOpacity,
             )
         }
         .stateIn(
@@ -64,6 +67,10 @@ class SettingsViewModel(
 
     fun setAccentColor(color: AccentColor) = settingsStore.setAccentColor(color)
 
+    fun setBackground(background: LauncherBackground) = settingsStore.setBackground(background)
+
+    fun setBackgroundOpacity(opacity: Float) = settingsStore.setBackgroundOpacity(opacity)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
@@ -74,6 +81,8 @@ class SettingsViewModel(
         settingsStore.setShowStatusBar(LauncherSettings.DEFAULT_SHOW_STATUS_BAR)
         settingsStore.setQuickButtonScale(LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
         settingsStore.setAccentColor(AccentColor.DEFAULT)
+        settingsStore.setBackground(LauncherBackground.DEFAULT)
+        settingsStore.setBackgroundOpacity(LauncherSettings.DEFAULT_BACKGROUND_OPACITY)
     }
 
     companion object {

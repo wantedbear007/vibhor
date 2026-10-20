@@ -43,6 +43,8 @@ class CockpitViewModel(
             dateText = formatClockDate(now),
             volumeLevel = deviceControls.mediaVolume(),
             brightnessLevel = deviceControls.screenBrightness(),
+            background = settings.background,
+            backgroundOpacity = settings.backgroundOpacity,
         )
     }.stateIn(
         scope = viewModelScope,

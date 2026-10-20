@@ -13,7 +13,7 @@ launcher UI is a three-page horizontal pager (Apps, Home, Cockpit).
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
 | `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Apps, Home, Cockpit). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
-| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, and `AccentColor` enums. |
+| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
 | `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
@@ -62,6 +62,14 @@ clock keep text legible over light wallpapers and double as the fallback when
 no wallpaper is available. See
 [android-compatibility.md](android-compatibility.md) for the API-level
 reasoning.
+
+The persisted **Launcher background** uses the same window wallpaper. Apps,
+Cockpit, and Settings draw the selected background color at the configured
+visibility on top of the window; at 0% the color is fully transparent and the
+wallpaper shows through. Home deliberately keeps the wallpaper and its clock
+backdrop controls. While the Settings overlay is visible, the pager is drawn
+at zero alpha so a transparent background shows the wallpaper rather than the
+launcher page underneath.
 
 ## UI state flow
 
@@ -188,7 +196,8 @@ SettingsStore (core.platform interface)
 
 - `LauncherSettings` holds the clamped scale multipliers (`clockScale`,
   `appIconScale`, `quickButtonScale`), the selected `clockFace`,
-  `clockFormat`, and `accentColor`, the clock-backdrop values
+  `clockFormat`, `accentColor`, and `background`, the launcher
+  `backgroundOpacity` (0–1), the clock-backdrop values
   (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1), `showStatusBar`, and the
   favourite package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
@@ -197,10 +206,11 @@ SettingsStore (core.platform interface)
   over the `vibhor_launcher_settings` preferences file. Keys include
   `clock_scale`, `app_icon_scale`, `clock_face`, `clock_format`,
   `clock_blur_radius`, `background_darkness`, `show_status_bar`,
-  `quick_button_scale`, `accent_color`, and `favourite_package_names`. The
-  in-memory `StateFlow` is updated synchronously and the preference write is
-  flushed with `apply()`. Enum keys store the stable string id and fall back to
-  the default on unknown values.
+  `quick_button_scale`, `accent_color`, `background_color`,
+  `background_opacity`, and `favourite_package_names`. The in-memory
+  `StateFlow` is updated synchronously and the preference write is flushed
+  with `apply()`. Enum keys store the stable string id and fall back to the
+  default on unknown values.
 - Both `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings`
   so the clock format applies to the Home clock **and** the Cockpit rail
   clock. `ClockFormat.SYSTEM` consults `DateFormat.is24HourFormat`; `H12`/`H24`
@@ -217,11 +227,12 @@ SettingsStore (core.platform interface)
   accent fill, translucent track, tap or drag to change, and step snapping via
   the pure, unit-tested `snapToSteps` helper.
 - `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
-  `Background`, `Appearance`, `Home & apps`). A `BoxWithConstraints` breakpoint
-  at 900dp switches from a stacked layout to a landscape dashboard: full-width
-  Clock, Background and Appearance side by side, then full-width Home & apps.
-  The clock-face row and the accent swatch grid adapt to their own available
-  width instead of fixed screen sizes.
+  `Clock backdrop`, `Launcher background`, `Appearance`, `Home & apps`). A
+  `BoxWithConstraints` breakpoint at 900dp switches from a stacked layout to a
+  landscape dashboard: full-width Clock, Clock backdrop / Launcher background /
+  Appearance side by side, then full-width Home & apps. The clock-face row and
+  both swatch grids adapt to their own available width instead of fixed screen
+  sizes.
 
 ### Clock faces (Home)
 

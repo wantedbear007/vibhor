@@ -2,11 +2,19 @@ package com.pratap.vibhor.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import com.pratap.vibhor.core.platform.AccentColor
+import com.pratap.vibhor.core.platform.LauncherBackground
 
 val Midnight = Color(0xFF0B111A)
 val DeepSlate = Color(0xFF142537)
 val PrimaryText = Color(0xFFF3F6FA)
 val SecondaryText = Color(0xFF91A6BC)
+
+/** Background palette. Midnight is the default launcher surface. */
+val BackgroundSlate = Color(0xFF151C26)
+val BackgroundGraphite = Color(0xFF23272E)
+val BackgroundBlack = Color(0xFF000000)
+val BackgroundNavy = Color(0xFF0A1B30)
+val BackgroundOcean = Color(0xFF082029)
 
 /**
  * Base accent. Kept for backward compatibility; UI code should read the
@@ -29,4 +37,14 @@ fun AccentColor.toColor(): Color = when (this) {
     AccentColor.PURPLE -> AccentPurple
     AccentColor.ORANGE -> AccentOrange
     AccentColor.PINK -> AccentPink
+}
+
+/** Resolves a persisted launcher background to its base Compose color. */
+fun LauncherBackground.toColor(): Color = when (this) {
+    LauncherBackground.MIDNIGHT -> Midnight
+    LauncherBackground.SLATE -> BackgroundSlate
+    LauncherBackground.GRAPHITE -> BackgroundGraphite
+    LauncherBackground.BLACK -> BackgroundBlack
+    LauncherBackground.NAVY -> BackgroundNavy
+    LauncherBackground.OCEAN -> BackgroundOcean
 }

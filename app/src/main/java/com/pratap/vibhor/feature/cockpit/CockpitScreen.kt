@@ -44,11 +44,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
-import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
 import com.pratap.vibhor.core.ui.theme.VibhorSpacing
 import com.pratap.vibhor.core.ui.theme.VibhorTheme
+import com.pratap.vibhor.core.ui.theme.toColor
 
 object CockpitTestTags {
     const val Page = "page_cockpit"
@@ -71,7 +71,7 @@ fun CockpitScreen(
         modifier = modifier
             .fillMaxSize()
             .testTag(CockpitTestTags.Page),
-        color = Midnight,
+        color = state.background.toColor().copy(alpha = state.backgroundOpacity),
     ) {
         BoxWithConstraints(
             modifier = Modifier

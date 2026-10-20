@@ -1,6 +1,8 @@
 package com.pratap.vibhor.feature.apps
 
 import com.pratap.vibhor.core.platform.InstalledApp
+import com.pratap.vibhor.core.platform.LauncherBackground
+import com.pratap.vibhor.core.platform.LauncherSettings
 
 enum class AppDrawerTab {
     Favourites,
@@ -16,4 +18,6 @@ data class AppDrawerUiState(
     val iconScale: Float = 1f,
     val searchQuery: String = "",
     val displayedApps: List<InstalledApp> = emptyList(),
+    val background: LauncherBackground = LauncherBackground.DEFAULT,
+    val backgroundOpacity: Float = LauncherSettings.DEFAULT_BACKGROUND_OPACITY,
 )

@@ -3,6 +3,7 @@ package com.pratap.vibhor.feature.apps
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.platform.InstalledAppsSource
+import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -100,6 +101,27 @@ class AppDrawerViewModelTest {
         viewModel.setSearchQuery("dial")
         advanceUntilIdle()
         assertEquals(listOf(apps[0]), viewModel.uiState.value.displayedApps)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `launcher background is exposed to the drawer`() = runTest(dispatcher) {
+        val viewModel = AppDrawerViewModel(
+            installedAppsSource = FakeInstalledAppsSource(flowOf(sampleApps())),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(
+                    background = LauncherBackground.NAVY,
+                    backgroundOpacity = 0.35f,
+                ),
+            ),
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(LauncherBackground.NAVY, viewModel.uiState.value.background)
+        assertEquals(0.35f, viewModel.uiState.value.backgroundOpacity)
 
         collection.cancel()
     }

@@ -12,7 +12,8 @@ a large clock), **Cockpit** (clock rail plus sound and brightness controls), and
 wallpaper is rendered by Android behind the window, so no storage permission is
 required and no wallpaper bitmap is ever decoded. A **Settings** overlay is
 reachable from the Cockpit rail and persists every tunable option — including
-the launcher-wide accent color — through `SharedPreferences`.
+the launcher-wide accent color and surface background — through
+`SharedPreferences`.
 
 ## Target device
 
@@ -124,7 +125,8 @@ The Apps page follows the same Material 3 styling as Settings: a title and app
 count, a pill-shaped search field, segmented Favourites/All tabs, and rounded
 tonal app tiles with subtle pressed feedback. Columns and tile sizes adapt to
 the screen width and the persisted app-icon-size setting; labels stay on one
-line and ellipsize when needed.
+line and ellipsize when needed. Its surface follows the persisted launcher
+background, so it can share the Home wallpaper at low visibility.
 
 ## Settings
 
@@ -140,16 +142,25 @@ button in the Cockpit side rail. It contains:
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
 | Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Single accent used by every screen and every future control |
+| Launcher background | Midnight / Slate / Graphite / Black / Navy / Ocean | Midnight | Base surface color for Apps, Cockpit, and Settings; Home keeps the wallpaper |
+| Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
 
-Settings are grouped into four accent-marked cards: **Clock** (size, face,
-format), **Background** (blur, darkness), **Appearance** (accent color, status
-bar), and **Home & apps** (Quick + button size, app icon size). On wide
-landscape displays the Clock card spans the top, Background and Appearance
-share a row, and Home & apps runs full width with its two sliders side by
-side; narrow screens stack every card. Clock face previews form a single row
-in the Clock card and scroll horizontally only when space is tight.
+Settings are grouped into five accent-marked cards: **Clock** (size, face,
+format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
+visibility), **Appearance** (accent color, status bar), and **Home & apps**
+(Quick + button size, app icon size). On wide landscape displays the Clock
+card spans the top, Clock backdrop / Launcher background / Appearance share a
+row, and Home & apps runs full width with its two sliders side by side; narrow
+screens stack every card. Clock face previews form a single row in the Clock
+card and scroll horizontally only when space is tight.
+
+The launcher background applies to the Apps, Cockpit, and Settings surfaces.
+Home continues to show the system wallpaper with its own clock-backdrop blur
+and darkness. A transparent launcher background lets the same wallpaper show
+through the other pages; while Settings is open, the pager is hidden so the
+overlay shows the wallpaper instead of the page underneath.
 
 Every slider on this screen uses the same thick pill track as the Cockpit
 volume and brightness controls: tap or drag anywhere on the pill, with values
@@ -167,7 +178,8 @@ size** and **Reset** apply to all of them):
   second hand) with the date below. The second hand keeps real time while
   Home is visible.
 
-- **Reset to defaults** restores every setting, including the accent color.
+- **Reset to defaults** restores every setting, including the accent color and
+  launcher background.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),

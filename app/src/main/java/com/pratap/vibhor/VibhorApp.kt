@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -111,6 +112,10 @@ fun VibhorApp(homeRequestToken: Int = 0) {
         state = pagerState,
         modifier = Modifier
             .fillMaxSize()
+            // Hide the pager while Settings is open so a translucent
+            // launcher background reveals the wallpaper rather than the
+            // current launcher page underneath the overlay.
+            .alpha(if (settingsVisible) 0f else 1f)
             .testTag(LauncherTestTags.Pager),
         flingBehavior = PagerDefaults.flingBehavior(
             state = pagerState,
@@ -193,6 +198,8 @@ private fun SettingsRoute(
         onQuickButtonScaleChange = viewModel::setQuickButtonScale,
         onAppIconScaleChange = viewModel::setAppIconScale,
         onAccentColorChange = viewModel::setAccentColor,
+        onBackgroundChange = viewModel::setBackground,
+        onBackgroundOpacityChange = viewModel::setBackgroundOpacity,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,
     )
