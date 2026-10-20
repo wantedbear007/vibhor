@@ -7,6 +7,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,12 +17,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pratap.vibhor.core.platform.AndroidAppLauncher
 import com.pratap.vibhor.core.platform.AppLauncher
 import com.pratap.vibhor.core.platform.NavigationApp
+import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
 import com.pratap.vibhor.feature.apps.AppDrawerScreen
 import com.pratap.vibhor.feature.apps.AppDrawerViewModel
@@ -54,6 +60,32 @@ fun VibhorApp(homeRequestToken: Int = 0) {
     }
     val scope = rememberCoroutineScope()
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
+
+    // Status bar visibility follows the persisted setting and is re-applied
+    // whenever the composition (re)enters, covering process recreation and
+    // return-from-background. The system navigation bar is always left
+    // visible so the user can never lock themselves out of system controls;
+    // when hidden, a swipe still reveals the status bar temporarily.
+    val statusBarVisible = LocalContext.current
+        .let { remember(it) { SharedPreferencesSettingsStore.get(it) } }
+        .settings
+        .collectAsStateWithLifecycle()
+        .value
+        .showStatusBar
+    val view = LocalView.current
+    LaunchedEffect(statusBarVisible) {
+        val controller = WindowCompat.getInsetsController(
+            (view.context as android.app.Activity).window,
+            view,
+        )
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        if (statusBarVisible) {
+            controller.show(WindowInsetsCompat.Type.statusBars())
+        } else {
+            controller.hide(WindowInsetsCompat.Type.statusBars())
+        }
+    }
 
     LaunchedEffect(homeRequestToken) {
         if (homeRequestToken > 0 &&
@@ -108,7 +140,13 @@ private fun HomeRoute(
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeScreen(state = state)
+    val context = LocalContext.current
+    val appLauncher = remember(context) { AndroidAppLauncher(context.applicationContext) }
+    HomeScreen(
+        state = state,
+        onLaunchApp = { app -> appLauncher.launch(app.packageName, app.activityName) },
+        onOpenAppDrawer = { /* no-op for now; can be extended */ },
+    )
 }
 
 @Composable
@@ -122,6 +160,8 @@ private fun AppsRoute(
         onAppClick = { app ->
             appLauncher.launch(app.packageName, app.activityName)
         },
+        onTabSelected = viewModel::selectTab,
+        onAppLongPress = { app -> viewModel.toggleFavourite(app.packageName) },
     )
 }
 
@@ -134,7 +174,8 @@ private fun CockpitRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     CockpitScreen(
         state = state,
-        onOpenNavigation = onOpenNavigation,
+        onVolumeChange = viewModel::setVolume,
+        onBrightnessChange = viewModel::setBrightness,
         onOpenSettings = onOpenSettings,
     )
 }
@@ -150,6 +191,10 @@ private fun SettingsRoute(
         onClockScaleChange = viewModel::setClockScale,
         onClockFaceChange = viewModel::setClockFace,
         onClockFormatChange = viewModel::setClockFormat,
+        onClockBlurChange = viewModel::setClockBlurRadius,
+        onBackgroundDarknessChange = viewModel::setBackgroundDarkness,
+        onShowStatusBarChange = viewModel::setShowStatusBar,
+        onQuickButtonScaleChange = viewModel::setQuickButtonScale,
         onAppIconScaleChange = viewModel::setAppIconScale,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,

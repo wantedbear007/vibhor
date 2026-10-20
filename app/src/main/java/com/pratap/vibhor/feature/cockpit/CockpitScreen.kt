@@ -1,8 +1,10 @@
 package com.pratap.vibhor.feature.cockpit
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -24,15 +27,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
-import com.pratap.vibhor.core.platform.NavigationApp
 import com.pratap.vibhor.core.ui.theme.DeepSlate
 import com.pratap.vibhor.core.ui.theme.ElectricBlue
 import com.pratap.vibhor.core.ui.theme.Midnight
@@ -43,8 +55,8 @@ import com.pratap.vibhor.core.ui.theme.VibhorTheme
 
 object CockpitTestTags {
     const val Page = "page_cockpit"
-    const val NavCard = "cockpit_nav_card"
-    const val MediaCard = "cockpit_media_card"
+    const val VolumeSlider = "cockpit_volume_slider"
+    const val BrightnessSlider = "cockpit_brightness_slider"
     const val RailClock = "cockpit_rail_clock"
     const val RailDate = "cockpit_rail_date"
     const val SettingsButton = "cockpit_settings_button"
@@ -53,7 +65,8 @@ object CockpitTestTags {
 @Composable
 fun CockpitScreen(
     state: CockpitUiState,
-    onOpenNavigation: (NavigationApp) -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onBrightnessChange: (Float) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -88,18 +101,23 @@ fun CockpitScreen(
                             .fillMaxHeight(),
                         horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
                     ) {
-                        NavigationCard(
-                            state = state,
-                            onOpenNavigation = onOpenNavigation,
+                        Row(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(),
-                        )
-                        MediaCard(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                        )
+                                .fillMaxHeight()
+                                .padding(VibhorSpacing.xl),
+                            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xxl, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SoundControl(
+                                value = state.volumeLevel,
+                                onValueChange = onVolumeChange,
+                            )
+                            BrightnessControl(
+                                value = state.brightnessLevel,
+                                onValueChange = onBrightnessChange,
+                            )
+                        }
                     }
                 }
             } else {
@@ -114,18 +132,23 @@ fun CockpitScreen(
                             .fillMaxWidth()
                             .padding(bottom = VibhorSpacing.sm),
                     )
-                    NavigationCard(
-                        state = state,
-                        onOpenNavigation = onOpenNavigation,
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                    )
-                    MediaCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                    )
+                            .weight(1f)
+                            .padding(horizontal = VibhorSpacing.xl),
+                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xxl, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SoundControl(
+                            value = state.volumeLevel,
+                            onValueChange = onVolumeChange,
+                        )
+                        BrightnessControl(
+                            value = state.brightnessLevel,
+                            onValueChange = onBrightnessChange,
+                        )
+                    }
                 }
             }
         }
@@ -172,80 +195,105 @@ private fun CockpitSideRail(
 }
 
 @Composable
-private fun NavigationCard(
-    state: CockpitUiState,
-    onOpenNavigation: (NavigationApp) -> Unit,
+private fun SoundControl(
+    value: Float,
+    onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val navigationApp = state.navigationApp
-    Card(
-        modifier = modifier
-            .testTag(CockpitTestTags.NavCard)
-            .then(
-                if (navigationApp != null) {
-                    Modifier.clickable { onOpenNavigation(navigationApp) }
-                } else {
-                    Modifier
-                },
-            ),
-        shape = RoundedCornerShape(VibhorSpacing.xl),
-        colors = CardDefaults.cardColors(containerColor = DeepSlate),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(VibhorSpacing.xl),
-            verticalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
-        ) {
-            CardHeader(
-                iconRes = R.drawable.ic_navigation,
-                title = stringResource(R.string.navigation_title),
-            )
-            if (navigationApp != null) {
-                Text(
-                    text = navigationApp.label,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = ElectricBlue,
-                )
-                Text(
-                    text = stringResource(R.string.navigation_open_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SecondaryText,
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.navigation_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = SecondaryText,
-                )
-            }
-        }
-    }
+    VerticalControlSlider(
+        value = value,
+        onValueChange = onValueChange,
+        iconRes = R.drawable.ic_volume_up,
+        modifier = modifier,
+        testTag = CockpitTestTags.VolumeSlider,
+    )
 }
 
 @Composable
-private fun MediaCard(
+private fun BrightnessControl(
+    value: Float,
+    onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.testTag(CockpitTestTags.MediaCard),
-        shape = RoundedCornerShape(VibhorSpacing.xl),
-        colors = CardDefaults.cardColors(containerColor = DeepSlate),
+    VerticalControlSlider(
+        value = value,
+        onValueChange = onValueChange,
+        iconRes = R.drawable.ic_brightness,
+        modifier = modifier,
+        testTag = CockpitTestTags.BrightnessSlider,
+    )
+}
+
+@Composable
+private fun VerticalControlSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    @androidx.annotation.DrawableRes iconRes: Int,
+    modifier: Modifier = Modifier,
+    testTag: String = "",
+) {
+    val clamped = value.coerceIn(0f, 1f)
+    val animated by animateFloatAsState(targetValue = clamped, label = "slider")
+    var dragValue by remember { mutableFloatStateOf(clamped) }
+    LaunchedEffect(clamped) { if (!dragValue.isNaN()) dragValue = clamped }
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
     ) {
-        Column(
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = PrimaryText,
+            modifier = Modifier.size(28.dp),
+        )
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(VibhorSpacing.xl),
-            verticalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+                .width(52.dp)
+                .height(240.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .background(PrimaryText.copy(alpha = 0.12f))
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            // Map vertical position to value (top = 1, bottom = 0)
+                            val v = (1f - (offset.y / size.height)).coerceIn(0f, 1f)
+                            dragValue = v
+                            onValueChange(v)
+                        },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            val v = (1f - (change.position.y / size.height)).coerceIn(0f, 1f)
+                            dragValue = v
+                            onValueChange(v)
+                        },
+                    )
+                }
+                .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier),
+            contentAlignment = Alignment.BottomCenter,
         ) {
-            CardHeader(
-                iconRes = R.drawable.ic_media,
-                title = stringResource(R.string.media_title),
-            )
-            Text(
-                text = stringResource(R.string.media_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = SecondaryText,
+            val fillFraction = animateFloatAsState(targetValue = dragValue.coerceIn(0f, 1f), label = "fill")
+            Canvas(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                val trackHeight = size.height
+                val trackWidth = size.width
+                val fillHeight = trackHeight * fillFraction.value
+                drawRoundRect(
+                    color = ElectricBlue.copy(alpha = 0.85f),
+                    topLeft = Offset(0f, trackHeight - fillHeight),
+                    size = Size(trackWidth, fillHeight),
+                    cornerRadius = CornerRadius(trackWidth / 2f, trackWidth / 2f),
+                )
+            }
+            // Subtle top highlight for iOS look
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(PrimaryText.copy(alpha = 0.18f)),
             )
         }
     }
@@ -282,13 +330,9 @@ private fun CockpitLandscapePreview() {
             state = CockpitUiState(
                 timeText = "10:42",
                 dateText = "Monday, 19 October",
-                navigationApp = NavigationApp(
-                    label = "Maps",
-                    packageName = "com.example.maps",
-                    activityName = "com.example.maps.MainActivity",
-                ),
             ),
-            onOpenNavigation = {},
+            onVolumeChange = {},
+            onBrightnessChange = {},
             onOpenSettings = {},
         )
     }
@@ -303,7 +347,8 @@ private fun CockpitPortraitPreview() {
                 timeText = "10:42",
                 dateText = "Monday, 19 October",
             ),
-            onOpenNavigation = {},
+            onVolumeChange = {},
+            onBrightnessChange = {},
             onOpenSettings = {},
         )
     }

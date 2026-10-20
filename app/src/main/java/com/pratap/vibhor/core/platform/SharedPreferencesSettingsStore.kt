@@ -46,6 +46,80 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(clockFormat = format) }
     }
 
+    override fun setClockBlurRadius(radius: Int) {
+        val clamped = radius.coerceIn(
+            LauncherSettings.MIN_BLUR_RADIUS,
+            LauncherSettings.MAX_BLUR_RADIUS,
+        )
+        prefs.edit { putInt(KEY_CLOCK_BLUR, clamped) }
+        state.update { it.copy(clockBlurRadius = clamped) }
+    }
+
+    override fun setBackgroundDarkness(darkness: Float) {
+        val clamped = darkness.coerceIn(
+            LauncherSettings.MIN_DARKNESS,
+            LauncherSettings.MAX_DARKNESS,
+        )
+        prefs.edit { putFloat(KEY_DARKNESS, clamped) }
+        state.update { it.copy(backgroundDarkness = clamped) }
+    }
+
+    override fun setShowStatusBar(show: Boolean) {
+        prefs.edit { putBoolean(KEY_SHOW_STATUS_BAR, show) }
+        state.update { it.copy(showStatusBar = show) }
+    }
+
+    override fun setQuickButtonScale(scale: Float) {
+        val clamped = scale.coerceIn(
+            LauncherSettings.MIN_QUICK_BUTTON_SCALE,
+            LauncherSettings.MAX_QUICK_BUTTON_SCALE,
+        )
+        prefs.edit { putFloat(KEY_QUICK_BUTTON_SCALE, clamped) }
+        state.update { it.copy(quickButtonScale = clamped) }
+    }
+
+    override fun addFavourite(packageName: String) {
+        val key = packageName.trim()
+        if (key.isEmpty()) return
+        state.update { current ->
+            if (key in current.favouritePackageNames) {
+                current
+            } else {
+                val updated = current.favouritePackageNames + key
+                prefs.edit { putStringSet(KEY_FAVOURITES, updated) }
+                current.copy(favouritePackageNames = updated)
+            }
+        }
+    }
+
+    override fun removeFavourite(packageName: String) {
+        val key = packageName.trim()
+        if (key.isEmpty()) return
+        state.update { current ->
+            if (key !in current.favouritePackageNames) {
+                current
+            } else {
+                val updated = current.favouritePackageNames - key
+                prefs.edit { putStringSet(KEY_FAVOURITES, updated) }
+                current.copy(favouritePackageNames = updated)
+            }
+        }
+    }
+
+    override fun toggleFavourite(packageName: String) {
+        val key = packageName.trim()
+        if (key.isEmpty()) return
+        state.update { current ->
+            val updated = if (key in current.favouritePackageNames) {
+                current.favouritePackageNames - key
+            } else {
+                current.favouritePackageNames + key
+            }
+            prefs.edit { putStringSet(KEY_FAVOURITES, updated) }
+            current.copy(favouritePackageNames = updated)
+        }
+    }
+
     private fun read(): LauncherSettings = LauncherSettings(
         clockScale = prefs
             .getFloat(KEY_CLOCK_SCALE, LauncherSettings.DEFAULT_SCALE)
@@ -55,6 +129,22 @@ class SharedPreferencesSettingsStore private constructor(
             .coerceIn(LauncherSettings.MIN_SCALE, LauncherSettings.MAX_SCALE),
         clockFace = ClockFace.fromId(prefs.getString(KEY_CLOCK_FACE, null)),
         clockFormat = ClockFormat.fromId(prefs.getString(KEY_CLOCK_FORMAT, null)),
+        clockBlurRadius = prefs
+            .getInt(KEY_CLOCK_BLUR, LauncherSettings.DEFAULT_BLUR_RADIUS)
+            .coerceIn(LauncherSettings.MIN_BLUR_RADIUS, LauncherSettings.MAX_BLUR_RADIUS),
+        backgroundDarkness = prefs
+            .getFloat(KEY_DARKNESS, LauncherSettings.DEFAULT_DARKNESS)
+            .coerceIn(LauncherSettings.MIN_DARKNESS, LauncherSettings.MAX_DARKNESS),
+        showStatusBar = prefs.getBoolean(
+            KEY_SHOW_STATUS_BAR,
+            LauncherSettings.DEFAULT_SHOW_STATUS_BAR,
+        ),
+        quickButtonScale = prefs
+            .getFloat(KEY_QUICK_BUTTON_SCALE, LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
+            .coerceIn(LauncherSettings.MIN_QUICK_BUTTON_SCALE, LauncherSettings.MAX_QUICK_BUTTON_SCALE),
+        favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
+            .orEmpty()
+            .toSet(),
     )
 
     private fun persist(
@@ -73,6 +163,11 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_ICON_SCALE = "app_icon_scale"
         private const val KEY_CLOCK_FACE = "clock_face"
         private const val KEY_CLOCK_FORMAT = "clock_format"
+        private const val KEY_CLOCK_BLUR = "clock_blur_radius"
+        private const val KEY_DARKNESS = "background_darkness"
+        private const val KEY_SHOW_STATUS_BAR = "show_status_bar"
+        private const val KEY_QUICK_BUTTON_SCALE = "quick_button_scale"
+        private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile
         private var instance: SharedPreferencesSettingsStore? = null

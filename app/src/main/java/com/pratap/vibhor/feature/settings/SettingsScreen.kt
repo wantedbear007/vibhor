@@ -21,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,7 +43,9 @@ import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.ui.clock.AnalogClockFace
+import com.pratap.vibhor.core.ui.clock.BoldClockFace
 import com.pratap.vibhor.core.ui.clock.ClassicClockFace
+import com.pratap.vibhor.core.ui.clock.ElegantClockFace
 import com.pratap.vibhor.core.ui.clock.MinimalClockFace
 import com.pratap.vibhor.core.ui.clock.SplitClockFace
 import com.pratap.vibhor.core.ui.theme.DeepSlate
@@ -58,6 +61,11 @@ object SettingsTestTags {
     const val ClockSlider = "settings_clock_slider"
     const val ClockFaceCardPrefix = "settings_clock_face_"
     const val ClockFormatOptionPrefix = "settings_clock_format_"
+    const val ClockBlurSlider = "settings_clock_blur_slider"
+    const val ClockBlurToggle = "settings_clock_blur_toggle"
+    const val DarknessSlider = "settings_darkness_slider"
+    const val StatusBarToggle = "settings_status_bar_toggle"
+    const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
     const val Close = "settings_close"
     const val Reset = "settings_reset"
@@ -74,6 +82,10 @@ fun SettingsScreen(
     onClockScaleChange: (Float) -> Unit,
     onClockFaceChange: (ClockFace) -> Unit,
     onClockFormatChange: (ClockFormat) -> Unit,
+    onClockBlurChange: (Int) -> Unit,
+    onBackgroundDarknessChange: (Float) -> Unit,
+    onShowStatusBarChange: (Boolean) -> Unit,
+    onQuickButtonScaleChange: (Float) -> Unit,
     onAppIconScaleChange: (Float) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
@@ -139,6 +151,25 @@ fun SettingsScreen(
                 onSelect = onClockFormatChange,
             )
 
+            ClockBackdropSetting(
+                blurRadius = state.clockBlurRadius,
+                darkness = state.backgroundDarkness,
+                onBlurChange = onClockBlurChange,
+                onDarknessChange = onBackgroundDarknessChange,
+            )
+
+            StatusBarSetting(
+                show = state.showStatusBar,
+                onToggle = onShowStatusBarChange,
+            )
+
+            ScaleSetting(
+                title = stringResource(R.string.settings_quick_button_size),
+                value = state.quickButtonScale,
+                onValueChange = onQuickButtonScaleChange,
+                modifier = Modifier.testTag(SettingsTestTags.QuickButtonSlider),
+            )
+
             ScaleSetting(
                 title = stringResource(R.string.settings_app_icon_size),
                 value = state.appIconScale,
@@ -156,6 +187,135 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ClockBackdropSetting(
+    blurRadius: Int,
+    darkness: Float,
+    onBlurChange: (Int) -> Unit,
+    onDarknessChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var blurValue by remember(blurRadius) { mutableFloatStateOf(blurRadius.toFloat()) }
+    var darknessValue by remember(darkness) { mutableFloatStateOf(darkness) }
+    LaunchedEffect(blurRadius) { blurValue = blurRadius.toFloat() }
+    LaunchedEffect(darkness) { darknessValue = darkness }
+
+    val blurEnabled = blurValue > 0f
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_clock_backdrop),
+            style = MaterialTheme.typography.titleMedium,
+            color = PrimaryText,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_clock_blur),
+                style = MaterialTheme.typography.bodyLarge,
+                color = PrimaryText,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (blurEnabled) {
+                        stringResource(R.string.settings_blur_value, blurValue.toInt())
+                    } else {
+                        stringResource(R.string.settings_value_off)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (blurEnabled) ElectricBlue else SecondaryText,
+                )
+                Switch(
+                    checked = blurEnabled,
+                    onCheckedChange = { enabled ->
+                        val next = if (enabled) LauncherSettings.DEFAULT_BLUR_RADIUS else 0
+                        blurValue = next.toFloat()
+                        onBlurChange(next)
+                    },
+                    modifier = Modifier.testTag(SettingsTestTags.ClockBlurToggle),
+                )
+            }
+        }
+        Slider(
+            value = blurValue,
+            onValueChange = { blurValue = it },
+            onValueChangeFinished = { onBlurChange(blurValue.toInt()) },
+            enabled = blurEnabled,
+            valueRange = 1f..LauncherSettings.MAX_BLUR_RADIUS.toFloat(),
+            steps = LauncherSettings.MAX_BLUR_RADIUS - 2,
+            modifier = Modifier.testTag(SettingsTestTags.ClockBlurSlider),
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_background_darkness),
+                style = MaterialTheme.typography.bodyLarge,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(
+                    R.string.settings_scale_value,
+                    (darknessValue * 100).toInt(),
+                ),
+                style = MaterialTheme.typography.bodyLarge,
+                color = ElectricBlue,
+            )
+        }
+        Slider(
+            value = darknessValue,
+            onValueChange = { darknessValue = it },
+            onValueChangeFinished = { onDarknessChange(darknessValue) },
+            valueRange = LauncherSettings.MIN_DARKNESS..LauncherSettings.MAX_DARKNESS,
+            steps = 4,
+            modifier = Modifier.testTag(SettingsTestTags.DarknessSlider),
+        )
+    }
+}
+
+@Composable
+private fun StatusBarSetting(
+    show: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.settings_status_bar),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(R.string.settings_status_bar_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SecondaryText,
+            )
+        }
+        Switch(
+            checked = show,
+            onCheckedChange = onToggle,
+            modifier = Modifier.testTag(SettingsTestTags.StatusBarToggle),
+        )
     }
 }
 
@@ -283,6 +443,20 @@ private fun ClockFaceCard(
                         timeText = "10:42",
                         baseSize = 44.sp,
                     )
+                    ClockFace.BOLD -> BoldClockFace(
+                        timeText = "10:42",
+                        dateText = "MON 20",
+                        baseSize = 32.sp,
+                        showDate = false,
+                    )
+                    ClockFace.ELEGANT -> ElegantClockFace(
+                        hourText = "10",
+                        minuteText = "42",
+                        meridiemText = "",
+                        dateText = "",
+                        baseSize = 44.sp,
+                        showDate = false,
+                    )
                     ClockFace.ANALOG -> AnalogClockFace(
                         hour = 10,
                         minute = 42,
@@ -307,6 +481,8 @@ private val ClockFace.labelRes: Int
         ClockFace.CLASSIC -> R.string.settings_clock_face_classic
         ClockFace.SPLIT -> R.string.settings_clock_face_split
         ClockFace.MINIMAL -> R.string.settings_clock_face_minimal
+        ClockFace.BOLD -> R.string.settings_clock_face_bold
+        ClockFace.ELEGANT -> R.string.settings_clock_face_elegant
         ClockFace.ANALOG -> R.string.settings_clock_face_analog
     }
 
@@ -390,6 +566,10 @@ private fun SettingsLandscapePreview() {
             onClockScaleChange = {},
             onClockFaceChange = {},
             onClockFormatChange = {},
+            onClockBlurChange = {},
+            onBackgroundDarknessChange = {},
+            onShowStatusBarChange = {},
+            onQuickButtonScaleChange = {},
             onAppIconScaleChange = {},
             onResetToDefaults = {},
             onClose = {},

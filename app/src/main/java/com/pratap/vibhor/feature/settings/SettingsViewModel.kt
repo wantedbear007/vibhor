@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.platform.SettingsStore
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,10 @@ class SettingsViewModel(
                 appIconScale = settings.appIconScale,
                 clockFace = settings.clockFace,
                 clockFormat = settings.clockFormat,
+                clockBlurRadius = settings.clockBlurRadius,
+                backgroundDarkness = settings.backgroundDarkness,
+                showStatusBar = settings.showStatusBar,
+                quickButtonScale = settings.quickButtonScale,
             )
         }
         .stateIn(
@@ -46,11 +51,24 @@ class SettingsViewModel(
 
     fun setClockFormat(format: ClockFormat) = settingsStore.setClockFormat(format)
 
+    fun setClockBlurRadius(radius: Int) = settingsStore.setClockBlurRadius(radius)
+
+    fun setBackgroundDarkness(darkness: Float) =
+        settingsStore.setBackgroundDarkness(darkness)
+
+    fun setShowStatusBar(show: Boolean) = settingsStore.setShowStatusBar(show)
+
+    fun setQuickButtonScale(scale: Float) = settingsStore.setQuickButtonScale(scale)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
         settingsStore.setClockFace(ClockFace.DEFAULT)
         settingsStore.setClockFormat(ClockFormat.DEFAULT)
+        settingsStore.setClockBlurRadius(LauncherSettings.DEFAULT_BLUR_RADIUS)
+        settingsStore.setBackgroundDarkness(LauncherSettings.DEFAULT_DARKNESS)
+        settingsStore.setShowStatusBar(LauncherSettings.DEFAULT_SHOW_STATUS_BAR)
+        settingsStore.setQuickButtonScale(LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
     }
 
     companion object {

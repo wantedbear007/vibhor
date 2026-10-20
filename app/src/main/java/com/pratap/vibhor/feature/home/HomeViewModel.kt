@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.pratap.vibhor.core.platform.AndroidInstalledAppsSource
 import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.InstalledAppsSource
 import com.pratap.vibhor.core.platform.SettingsStore
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.platform.SystemClockTicker
@@ -22,13 +24,15 @@ import kotlinx.coroutines.flow.stateIn
 class HomeViewModel(
     clockTicker: ClockTicker,
     private val settingsStore: SettingsStore,
+    installedAppsSource: InstalledAppsSource,
     is24HourFormat: () -> Boolean = { false },
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = combine(
         clockTicker.ticks(),
         settingsStore.settings,
-    ) { now, settings ->
+        installedAppsSource.apps(),
+    ) { now, settings, apps ->
         val use24Hour = when (settings.clockFormat) {
             ClockFormat.H24 -> true
             ClockFormat.H12 -> false
@@ -40,12 +44,16 @@ class HomeViewModel(
             dateText = formatClockDate(now),
             clockScale = settings.clockScale,
             clockFace = settings.clockFace,
+            clockBlurRadius = settings.clockBlurRadius,
+            backgroundDarkness = settings.backgroundDarkness,
             hour = now.hour,
             minute = now.minute,
             second = now.second,
             hourText = split.hourText,
             minuteText = split.minuteText,
             meridiemText = split.meridiemText,
+            quickButtonScale = settings.quickButtonScale,
+            favourites = apps.filter { it.packageName in settings.favouritePackageNames },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -60,6 +68,7 @@ class HomeViewModel(
                 HomeViewModel(
                     clockTicker = SystemClockTicker(application),
                     settingsStore = SharedPreferencesSettingsStore.get(application),
+                    installedAppsSource = AndroidInstalledAppsSource(application),
                     is24HourFormat = { DateFormat.is24HourFormat(application) },
                 )
             }

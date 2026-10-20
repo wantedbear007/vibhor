@@ -5,8 +5,11 @@
     <string name="navigation_empty">No navigation app found</string>
     <string name="media_title">Media</string>
     <string name="media_empty">No media playing</string>
-    <string name="apps_empty">No apps found</string>
     <string name="apps_loading">Loading apps…</string>
+    <string name="apps_empty">No launchable apps found</string>
+    <string name="apps_favourites_empty">No favourites yet. Long-press an app to add one.</string>
+    <string name="apps_tab_favourites">Favourites</string>
+    <string name="apps_tab_all">All</string>
     <string name="settings_title">Settings</string>
     <string name="settings_close">Close settings</string>
     <string name="settings_clock_size">Clock size</string>
@@ -14,12 +17,23 @@
     <string name="settings_clock_face_classic">Classic</string>
     <string name="settings_clock_face_split">Split</string>
     <string name="settings_clock_face_minimal">Minimal</string>
+    <string name="settings_clock_face_bold">Bold</string>
+    <string name="settings_clock_face_elegant">Elegant</string>
     <string name="settings_clock_face_analog">Analog</string>
     <string name="settings_clock_format">Time format</string>
     <string name="settings_clock_format_system">System</string>
     <string name="settings_clock_format_12">12-hour</string>
     <string name="settings_clock_format_24">24-hour</string>
+    <string name="settings_clock_backdrop">Clock backdrop</string>
+    <string name="settings_clock_blur">Blur</string>
+    <string name="settings_background_darkness">Darkness</string>
+    <string name="settings_blur_value">%1$d</string>
+    <string name="settings_value_off">Off</string>
+    <string name="settings_status_bar">Show status bar</string>
+    <string name="settings_status_bar_summary">Hide for a cleaner Home; swipe down to reveal</string>
     <string name="settings_app_icon_size">App icon size</string>
+    <string name="settings_quick_button_size">Quick + button size</string>
     <string name="settings_scale_value">%1$d%%</string>
     <string name="settings_reset">Reset to defaults</string>
+    <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>
 </resources>

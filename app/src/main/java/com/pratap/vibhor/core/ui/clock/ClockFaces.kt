@@ -1,7 +1,9 @@
 package com.pratap.vibhor.core.ui.clock
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.core.ui.theme.ElectricBlue
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
@@ -149,6 +152,117 @@ fun MinimalClockFace(
         color = PrimaryText,
         modifier = modifier.then(timeModifier),
     )
+}
+
+/**
+ * Bold modern digital clock: heavy sans-serif time with a small uppercase
+ * date underneath. Reads clearly at a glance on a car display.
+ */
+@Composable
+fun BoldClockFace(
+    timeText: String,
+    dateText: String,
+    baseSize: TextUnit,
+    modifier: Modifier = Modifier,
+    showDate: Boolean = true,
+    timeModifier: Modifier = Modifier,
+    dateModifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Text(
+            text = timeText,
+            fontSize = baseSize,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.SansSerif,
+            letterSpacing = baseSize * (-0.02f),
+            color = PrimaryText,
+            modifier = timeModifier,
+        )
+        if (showDate) {
+            Text(
+                text = dateText.uppercase(),
+                fontSize = baseSize * 0.13f,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.SansSerif,
+                letterSpacing = baseSize * 0.04f,
+                color = ElectricBlue,
+                modifier = dateModifier,
+            )
+        }
+    }
+}
+
+/**
+ * Elegant split-line clock: hour and minute separated by a thin accent
+ * divider on a single baseline, with a smaller, lighter date beneath.
+ */
+@Composable
+fun ElegantClockFace(
+    hourText: String,
+    minuteText: String,
+    meridiemText: String,
+    dateText: String,
+    baseSize: TextUnit,
+    modifier: Modifier = Modifier,
+    showDate: Boolean = true,
+    timeModifier: Modifier = Modifier,
+    dateModifier: Modifier = Modifier,
+) {
+    val timeSize = baseSize * 0.72f
+    val dividerHeight = with(LocalDensity.current) { (timeSize * 0.5f).toDp() }
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = hourText,
+                fontSize = timeSize,
+                fontWeight = FontWeight.Light,
+                fontFamily = FontFamily.Serif,
+                color = PrimaryText,
+            )
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = (baseSize.value * 0.05f).dp)
+                    .size(width = 2.dp, height = (timeSize.value * 0.5f).dp)
+                    .background(ElectricBlue),
+            )
+            Text(
+                text = minuteText,
+                fontSize = timeSize,
+                fontWeight = FontWeight.Light,
+                fontFamily = FontFamily.Serif,
+                color = PrimaryText,
+                modifier = timeModifier,
+            )
+            if (meridiemText.isNotEmpty()) {
+                Text(
+                    text = meridiemText,
+                    fontSize = baseSize * 0.16f,
+                    fontWeight = FontWeight.Medium,
+                    color = SecondaryText,
+                    modifier = Modifier.padding(start = VibhorSpacing.sm),
+                )
+            }
+        }
+        if (showDate) {
+            Text(
+                text = dateText,
+                fontSize = baseSize * 0.11f,
+                fontWeight = FontWeight.Light,
+                fontFamily = FontFamily.Serif,
+                letterSpacing = baseSize * 0.02f,
+                color = SecondaryText,
+                modifier = dateModifier,
+            )
+        }
+    }
 }
 
 /**

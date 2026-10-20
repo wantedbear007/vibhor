@@ -8,6 +8,8 @@ enum class ClockFace(val id: String) {
     CLASSIC("classic"),
     SPLIT("split"),
     MINIMAL("minimal"),
+    BOLD("bold"),
+    ELEGANT("elegant"),
     ANALOG("analog"),
     ;
 
