@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -28,8 +30,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -146,6 +150,7 @@ fun MusicScreen(
             }
 
             if (landscape) {
+                val playerMinHeight = maxHeight * 0.50f
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier
@@ -166,7 +171,9 @@ fun MusicScreen(
                                     .weight(1f),
                             )
                             card(
-                                Modifier.fillMaxWidth(),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = playerMinHeight),
                                 false,
                             )
                         }
@@ -189,7 +196,7 @@ fun MusicScreen(
                         playing = playing,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(176.dp),
+                            .height(156.dp),
                     )
                     card(
                         Modifier
@@ -311,7 +318,10 @@ private fun TrackPlayer(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.spacedBy(
+                VibhorSpacing.lg,
+                Alignment.CenterHorizontally,
+            ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TransportButton(
@@ -321,13 +331,11 @@ private fun TrackPlayer(
                 onClick = onPrevious,
                 testTag = MusicTestTags.Previous,
             )
-            Spacer(modifier = Modifier.width(22.dp))
             PlayPauseButton(
                 playing = track.isPlaying,
                 enabled = track.canPlayPause,
                 onClick = onPlayPause,
             )
-            Spacer(modifier = Modifier.width(22.dp))
             TransportButton(
                 iconRes = R.drawable.ic_skip_next,
                 contentDescription = stringResource(R.string.music_next),
@@ -435,20 +443,28 @@ private fun PlaybackProgress(
     } else {
         0f
     }
-    val animatedTarget by animateFloatAsState(
-        targetValue = target,
-        animationSpec = tween(durationMillis = 1_000, easing = LinearEasing),
-        label = "playback-progress",
-    )
 
     var dragging by remember { mutableStateOf(false) }
     var pendingFraction by remember(durationMs) { mutableStateOf<Float?>(null) }
+    // Snap straight to the dragged value; only animate ordinary position ticks.
+    // This keeps the thumb under the finger and avoids a snap back to the old
+    // spot when the session confirms the seek.
+    val fraction by animateFloatAsState(
+        targetValue = pendingFraction ?: target,
+        animationSpec = if (pendingFraction != null) {
+            snap()
+        } else {
+            tween(durationMillis = 1_000, easing = LinearEasing)
+        },
+        label = "playback-progress",
+    )
 
     // Keep the chosen position on screen until the real session reports the
     // seeked position, so the thumb does not snap back between updates.
     LaunchedEffect(positionMs, pendingFraction, dragging) {
         val pending = pendingFraction ?: return@LaunchedEffect
-        if (!dragging && abs(target - pending) <= SEEK_MATCH_TOLERANCE) {
+        val pendingMs = (pending * duration).roundToLong()
+        if (!dragging && abs(positionMs - pendingMs) <= SEEK_MATCH_WINDOW_MS) {
             pendingFraction = null
         }
     }
@@ -459,7 +475,6 @@ private fun PlaybackProgress(
         }
     }
 
-    val fraction = pendingFraction ?: animatedTarget
     val shownPositionMs = if (dragging || pendingFraction != null) {
         (fraction * duration).roundToLong()
     } else {
@@ -489,7 +504,7 @@ private fun PlaybackProgress(
             thumb = {
                 Box(
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                         .background(
                             if (seekable) accent else SecondaryText.copy(alpha = 0.45f),
@@ -500,7 +515,7 @@ private fun PlaybackProgress(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(12.dp)
+                        .height(16.dp)
                         .clip(trackShape)
                         .background(PrimaryText.copy(alpha = 0.12f))
                         .testTag(MusicTestTags.ProgressBar),
@@ -553,29 +568,28 @@ private fun PlayPauseButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = VibhorThemeColors.accent
-    Surface(
+    FilledIconButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
-            .size(62.dp)
+            .size(64.dp)
             .testTag(MusicTestTags.PlayPause),
-        shape = CircleShape,
-        color = if (enabled) accent else SurfaceElevated,
-        contentColor = if (enabled) VibhorThemeColors.accentOn else SecondaryText,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = VibhorThemeColors.accent,
+            contentColor = VibhorThemeColors.accentOn,
+            disabledContainerColor = SurfaceElevated,
+            disabledContentColor = SecondaryText.copy(alpha = 0.55f),
+        ),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painter = painterResource(
-                    if (playing) R.drawable.ic_pause else R.drawable.ic_media,
-                ),
-                contentDescription = stringResource(
-                    if (playing) R.string.music_pause else R.string.music_play,
-                ),
-                tint = if (enabled) VibhorThemeColors.accentOn else SecondaryText,
-                modifier = Modifier.size(28.dp),
-            )
-        }
+        Icon(
+            painter = painterResource(
+                if (playing) R.drawable.ic_pause else R.drawable.ic_media,
+            ),
+            contentDescription = stringResource(
+                if (playing) R.string.music_pause else R.string.music_play,
+            ),
+            modifier = Modifier.size(32.dp),
+        )
     }
 }
 
@@ -592,14 +606,17 @@ private fun TransportButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
-            .size(52.dp)
+            .size(56.dp)
             .testTag(testTag),
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = PrimaryText,
+            disabledContentColor = SecondaryText.copy(alpha = 0.35f),
+        ),
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
-            tint = if (enabled) PrimaryText else SecondaryText.copy(alpha = 0.35f),
-            modifier = Modifier.size(28.dp),
+            modifier = Modifier.size(30.dp),
         )
     }
 }
@@ -690,7 +707,7 @@ private fun SliderPair(
 }
 
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
-private const val SEEK_MATCH_TOLERANCE = 0.02f
+private const val SEEK_MATCH_WINDOW_MS = 1_000L
 private const val SEEK_TIMEOUT_MILLIS = 3_000L
 
 @Preview(name = "Music landscape", widthDp = 1024, heightDp = 600)

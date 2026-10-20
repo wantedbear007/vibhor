@@ -53,14 +53,18 @@ class MusicScreenTest {
                 .fetchSemanticsNodes().isNotEmpty()
         }
 
-        val astronautBottom = composeRule.onNodeWithTag(MusicTestTags.Astronaut)
-            .fetchSemanticsNode().boundsInRoot.bottom
-        val cardTop = composeRule.onNodeWithTag(MusicTestTags.Card)
-            .fetchSemanticsNode().boundsInRoot.top
+        val astronaut = composeRule.onNodeWithTag(MusicTestTags.Astronaut)
+            .fetchSemanticsNode().boundsInRoot
+        val card = composeRule.onNodeWithTag(MusicTestTags.Card)
+            .fetchSemanticsNode().boundsInRoot
 
         assertTrue(
             "The astronaut stage must sit above the player card",
-            astronautBottom <= cardTop,
+            astronaut.bottom <= card.top,
+        )
+        assertTrue(
+            "The player card should be taller than the astronaut stage",
+            card.height > astronaut.height,
         )
     }
 
@@ -126,7 +130,7 @@ class MusicScreenTest {
             composeRule.onNodeWithText("Test Track").assertIsDisplayed()
             composeRule.onNodeWithText("Test Artist").assertIsDisplayed()
             composeRule.onNodeWithTag(MusicTestTags.ProgressBar, useUnmergedTree = true)
-                .assertHeightIsAtLeast(12.dp)
+                .assertHeightIsAtLeast(16.dp)
 
             composeRule.onNodeWithTag(MusicTestTags.PlayPause).performClick()
             composeRule.waitUntil(timeoutMillis = 3_000L) { pauseCalls.get() == 1 }
