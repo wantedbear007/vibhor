@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.settings
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,11 +16,11 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import com.pratap.vibhor.R
+import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.LauncherSettings
@@ -48,13 +50,15 @@ import com.pratap.vibhor.core.ui.clock.ClassicClockFace
 import com.pratap.vibhor.core.ui.clock.ElegantClockFace
 import com.pratap.vibhor.core.ui.clock.MinimalClockFace
 import com.pratap.vibhor.core.ui.clock.SplitClockFace
+import com.pratap.vibhor.core.ui.components.PillSlider
 import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.ElectricBlue
+import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
 import com.pratap.vibhor.core.ui.theme.VibhorSpacing
 import com.pratap.vibhor.core.ui.theme.VibhorTheme
+import com.pratap.vibhor.core.ui.theme.toColor
 
 object SettingsTestTags {
     const val Page = "page_settings"
@@ -67,6 +71,7 @@ object SettingsTestTags {
     const val StatusBarToggle = "settings_status_bar_toggle"
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
+    const val AccentOptionPrefix = "settings_accent_"
     const val Close = "settings_close"
     const val Reset = "settings_reset"
 }
@@ -87,6 +92,7 @@ fun SettingsScreen(
     onShowStatusBarChange: (Boolean) -> Unit,
     onQuickButtonScaleChange: (Float) -> Unit,
     onAppIconScaleChange: (Float) -> Unit,
+    onAccentColorChange: (AccentColor) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -113,7 +119,7 @@ fun SettingsScreen(
                 Icon(
                     painter = painterResource(R.drawable.ic_settings),
                     contentDescription = null,
-                    tint = ElectricBlue,
+                    tint = VibhorThemeColors.accent,
                     modifier = Modifier.size(28.dp),
                 )
                 Text(
@@ -163,6 +169,11 @@ fun SettingsScreen(
                 onToggle = onShowStatusBarChange,
             )
 
+            AccentColorSetting(
+                selected = state.accentColor,
+                onSelect = onAccentColorChange,
+            )
+
             ScaleSetting(
                 title = stringResource(R.string.settings_quick_button_size),
                 value = state.quickButtonScale,
@@ -183,7 +194,7 @@ fun SettingsScreen(
             ) {
                 Text(
                     text = stringResource(R.string.settings_reset),
-                    color = ElectricBlue,
+                    color = VibhorThemeColors.accent,
                 )
             }
         }
@@ -236,7 +247,7 @@ private fun ClockBackdropSetting(
                         stringResource(R.string.settings_value_off)
                     },
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (blurEnabled) ElectricBlue else SecondaryText,
+                    color = if (blurEnabled) VibhorThemeColors.accent else SecondaryText,
                 )
                 Switch(
                     checked = blurEnabled,
@@ -249,7 +260,7 @@ private fun ClockBackdropSetting(
                 )
             }
         }
-        Slider(
+        PillSlider(
             value = blurValue,
             onValueChange = { blurValue = it },
             onValueChangeFinished = { onBlurChange(blurValue.toInt()) },
@@ -274,10 +285,10 @@ private fun ClockBackdropSetting(
                     (darknessValue * 100).toInt(),
                 ),
                 style = MaterialTheme.typography.bodyLarge,
-                color = ElectricBlue,
+                color = VibhorThemeColors.accent,
             )
         }
-        Slider(
+        PillSlider(
             value = darknessValue,
             onValueChange = { darknessValue = it },
             onValueChangeFinished = { onDarknessChange(darknessValue) },
@@ -320,6 +331,79 @@ private fun StatusBarSetting(
 }
 
 @Composable
+private fun AccentColorSetting(
+    selected: AccentColor,
+    onSelect: (AccentColor) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_accent_color),
+            style = MaterialTheme.typography.titleMedium,
+            color = PrimaryText,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+        ) {
+            AccentColor.entries.forEach { accent ->
+                val isSelected = accent == selected
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(SettingsTestTags.AccentOptionPrefix + accent.id),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(VibhorSpacing.xs),
+                ) {
+                    Surface(
+                        onClick = { onSelect(accent) },
+                        shape = CircleShape,
+                        color = accent.toColor(),
+                        border = BorderStroke(
+                            width = if (isSelected) 3.dp else 1.dp,
+                            color = if (isSelected) {
+                                PrimaryText
+                            } else {
+                                SecondaryText.copy(alpha = 0.35f)
+                            },
+                        ),
+                        modifier = Modifier.size(44.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(Midnight, CircleShape),
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = stringResource(accent.labelRes),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isSelected) PrimaryText else SecondaryText,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val AccentColor.labelRes: Int
+    get() = when (this) {
+        AccentColor.BLUE -> R.string.settings_accent_blue
+        AccentColor.TEAL -> R.string.settings_accent_teal
+        AccentColor.GREEN -> R.string.settings_accent_green
+        AccentColor.PURPLE -> R.string.settings_accent_purple
+        AccentColor.ORANGE -> R.string.settings_accent_orange
+        AccentColor.PINK -> R.string.settings_accent_pink
+    }
+
+@Composable
 private fun ScaleSetting(
     title: String,
     value: Float,
@@ -348,10 +432,10 @@ private fun ScaleSetting(
                     (sliderValue * 100).toInt(),
                 ),
                 style = MaterialTheme.typography.titleMedium,
-                color = ElectricBlue,
+                color = VibhorThemeColors.accent,
             )
         }
-        Slider(
+        PillSlider(
             value = sliderValue,
             onValueChange = { sliderValue = it },
             onValueChangeFinished = { onValueChange(sliderValue) },
@@ -406,7 +490,7 @@ private fun ClockFaceCard(
         color = DeepSlate,
         border = BorderStroke(
             width = if (selected) 2.dp else 1.dp,
-            color = if (selected) ElectricBlue else DeepSlate,
+            color = if (selected) VibhorThemeColors.accent else DeepSlate,
         ),
         modifier = modifier
             .width(160.dp)
@@ -470,7 +554,7 @@ private fun ClockFaceCard(
             Text(
                 text = stringResource(face.labelRes),
                 style = MaterialTheme.typography.labelSmall,
-                color = if (selected) ElectricBlue else SecondaryText,
+                color = if (selected) VibhorThemeColors.accent else SecondaryText,
             )
         }
     }
@@ -527,10 +611,10 @@ private fun FormatOptionChip(
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.small,
-        color = if (selected) ElectricBlue.copy(alpha = 0.16f) else DeepSlate,
+        color = if (selected) VibhorThemeColors.accent.copy(alpha = 0.16f) else DeepSlate,
         border = BorderStroke(
             width = if (selected) 2.dp else 1.dp,
-            color = if (selected) ElectricBlue else DeepSlate,
+            color = if (selected) VibhorThemeColors.accent else DeepSlate,
         ),
         modifier = modifier
             .height(48.dp)
@@ -540,7 +624,7 @@ private fun FormatOptionChip(
             Text(
                 text = stringResource(format.labelRes),
                 style = MaterialTheme.typography.labelLarge,
-                color = if (selected) ElectricBlue else SecondaryText,
+                color = if (selected) VibhorThemeColors.accent else SecondaryText,
             )
         }
     }
@@ -571,6 +655,7 @@ private fun SettingsLandscapePreview() {
             onShowStatusBarChange = {},
             onQuickButtonScaleChange = {},
             onAppIconScaleChange = {},
+            onAccentColorChange = {},
             onResetToDefaults = {},
             onClose = {},
         )

@@ -22,7 +22,9 @@ class LauncherPagerTest {
         composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
 
         composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithText("Navigation").assertIsDisplayed()
+        composeRule.onNodeWithTag(CockpitTestTags.VolumeSlider).assertIsDisplayed()
+        composeRule.onNodeWithTag(CockpitTestTags.BrightnessSlider).assertIsDisplayed()
+        composeRule.onNodeWithText("Navigation").assertDoesNotExist()
     }
 
     @Test

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.LauncherSettings
@@ -35,6 +36,7 @@ class SettingsViewModel(
                 backgroundDarkness = settings.backgroundDarkness,
                 showStatusBar = settings.showStatusBar,
                 quickButtonScale = settings.quickButtonScale,
+                accentColor = settings.accentColor,
             )
         }
         .stateIn(
@@ -60,6 +62,8 @@ class SettingsViewModel(
 
     fun setQuickButtonScale(scale: Float) = settingsStore.setQuickButtonScale(scale)
 
+    fun setAccentColor(color: AccentColor) = settingsStore.setAccentColor(color)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
@@ -69,6 +73,7 @@ class SettingsViewModel(
         settingsStore.setBackgroundDarkness(LauncherSettings.DEFAULT_DARKNESS)
         settingsStore.setShowStatusBar(LauncherSettings.DEFAULT_SHOW_STATUS_BAR)
         settingsStore.setQuickButtonScale(LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
+        settingsStore.setAccentColor(AccentColor.DEFAULT)
     }
 
     companion object {

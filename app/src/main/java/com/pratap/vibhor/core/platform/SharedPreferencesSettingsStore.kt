@@ -78,6 +78,11 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(quickButtonScale = clamped) }
     }
 
+    override fun setAccentColor(color: AccentColor) {
+        prefs.edit { putString(KEY_ACCENT_COLOR, color.id) }
+        state.update { it.copy(accentColor = color) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -142,6 +147,7 @@ class SharedPreferencesSettingsStore private constructor(
         quickButtonScale = prefs
             .getFloat(KEY_QUICK_BUTTON_SCALE, LauncherSettings.DEFAULT_QUICK_BUTTON_SCALE)
             .coerceIn(LauncherSettings.MIN_QUICK_BUTTON_SCALE, LauncherSettings.MAX_QUICK_BUTTON_SCALE),
+        accentColor = AccentColor.fromId(prefs.getString(KEY_ACCENT_COLOR, null)),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -167,6 +173,7 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_DARKNESS = "background_darkness"
         private const val KEY_SHOW_STATUS_BAR = "show_status_bar"
         private const val KEY_QUICK_BUTTON_SCALE = "quick_button_scale"
+        private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

@@ -1,6 +1,5 @@
 package com.pratap.vibhor.feature.cockpit
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,8 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
-import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.ElectricBlue
+import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
@@ -95,30 +92,13 @@ fun CockpitScreen(
                             .width(148.dp)
                             .fillMaxHeight(),
                     )
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .padding(VibhorSpacing.xl),
-                            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xxl, Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            SoundControl(
-                                value = state.volumeLevel,
-                                onValueChange = onVolumeChange,
-                            )
-                            BrightnessControl(
-                                value = state.brightnessLevel,
-                                onValueChange = onBrightnessChange,
-                            )
-                        }
-                    }
+                    ControlCluster(
+                        volume = state.volumeLevel,
+                        brightness = state.brightnessLevel,
+                        onVolumeChange = onVolumeChange,
+                        onBrightnessChange = onBrightnessChange,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             } else {
                 Column(
@@ -132,23 +112,12 @@ fun CockpitScreen(
                             .fillMaxWidth()
                             .padding(bottom = VibhorSpacing.sm),
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(horizontal = VibhorSpacing.xl),
-                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xxl, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SoundControl(
-                            value = state.volumeLevel,
-                            onValueChange = onVolumeChange,
-                        )
-                        BrightnessControl(
-                            value = state.brightnessLevel,
-                            onValueChange = onBrightnessChange,
-                        )
-                    }
+                    ControlCluster(
+                        volume = state.volumeLevel,
+                        brightness = state.brightnessLevel,
+                        onVolumeChange = onVolumeChange,
+                        onBrightnessChange = onBrightnessChange,
+                    )
                 }
             }
         }
@@ -191,6 +160,30 @@ private fun CockpitSideRail(
                 modifier = Modifier.size(28.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun ControlCluster(
+    volume: Float,
+    brightness: Float,
+    onVolumeChange: (Float) -> Unit,
+    onBrightnessChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.xl),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SoundControl(
+            value = volume,
+            onValueChange = onVolumeChange,
+        )
+        BrightnessControl(
+            value = brightness,
+            onValueChange = onBrightnessChange,
+        )
     }
 }
 
@@ -250,8 +243,8 @@ private fun VerticalControlSlider(
         )
         Box(
             modifier = Modifier
-                .width(52.dp)
-                .height(240.dp)
+                .width(104.dp)
+                .height(480.dp)
                 .clip(RoundedCornerShape(999.dp))
                 .background(PrimaryText.copy(alpha = 0.12f))
                 .pointerInput(Unit) {
@@ -274,6 +267,7 @@ private fun VerticalControlSlider(
             contentAlignment = Alignment.BottomCenter,
         ) {
             val fillFraction = animateFloatAsState(targetValue = dragValue.coerceIn(0f, 1f), label = "fill")
+            val fillColor = VibhorThemeColors.accent
             Canvas(
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -281,7 +275,7 @@ private fun VerticalControlSlider(
                 val trackWidth = size.width
                 val fillHeight = trackHeight * fillFraction.value
                 drawRoundRect(
-                    color = ElectricBlue.copy(alpha = 0.85f),
+                    color = fillColor.copy(alpha = 0.85f),
                     topLeft = Offset(0f, trackHeight - fillHeight),
                     size = Size(trackWidth, fillHeight),
                     cornerRadius = CornerRadius(trackWidth / 2f, trackWidth / 2f),
@@ -296,29 +290,6 @@ private fun VerticalControlSlider(
                     .background(PrimaryText.copy(alpha = 0.18f)),
             )
         }
-    }
-}
-
-@Composable
-private fun CardHeader(
-    @DrawableRes iconRes: Int,
-    title: String,
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.md),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = ElectricBlue,
-            modifier = Modifier.size(32.dp),
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = PrimaryText,
-        )
     }
 }
 

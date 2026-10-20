@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import com.pratap.vibhor.core.ui.theme.ElectricBlue
+import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
 import com.pratap.vibhor.core.ui.theme.VibhorSpacing
@@ -189,7 +189,7 @@ fun BoldClockFace(
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = FontFamily.SansSerif,
                 letterSpacing = baseSize * 0.04f,
-                color = ElectricBlue,
+                color = VibhorThemeColors.accent,
                 modifier = dateModifier,
             )
         }
@@ -231,7 +231,7 @@ fun ElegantClockFace(
                 modifier = Modifier
                     .padding(horizontal = (baseSize.value * 0.05f).dp)
                     .size(width = 2.dp, height = (timeSize.value * 0.5f).dp)
-                    .background(ElectricBlue),
+                    .background(VibhorThemeColors.accent),
             )
             Text(
                 text = minuteText,
@@ -290,6 +290,7 @@ fun AnalogClockFace(
         }
     }
     val diameter = with(LocalDensity.current) { (baseSize * 1.1f).toDp() }
+    val accent = VibhorThemeColors.accent
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -350,9 +351,9 @@ fun AnalogClockFace(
                 angleDegrees = liveSecond * 6f,
                 length = 0.78f,
                 width = 0.022f,
-                color = ElectricBlue,
+                color = accent,
             )
-            drawCircle(color = ElectricBlue, radius = radius * 0.05f, center = center)
+            drawCircle(color = accent, radius = radius * 0.05f, center = center)
         }
         if (showDate) {
             Text(

@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.ElectricBlue
+import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText
@@ -168,7 +168,7 @@ private fun AppDrawerTabs(
         indicator = { tabPositions ->
             TabRowDefaults.SecondaryIndicator(
                 modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
-                color = ElectricBlue,
+                color = VibhorThemeColors.accent,
             )
         },
     ) {

@@ -53,7 +53,6 @@ import com.pratap.vibhor.core.ui.clock.ElegantClockFace
 import com.pratap.vibhor.core.ui.clock.MinimalClockFace
 import com.pratap.vibhor.core.ui.clock.SplitClockFace
 import com.pratap.vibhor.core.ui.theme.DeepSlate
-import com.pratap.vibhor.core.ui.theme.ElectricBlue
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
 import com.pratap.vibhor.core.ui.theme.SecondaryText

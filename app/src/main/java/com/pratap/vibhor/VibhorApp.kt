@@ -26,7 +26,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pratap.vibhor.core.platform.AndroidAppLauncher
 import com.pratap.vibhor.core.platform.AppLauncher
-import com.pratap.vibhor.core.platform.NavigationApp
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
 import com.pratap.vibhor.feature.apps.AppDrawerScreen
@@ -122,9 +121,6 @@ fun VibhorApp(homeRequestToken: Int = 0) {
             LauncherPage.Apps -> AppsRoute(appLauncher = appLauncher)
             LauncherPage.Home -> HomeRoute()
             LauncherPage.Cockpit -> CockpitRoute(
-                onOpenNavigation = { app ->
-                    appLauncher.launch(app.packageName, app.activityName)
-                },
                 onOpenSettings = { settingsVisible = true },
             )
         }
@@ -167,7 +163,6 @@ private fun AppsRoute(
 
 @Composable
 private fun CockpitRoute(
-    onOpenNavigation: (NavigationApp) -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
 ) {
@@ -196,6 +191,7 @@ private fun SettingsRoute(
         onShowStatusBarChange = viewModel::setShowStatusBar,
         onQuickButtonScaleChange = viewModel::setQuickButtonScale,
         onAppIconScaleChange = viewModel::setAppIconScale,
+        onAccentColorChange = viewModel::setAccentColor,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,
     )

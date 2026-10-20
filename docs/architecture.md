@@ -9,21 +9,21 @@ launcher UI is a three-page horizontal pager (Apps, Home, Cockpit).
 
 | Package | Responsibility |
 |---|---|
-| `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset) and `VibhorApp` (horizontal pager host + Settings overlay). |
-| `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. |
+| `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset, accent theme host) and `VibhorApp` (horizontal pager host + Settings overlay). |
+| `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
 | `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Apps, Home, Cockpit). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
-| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), navigation-app discovery (`NavigationAppsSource`), app launching (`AppLauncher`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace` enum (Classic/Split/Minimal/Analog). |
-| `core.ui.clock` | Four stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
-| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock). |
-| `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (navigation + media cards, Settings entry point in the side rail). |
-| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, and `AppDrawerScreen` (installed-app grid). |
-| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (clock-size and app-icon-size sliders). |
+| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, and `AccentColor` enums. |
+| `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
+| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
+| `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
+| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, and `AppDrawerScreen` (Favourites/All tabs over the installed-app grid). |
+| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
 
 UI code does not access Android system services directly. All system
 integrations live in `core.platform` behind small interfaces (`ClockTicker`,
-`InstalledAppsSource`, `NavigationAppsSource`, `AppLauncher`), so they can be
-faked in unit tests.
+`InstalledAppsSource`, `AppLauncher`, `DeviceControls`), so they can be faked
+in unit tests.
 
 ## Pager and screen host
 
@@ -106,10 +106,12 @@ PackageManager (MAIN/LAUNCHER query) + package-change broadcasts
             ▼
 AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSource
             │  Flow<List<InstalledApp>>, re-emitted on package changes
-            ▼
-AppDrawerViewModel  ──  stateIn(WhileSubscribed(5s))
-            ▼
-StateFlow<AppDrawerUiState>  ──►  AppDrawerScreen (grid, tap to launch)
+            ├──────────────► AppDrawerViewModel  ──  stateIn(WhileSubscribed(5s))
+            │                        ▼
+            │                StateFlow<AppDrawerUiState>  ──►  AppDrawerScreen
+            └──────────────► HomeViewModel  ──  favourites = installed ∩ persisted
+                                     ▼
+                             Quick + popup on HomeScreen
 ```
 
 - Icons are decoded off the main thread once per package set and reused; they
@@ -117,20 +119,58 @@ StateFlow<AppDrawerUiState>  ──►  AppDrawerScreen (grid, tap to launch)
   only for the current package list.
 - Launching goes through `AppLauncher` (interface) implemented by
   `AndroidAppLauncher`; the presentation layer never calls `startActivity`.
+- Favourites are stored by package name in `LauncherSettings` and joined with
+  the live installed-app list, so uninstalled apps disappear without leaving a
+  stale entry. The drawer tab (`Favourites`/`All`) lives in
+  `AppDrawerViewModel`. Home and the drawer share the same source of truth.
 
-### Navigation-app discovery (Cockpit)
+### Cockpit device controls
 
-`AndroidNavigationAppsSource` resolves the installed navigation app once (via
-`PackageManager` intent queries for the navigation/mapping intent) and exposes
-it to `CockpitViewModel`. If none is found, the navigation card shows an
-honest empty state. The media card always shows an honest empty state; no
-playback state is fabricated.
+`CockpitViewModel` combines the clock ticker, settings, and
+`DeviceControls.observeChanges()`; `DeviceControls` is the small platform
+interface implemented by `AndroidDeviceControls`:
+
+- **Volume** reads and writes `AudioManager.STREAM_MUSIC`. Slider fraction →
+  index mapping is a pure function (`DeviceLevels`) and is unit tested. A
+  runtime receiver for `android.media.VOLUME_CHANGED_ACTION` keeps the UI in
+  sync when hardware keys or another app change the stream.
+- **Brightness** uses the current activity's window attribute
+  (`screenBrightness`), never `WRITE_SETTINGS` and never the global system
+  brightness. Because it is window-scoped, it disappears with the window. The
+  effective value falls back to the system brightness scale when no override
+  exists.
+- The sliders are custom Canvas composables (`VerticalControlSlider`) with
+  `detectDragGestures`: the top of the track is the maximum, the bottom the
+  minimum. No third-party slider library is used.
+
+### Accent color and theming
+
+`MainActivity` obtains the process-wide `SharedPreferencesSettingsStore`,
+collects `LauncherSettings`, and passes `accentColor` into `VibhorTheme`.
+`VibhorTheme` builds the Material `darkColorScheme` from that accent and
+provides it through `LocalAccentColor`.
+
+```text
+LauncherSettings.accentColor (persisted id)
+            │
+            ▼
+MainActivity ── VibhorTheme(accentColor) ── MaterialTheme.primary
+                                        └── LocalAccentColor
+                                                  │
+                                                  ▼
+                            VibhorThemeColors.accent (all feature UI)
+```
+
+Screens must read accents from `VibhorThemeColors.accent` (or
+`MaterialTheme.colorScheme.primary`); hardcoded accent literals are not used
+anywhere in feature code. A new accent option is added once in `AccentColor`,
+once in the theme palette, and once in the Settings swatch row.
 
 ### Settings persistence
 
 ```text
-SettingsScreen (sliders, commit on release)
-        │  setClockScale / setAppIconScale / resetToDefaults
+SettingsScreen (sliders commit on release; swatches immediately)
+        │  setters + resetToDefaults
         ▼
 SettingsViewModel  ──►  StateFlow<LauncherSettings>
         ▲                       │ collectAsStateWithLifecycle()
@@ -141,31 +181,40 @@ SettingsStore (core.platform interface)
         └── InMemorySettingsStore           (tests and previews)
 ```
 
-- `LauncherSettings` holds two clamped scale multipliers (`clockScale` and
-  `appIconScale`, range 0.5–2.0, default 1.0), the selected `clockFace`
-  (`ClockFace`, default `CLASSIC`), and the selected `clockFormat`
-  (`ClockFormat`, default `SYSTEM`).
+- `LauncherSettings` holds the clamped scale multipliers (`clockScale`,
+  `appIconScale`, `quickButtonScale`), the selected `clockFace`,
+  `clockFormat`, and `accentColor`, the clock-backdrop values
+  (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1), `showStatusBar`, and the
+  favourite package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
-  over the `vibhor_launcher_settings` preferences file (keys `clock_scale`,
-  `app_icon_scale`, `clock_face`, `clock_format`); the in-memory `StateFlow`
-  is updated synchronously and the preference write is flushed with `apply()`.
-  The `clock_face` and `clock_format` keys store the enum's stable string id
-  and fall back to the default on unknown values.
+  over the `vibhor_launcher_settings` preferences file. Keys include
+  `clock_scale`, `app_icon_scale`, `clock_face`, `clock_format`,
+  `clock_blur_radius`, `background_darkness`, `show_status_bar`,
+  `quick_button_scale`, `accent_color`, and `favourite_package_names`. The
+  in-memory `StateFlow` is updated synchronously and the preference write is
+  flushed with `apply()`. Enum keys store the stable string id and fall back to
+  the default on unknown values.
 - Both `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings`
   so the clock format applies to the Home clock **and** the Cockpit rail
   clock. `ClockFormat.SYSTEM` consults `DateFormat.is24HourFormat`; `H12`/`H24`
   override it regardless of the device setting.
-- Scales multiply sizes computed per screen (clock size on Home; icon, cell,
-  and label sizes on Apps), so a single pair of settings works across
+- `HomeViewModel` starts the app list with an empty-emission `onStart` so the
+  clock never waits for the installed-app scan; favourites update when
+  discovery completes.
+- Scales multiply sizes computed per screen, so a single setting works across
   densities, orientations, and future content changes.
 - ViewModels receive a `SettingsStore` through their factories and expose
-  derived scale state in their own `UiState`; composables stay stateless.
+  derived state in their own `UiState`; composables stay stateless.
+- Every Settings slider uses the shared `PillSlider` (`core.ui.components`),
+  the horizontal counterpart of the Cockpit track: a 48dp fully rounded pill,
+  accent fill, translucent track, tap or drag to change, and step snapping via
+  the pure, unit-tested `snapToSteps` helper.
 
 ### Clock faces (Home)
 
-Home renders one of four clock faces based on `settings.clockFace`. Each face
+Home renders one of six clock faces based on `settings.clockFace`. Each face
 is a stateless composable in `core.ui.clock` that sizes itself from one
 `baseSize` budget, so the same composable renders full-size on Home and as a
 miniature static preview on the Settings screen:
@@ -175,6 +224,8 @@ HomeScreen ── when (state.clockFace)
 ├── CLASSIC → ClassicClockFace   (serif time + date)
 ├── SPLIT   → SplitClockFace     (hour above minutes + meridiem + date)
 ├── MINIMAL → MinimalClockFace   (thin sans-serif time, no date)
+├── BOLD    → BoldClockFace      (heavy time + compact date)
+├── ELEGANT → ElegantClockFace   (serif split time + accent divider)
 └── ANALOG  → AnalogClockFace    (Canvas face: ticks, hands, accent second hand + date)
 ```
 
@@ -214,16 +265,16 @@ following intent filter:
 
 - **Media:** a `core.platform` media-session source (for example
   `MediaSessionManager` or a notification listener, subject to permissions)
-  behind a small interface, with presentation in the existing media card or a
-  new `feature.media` package. Media playback itself stays outside the
-  launcher. Do not simulate playback metadata.
-- **Turn-by-turn navigation:** extend `NavigationAppsSource` or add a routing
-  integration in `core.platform`; keep the presentation in `feature.cockpit`.
-  Do not simulate live guidance data.
-- **Settings / preferences:** `SettingsStore` (core.platform) with a
-  `SharedPreferences` implementation now exists; new preferences should be
-  added as fields of `LauncherSettings` with clamped defaults and surfaced as
-  sliders or toggles on the existing `SettingsScreen`.
+  behind a small interface, with presentation in a new `feature.media` package.
+  Media playback itself stays outside the launcher. Do not simulate playback
+  metadata.
+- **New controls:** extend `DeviceControls` (core.platform) and surface them on
+  the existing Cockpit screen; keep Android service access behind the interface
+  so unit tests use a fake.
+- **Settings / preferences:** new preferences should be added as fields of
+  `LauncherSettings` with clamped defaults, persisted with a stable key, and
+  surfaced on the existing `SettingsScreen`. New UI must take its accent from
+  `VibhorThemeColors.accent`, never a literal.
 - **More screens:** introduce a navigation library only when deep links,
   nested graphs, or many screens make it pay for itself. The pager is
   sufficient for the three launcher pages.

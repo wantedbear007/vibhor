@@ -9,7 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.ui.theme.VibhorTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,7 +27,13 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            VibhorTheme {
+            // The persisted accent drives the entire launcher theme, so every
+            // screen (and the full-screen settings overlay) shares one accent.
+            val settingsStore = remember {
+                SharedPreferencesSettingsStore.get(applicationContext)
+            }
+            val settings by settingsStore.settings.collectAsStateWithLifecycle()
+            VibhorTheme(accentColor = settings.accentColor) {
                 VibhorApp(homeRequestToken = homeRequestToken)
             }
         }

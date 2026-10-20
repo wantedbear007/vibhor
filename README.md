@@ -7,13 +7,12 @@ application.
 
 This milestone turns the foundation into a three-screen automotive launcher.
 The screens are laid out on a horizontal pager: **Home** (system wallpaper and
-a large clock), **Cockpit** (navigation and media cards), and **Apps** (a grid
-of installed launcher apps). The system wallpaper is rendered by Android behind
-the window, so no storage permission is required and no wallpaper bitmap is
-ever decoded. App discovery, media integration, and navigation integration
-beyond launching an installed navigation app are intentionally not included.
-A **Settings** overlay (clock size and app-icon size) is reachable from the
-Cockpit side rail and persists through `SharedPreferences`.
+a large clock), **Cockpit** (clock rail plus sound and brightness controls), and
+**Apps** (favourites and a grid of installed launcher apps). The system
+wallpaper is rendered by Android behind the window, so no storage permission is
+required and no wallpaper bitmap is ever decoded. A **Settings** overlay is
+reachable from the Cockpit rail and persists every tunable option — including
+the launcher-wide accent color — through `SharedPreferences`.
 
 ## Target device
 
@@ -108,9 +107,9 @@ Cockpit**, with Home as the default (middle) page.
 
 | Page | Content |
 |---|---|
-| **Home** (default) | System wallpaper + large clock + date only. No branding, cards, buttons, or dock. |
-| **Cockpit** | Navigation card (launches the discovered navigation app, or an honest empty state) + media card (honest empty state). No fabricated playback state. |
-| **Apps** | Responsive grid of real installed launcher apps, sorted by label; tapping launches the app. |
+| **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
+| **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
+| **Apps** | **Favourites** and **All** tabs over a responsive grid of real installed launcher apps, sorted by label; tapping launches the app, long-pressing toggles a favourite. |
 
 Navigation gestures:
 
@@ -129,9 +128,18 @@ button in the Cockpit side rail. It contains:
 | Setting | Range | Default | Effect |
 |---|---|---|---|
 | Clock size | 50%–200% (5% steps) | 100% | Multiplier on the computed Home clock size |
-| Clock face | Classic / Split / Minimal / Analog | Classic | Which clock face renders on Home (see below) |
+| Clock face | Classic / Split / Minimal / Bold / Elegant / Analog | Classic | Which clock face renders on Home (see below) |
 | Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock **and** the Cockpit rail clock |
+| Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
+| Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
+| Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
+| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Single accent used by every screen and every future control |
+| Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
+
+Every slider on this screen uses the same thick pill track as the Cockpit
+volume and brightness controls: tap or drag anywhere on the pill, with values
+snapping to the supported stops.
 
 Clock faces (each sizes itself from the same computed clock size, so **Clock
 size** and **Reset** apply to all of them):
@@ -139,13 +147,17 @@ size** and **Reset** apply to all of them):
 - **Classic** — large serif time with the date below (the default look).
 - **Split** — hour stacked above minutes with a small meridiem, plus the date.
 - **Minimal** — thin sans-serif time, no date, smaller footprint.
+- **Bold** — heavy sans-serif time with a compact date.
+- **Elegant** — serif hour and minute separated by an accent divider.
 - **Analog** — a Canvas-drawn face (tick marks, hour/minute hands, accent
   second hand) with the date below. The second hand keeps real time while
   Home is visible.
 
-- **Reset to defaults** restores both sliders to 100% and the clock face and time format to their defaults.
+- **Reset to defaults** restores every setting, including the accent color.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
+- The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
+  never hardcoded in a screen, so new UI automatically follows the choice.
 - Scales are multipliers on sizes computed per screen, so the same settings
   work across densities and orientations.
 - **Back** (or the close button) dismisses Settings without leaving Home.
@@ -156,11 +168,13 @@ size** and **Reset** apply to all of them):
   (`windowShowWallpaper`). This requires no storage permission and never decodes
   a wallpaper bitmap. On devices where no wallpaper is available the screen
   falls back to a dark background.
-- The navigation card can discover and launch an installed navigation app, but
-  there is no turn-by-turn guidance, routing, or live traffic integration.
-- The media card shows an honest empty state; there is no media session,
-  metadata, or playback control integration.
-- No weather, location, vehicle, or CAN bus integration exists.
+- Clock blur requires Android 12+; on Android 9 the darkness layer still works.
+- Cockpit volume drives the media stream through `AudioManager`; brightness is
+  a window-level override for the current activity (no `WRITE_SETTINGS`), so it
+  resets once the window is gone. First-party hard keys stay in sync through a
+  runtime volume-change receiver.
+- There is no turn-by-turn navigation, media session, weather, location,
+  vehicle, or CAN bus integration.
 - No boot receiver, background service, database, networking, or analytics.
 - The clock updates once per minute while the screen is visible and reacts to
   system time and time-zone changes. It does not run in the background.
@@ -172,20 +186,20 @@ size** and **Reset** apply to all of them):
 
 ```text
 app/src/main/java/com/pratap/vibhor/
-├── MainActivity.kt              # Launcher entry point, edge-to-edge, home-reset
+├── MainActivity.kt              # Launcher entry point, edge-to-edge, home-reset, accent theme host
 ├── VibhorApp.kt                 # Pager host (Apps/Home/Cockpit) + Settings overlay
 ├── core/
-│   ├── platform/                # App/nav discovery, launcher, clock ticker, settings store, ClockFace enum
+│   ├── platform/                # App discovery, launcher, clock ticker, settings store, accent/device controls
 │   ├── time/                    # Clock abstraction and formatting (incl. split-time pieces)
 │   └── ui/
-│       ├── clock/               # Four stateless clock-face composables (shared by Home + Settings)
+│       ├── clock/               # Six stateless clock-face composables (shared by Home + Settings)
 │       ├── navigation/          # LauncherPage enum (page order)
-│       └── theme/               # Colors, typography, spacing, shapes
+│       └── theme/               # Colors, typography, spacing, shapes, accent CompositionLocal
 └── feature/
-    ├── home/                    # Wallpaper + clock (HomeViewModel, screen)
-    ├── cockpit/                 # Nav + media cards + Settings entry (CockpitViewModel, screen)
-    ├── apps/                    # Installed-app grid (AppDrawerViewModel, screen)
-    └── settings/                # Clock/icon size sliders (SettingsViewModel, screen)
+    ├── home/                    # Wallpaper + clock + Quick + favourites (HomeViewModel, screen)
+    ├── cockpit/                 # Clock rail + volume/brightness sliders (CockpitViewModel, screen)
+    ├── apps/                    # Favourites/All tabs over the installed-app grid (AppDrawerViewModel, screen)
+    └── settings/                # Every persisted launcher setting (SettingsViewModel, screen)
 ```
 
 ## Documentation

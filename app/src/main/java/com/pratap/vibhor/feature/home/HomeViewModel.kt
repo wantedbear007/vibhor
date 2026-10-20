@@ -19,6 +19,7 @@ import com.pratap.vibhor.core.time.splitClockTime
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 class HomeViewModel(
@@ -31,7 +32,9 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = combine(
         clockTicker.ticks(),
         settingsStore.settings,
-        installedAppsSource.apps(),
+        // Never let the clock wait on the app scan: start with no favourites
+        // and update when discovery completes.
+        installedAppsSource.apps().onStart { emit(emptyList()) },
     ) { now, settings, apps ->
         val use24Hour = when (settings.clockFormat) {
             ClockFormat.H24 -> true

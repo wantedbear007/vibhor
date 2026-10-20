@@ -1,5 +1,6 @@
 package com.pratap.vibhor.feature.settings
 
+import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
@@ -85,6 +86,41 @@ class SettingsViewModelTest {
 
         assertEquals(2f, viewModel.uiState.value.clockScale)
         assertEquals(0.5f, viewModel.uiState.value.appIconScale)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `accent color updates ui state and persists to store`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setAccentColor(AccentColor.TEAL)
+        advanceUntilIdle()
+
+        assertEquals(AccentColor.TEAL, viewModel.uiState.value.accentColor)
+        assertEquals(AccentColor.TEAL, store.settings.value.accentColor)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `reset to defaults restores the default accent color`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setAccentColor(AccentColor.PURPLE)
+        advanceUntilIdle()
+        viewModel.resetToDefaults()
+        advanceUntilIdle()
+
+        assertEquals(AccentColor.DEFAULT, viewModel.uiState.value.accentColor)
 
         collection.cancel()
     }

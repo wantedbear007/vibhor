@@ -20,6 +20,7 @@ data class LauncherSettings(
     val backgroundDarkness: Float = DEFAULT_DARKNESS,
     val showStatusBar: Boolean = DEFAULT_SHOW_STATUS_BAR,
     val quickButtonScale: Float = DEFAULT_QUICK_BUTTON_SCALE,
+    val accentColor: AccentColor = AccentColor.DEFAULT,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -59,6 +60,7 @@ interface SettingsStore {
     fun setBackgroundDarkness(darkness: Float)
     fun setShowStatusBar(show: Boolean)
     fun setQuickButtonScale(scale: Float)
+    fun setAccentColor(color: AccentColor)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -156,6 +158,10 @@ class InMemorySettingsStore(
                 ),
             )
         }
+    }
+
+    override fun setAccentColor(color: AccentColor) {
+        state.update { it.copy(accentColor = color) }
     }
 
     override fun addFavourite(packageName: String) {

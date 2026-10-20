@@ -33,6 +33,13 @@
     <string name="settings_status_bar_summary">Hide for a cleaner Home; swipe down to reveal</string>
     <string name="settings_app_icon_size">App icon size</string>
     <string name="settings_quick_button_size">Quick + button size</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_accent_blue">Blue</string>
+    <string name="settings_accent_teal">Teal</string>
+    <string name="settings_accent_green">Green</string>
+    <string name="settings_accent_purple">Purple</string>
+    <string name="settings_accent_orange">Orange</string>
+    <string name="settings_accent_pink">Pink</string>
     <string name="settings_scale_value">%1$d%%</string>
     <string name="settings_reset">Reset to defaults</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>

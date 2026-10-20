@@ -3,6 +3,8 @@ package com.pratap.vibhor.feature.home
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
+import com.pratap.vibhor.core.platform.InstalledApp
+import com.pratap.vibhor.core.platform.InstalledAppsSource
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.time.ClockTicker
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +50,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(
             clockTicker = FakeClockTicker(instant),
             settingsStore = InMemorySettingsStore(),
+            installedAppsSource = FakeInstalledAppsSource(),
             is24HourFormat = { false },
         )
 
@@ -67,6 +70,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(
             clockTicker = FakeClockTicker(instant),
             settingsStore = settingsStore,
+            installedAppsSource = FakeInstalledAppsSource(),
         )
 
         val collection = launch { viewModel.uiState.collect { } }
@@ -82,6 +86,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel(
             clockTicker = FakeClockTicker(ZonedDateTime.now()),
             settingsStore = InMemorySettingsStore(),
+            installedAppsSource = FakeInstalledAppsSource(),
         )
 
         assertEquals(HomeUiState(), viewModel.uiState.value)
@@ -97,6 +102,7 @@ class HomeViewModelTest {
             val viewModel = HomeViewModel(
                 clockTicker = FakeClockTicker(instant),
                 settingsStore = settingsStore,
+                installedAppsSource = FakeInstalledAppsSource(),
                 is24HourFormat = { false },
             )
 
@@ -121,6 +127,7 @@ class HomeViewModelTest {
             settingsStore = InMemorySettingsStore(
                 LauncherSettings(clockFormat = ClockFormat.H24),
             ),
+            installedAppsSource = FakeInstalledAppsSource(),
             is24HourFormat = { false },
         )
 
@@ -142,6 +149,7 @@ class HomeViewModelTest {
             settingsStore = InMemorySettingsStore(
                 LauncherSettings(clockFormat = ClockFormat.H12),
             ),
+            installedAppsSource = FakeInstalledAppsSource(),
             is24HourFormat = { true },
         )
 
@@ -155,9 +163,37 @@ class HomeViewModelTest {
         collection.cancel()
     }
 
+    @Test
+    fun `home favourites use the same installed apps as the app drawer`() =
+        runTest(dispatcher) {
+            val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+            val maps = InstalledApp("com.example.maps", "com.example.maps.MainActivity", "Maps")
+            val store = InMemorySettingsStore()
+            store.addFavourite("com.example.maps")
+            store.addFavourite("com.example.missing")
+            val viewModel = HomeViewModel(
+                clockTicker = FakeClockTicker(instant),
+                settingsStore = store,
+                installedAppsSource = FakeInstalledAppsSource(listOf(maps)),
+            )
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(listOf(maps), viewModel.uiState.value.favourites)
+
+            collection.cancel()
+        }
+
     private class FakeClockTicker(
         private val instant: ZonedDateTime,
     ) : ClockTicker {
         override fun ticks(): Flow<ZonedDateTime> = flowOf(instant)
+    }
+
+    private class FakeInstalledAppsSource(
+        private val apps: List<InstalledApp> = emptyList(),
+    ) : InstalledAppsSource {
+        override fun apps(): Flow<List<InstalledApp>> = flowOf(apps)
     }
 }
