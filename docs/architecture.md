@@ -21,7 +21,7 @@ media session.
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `core.ui.components` | Shared controls: the horizontal settings `PillSlider` and the vertical `VerticalPillSlider` used by both the Apps rail and the Music page. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Favourites button). |
-| `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume/brightness pills, favourites strip). |
+| `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume/brightness pills). |
 | `feature.cockpit` | `CockpitUiState` and `CockpitViewModel` (real device controls, connectivity, night mode, and the Apps clock), shared by the Music and Apps pages. |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
@@ -231,8 +231,12 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   bitmap falls back to the gradient note tile.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises.
-- Progress is a readout, not a seek control, so it never competes with the
-  pager's horizontal drag.
+- The thick progress bar is a `Slider` bound to the real session. Dragging
+  updates the displayed position immediately, and releasing calls
+  `TransportControls.seekTo` when `ACTION_SEEK_TO` is advertised. The slider
+  handles horizontal drags inside its bounds, so only swipes outside it move
+  the pager. If the session never reports the new position, the optimistic
+  value falls back after a short timeout.
 - `refresh()` is re-run on `ON_RESUME` from the Music route, so granting or
   revoking notification access in system settings takes effect on return.
 - `AstronautScene` is a single Canvas. The infinite transitions (bob, nod, foot
@@ -451,9 +455,9 @@ following intent filter:
 ## Where future work belongs
 
 - **Media:** extend `MediaControls`/`AndroidMediaControls` (core.platform.media)
-  and `NowPlaying` when a new session capability is needed (for example seeking
-  or queue metadata), then surface it in `feature.music`. Playback itself stays
-  outside the launcher, and nothing may be simulated.
+  and `NowPlaying` when a new session capability is needed (for example queue
+  metadata), then surface it in `feature.music`. Playback itself stays outside
+  the launcher, and nothing may be simulated.
 - **New controls:** extend `DeviceControls` or `QuickControls` (core.platform)
   and surface them on the Music page or the unified Apps rail; keep Android
   service access behind the interface so unit tests use a fake.

@@ -111,6 +111,14 @@ class AndroidMediaControls(context: Context) : MediaControls {
         runCatching { controller.transportControls.skipToPrevious() }
     }
 
+    override fun seekTo(positionMs: Long) {
+        val controller = active ?: return
+        val supportsSeek =
+            controller.playbackState?.actions?.and(PlaybackState.ACTION_SEEK_TO) != 0L
+        if (!supportsSeek) return
+        runCatching { controller.transportControls.seekTo(positionMs.coerceAtLeast(0L)) }
+    }
+
     override fun release() {
         detach()
         scope.coroutineContext[Job]?.cancel()
@@ -206,6 +214,7 @@ class AndroidMediaControls(context: Context) : MediaControls {
             canPlayPause = actions and PLAY_PAUSE_ACTIONS != 0L,
             canSkipNext = actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
             canSkipPrevious = actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L,
+            canSeek = actions and PlaybackState.ACTION_SEEK_TO != 0L,
         )
 
         if (state?.state == PlaybackState.STATE_PLAYING) {

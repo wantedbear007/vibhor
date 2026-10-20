@@ -53,6 +53,7 @@ class MusicViewModelTest {
             canPlayPause = true,
             canSkipNext = true,
             canSkipPrevious = false,
+            canSeek = true,
         )
         advanceUntilIdle()
 
@@ -76,10 +77,12 @@ class MusicViewModelTest {
         viewModel.playPause()
         viewModel.next()
         viewModel.previous()
+        viewModel.seekTo(42_000L)
 
         assertEquals(1, controls.playPauseCalls)
         assertEquals(1, controls.nextCalls)
         assertEquals(1, controls.previousCalls)
+        assertEquals(listOf(42_000L), controls.seeks)
 
         collection.cancel()
     }
@@ -115,6 +118,7 @@ class MusicViewModelTest {
         var playPauseCalls = 0
         var nextCalls = 0
         var previousCalls = 0
+        val seeks = mutableListOf<Long>()
 
         override fun hasAccess(): Boolean = access
 
@@ -132,6 +136,10 @@ class MusicViewModelTest {
 
         override fun previous() {
             previousCalls++
+        }
+
+        override fun seekTo(positionMs: Long) {
+            seeks += positionMs
         }
     }
 }

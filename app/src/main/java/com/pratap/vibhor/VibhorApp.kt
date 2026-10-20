@@ -51,8 +51,6 @@ import com.pratap.vibhor.feature.music.MusicScreen
 import com.pratap.vibhor.feature.music.MusicViewModel
 import com.pratap.vibhor.feature.settings.SettingsScreen
 import com.pratap.vibhor.feature.settings.SettingsViewModel
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 object LauncherTestTags {
@@ -173,7 +171,7 @@ fun VibhorApp(homeRequestToken: Int = 0) {
                     onOpenSettings = { settingsVisible = true },
                 )
                 LauncherPage.Home -> HomeRoute()
-                LauncherPage.Music -> MusicRoute(appLauncher = appLauncher)
+                LauncherPage.Music -> MusicRoute()
             }
         }
     }
@@ -247,20 +245,11 @@ private fun AppsRoute(
 
 @Composable
 private fun MusicRoute(
-    appLauncher: AppLauncher,
     controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
     musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory),
-    homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
     val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
-    // HomeViewModel's state ticks with the clock; only favourites matter here.
-    val favouritesFlow = remember(homeViewModel) {
-        homeViewModel.uiState
-            .map { it.favourites }
-            .distinctUntilChanged()
-    }
-    val favourites by favouritesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -278,13 +267,12 @@ private fun MusicRoute(
     MusicScreen(
         musicState = musicState,
         controlState = controlState,
-        favourites = favourites,
         onPlayPause = musicViewModel::playPause,
         onNext = musicViewModel::next,
         onPrevious = musicViewModel::previous,
+        onSeek = musicViewModel::seekTo,
         onVolumeChange = controlViewModel::setVolume,
         onBrightnessChange = controlViewModel::setBrightness,
-        onLaunchApp = { app -> appLauncher.launch(app.packageName, app.activityName) },
         onEnableMediaAccess = {
             runCatching {
                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))

@@ -99,7 +99,6 @@
     <string name="settings_reset">Reset to defaults</string>
     <string name="home_quick_button">Favourites</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>
-    <string name="music_favourites">Favourites</string>
     <string name="music_idle_title">No music playing</string>
     <string name="music_idle_body">Start playback in any media app</string>
     <string name="music_access_body">Allow notification access so Vibhor can read and control the active media session.</string>

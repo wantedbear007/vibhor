@@ -11,7 +11,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,18 +25,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +60,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
-import com.pratap.vibhor.core.platform.InstalledApp
 import com.pratap.vibhor.core.platform.media.NowPlaying
 import com.pratap.vibhor.core.time.formatPlaybackTime
 import com.pratap.vibhor.core.ui.components.VerticalPillSlider
@@ -70,6 +72,9 @@ import com.pratap.vibhor.core.ui.theme.VibhorTheme
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
 import com.pratap.vibhor.core.ui.theme.toColor
 import com.pratap.vibhor.feature.cockpit.CockpitUiState
+import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.roundToLong
 import kotlin.math.sin
 
 object MusicTestTags {
@@ -87,28 +92,25 @@ object MusicTestTags {
     const val Previous = "music_previous"
     const val VolumeSlider = "music_volume_slider"
     const val BrightnessSlider = "music_brightness_slider"
-    const val Favourites = "music_favourites"
     const val Idle = "music_idle"
     const val AccessAction = "music_access_action"
 }
 
 /**
- * Music page: the astronaut stage above the real media session, the device
- * volume/brightness pills on the right, and a compact favourites strip along
- * the bottom. The layout keeps that hierarchy in landscape and stacks the
- * stage, player, and pills cleanly in portrait.
+ * Music page: the astronaut stage above the real media session and the device
+ * volume/brightness pills on the right. The layout keeps that hierarchy in
+ * landscape and stacks the stage, player, and pills cleanly in portrait.
  */
 @Composable
 fun MusicScreen(
     musicState: MusicUiState,
     controlState: CockpitUiState,
-    favourites: List<InstalledApp>,
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onSeek: (Long) -> Unit,
     onVolumeChange: (Float) -> Unit,
     onBrightnessChange: (Float) -> Unit,
-    onLaunchApp: (InstalledApp) -> Unit,
     onEnableMediaAccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -136,6 +138,7 @@ fun MusicScreen(
                     onPlayPause = onPlayPause,
                     onNext = onNext,
                     onPrevious = onPrevious,
+                    onSeek = onSeek,
                     onEnableMediaAccess = onEnableMediaAccess,
                     fillHeight = fillHeight,
                     modifier = cardModifier,
@@ -176,11 +179,6 @@ fun MusicScreen(
                                 .fillMaxHeight(),
                         )
                     }
-                    Spacer(modifier = Modifier.height(VibhorSpacing.lg))
-                    FavouritesStrip(
-                        favourites = favourites,
-                        onLaunchApp = onLaunchApp,
-                    )
                 }
             } else {
                 Column(
@@ -207,10 +205,6 @@ fun MusicScreen(
                             .fillMaxWidth()
                             .height(228.dp),
                     )
-                    FavouritesStrip(
-                        favourites = favourites,
-                        onLaunchApp = onLaunchApp,
-                    )
                 }
             }
         }
@@ -224,6 +218,7 @@ private fun MusicCard(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onSeek: (Long) -> Unit,
     onEnableMediaAccess: () -> Unit,
     fillHeight: Boolean,
     modifier: Modifier = Modifier,
@@ -251,6 +246,7 @@ private fun MusicCard(
                     onPlayPause = onPlayPause,
                     onNext = onNext,
                     onPrevious = onPrevious,
+                    onSeek = onSeek,
                 )
             }
         }
@@ -263,6 +259,7 @@ private fun TrackPlayer(
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
+    onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -306,6 +303,8 @@ private fun TrackPlayer(
         PlaybackProgress(
             positionMs = track.positionMs,
             durationMs = track.durationMs,
+            canSeek = track.canSeek,
+            onSeek = onSeek,
         )
 
         Spacer(modifier = Modifier.height(22.dp))
@@ -420,59 +419,125 @@ private fun AlbumArtwork(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaybackProgress(
     positionMs: Long,
     durationMs: Long,
+    canSeek: Boolean,
+    onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val target = if (durationMs > 0L) {
-        (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+    val duration = durationMs.coerceAtLeast(0L)
+    val seekable = canSeek && duration > 0L
+    val target = if (duration > 0L) {
+        (positionMs.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
     } else {
         0f
     }
-    val fraction by animateFloatAsState(
+    val animatedTarget by animateFloatAsState(
         targetValue = target,
         animationSpec = tween(durationMillis = 1_000, easing = LinearEasing),
         label = "playback-progress",
     )
+
+    var dragging by remember { mutableStateOf(false) }
+    var pendingFraction by remember(durationMs) { mutableStateOf<Float?>(null) }
+
+    // Keep the chosen position on screen until the real session reports the
+    // seeked position, so the thumb does not snap back between updates.
+    LaunchedEffect(positionMs, pendingFraction, dragging) {
+        val pending = pendingFraction ?: return@LaunchedEffect
+        if (!dragging && abs(target - pending) <= SEEK_MATCH_TOLERANCE) {
+            pendingFraction = null
+        }
+    }
+    LaunchedEffect(pendingFraction, dragging) {
+        if (pendingFraction != null && !dragging) {
+            delay(SEEK_TIMEOUT_MILLIS)
+            if (!dragging) pendingFraction = null
+        }
+    }
+
+    val fraction = pendingFraction ?: animatedTarget
+    val shownPositionMs = if (dragging || pendingFraction != null) {
+        (fraction * duration).roundToLong()
+    } else {
+        positionMs
+    }
     val accent = VibhorThemeColors.accent
     val trackShape = RoundedCornerShape(999.dp)
 
-    Column(modifier = modifier.testTag(MusicTestTags.Progress)) {
-        Box(
+    Column(modifier = modifier) {
+        Slider(
+            value = fraction,
+            onValueChange = { value ->
+                dragging = true
+                pendingFraction = value
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(12.dp)
-                .clip(trackShape)
-                .background(PrimaryText.copy(alpha = 0.12f))
-                .testTag(MusicTestTags.ProgressBar),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(fraction)
-                    .clip(trackShape)
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(accent, accent.copy(alpha = 0.62f)),
+                .testTag(MusicTestTags.Progress),
+            enabled = seekable,
+            onValueChangeFinished = {
+                val value = pendingFraction
+                if (seekable && value != null) {
+                    onSeek((value * duration).roundToLong())
+                }
+                dragging = false
+            },
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (seekable) accent else SecondaryText.copy(alpha = 0.45f),
                         ),
-                    ),
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
+                )
+            },
+            track = { sliderState ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(trackShape)
+                        .background(PrimaryText.copy(alpha = 0.12f))
+                        .testTag(MusicTestTags.ProgressBar),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(sliderState.coercedValueAsFraction)
+                            .clip(trackShape)
+                            .background(
+                                Brush.horizontalGradient(
+                                    colors = if (seekable) {
+                                        listOf(accent, accent.copy(alpha = 0.62f))
+                                    } else {
+                                        listOf(
+                                            SecondaryText.copy(alpha = 0.5f),
+                                            SecondaryText.copy(alpha = 0.3f),
+                                        )
+                                    },
+                                ),
+                            ),
+                    )
+                }
+            },
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = formatPlaybackTime(positionMs),
+                text = formatPlaybackTime(shownPositionMs),
                 style = MaterialTheme.typography.labelSmall,
                 color = SecondaryText,
             )
-            if (durationMs > 0L) {
+            if (duration > 0L) {
                 Text(
-                    text = formatPlaybackTime(durationMs),
+                    text = formatPlaybackTime(duration),
                     style = MaterialTheme.typography.labelSmall,
                     color = SecondaryText,
                 )
@@ -624,111 +689,9 @@ private fun SliderPair(
     }
 }
 
-@Composable
-private fun FavouritesStrip(
-    favourites: List<InstalledApp>,
-    onLaunchApp: (InstalledApp) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(MusicTestTags.Favourites),
-        shape = RoundedCornerShape(20.dp),
-        color = PrimaryText.copy(alpha = 0.045f),
-        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.07f)),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(62.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.music_favourites),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
-                color = SecondaryText,
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            if (favourites.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_quick_empty),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SecondaryText.copy(alpha = 0.8f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-            } else {
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    favourites.forEach { app ->
-                        FavouriteChip(
-                            app = app,
-                            onClick = { onLaunchApp(app) },
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavouriteChip(
-    app: InstalledApp,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        color = PrimaryText.copy(alpha = 0.06f),
-        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.06f)),
-        contentColor = PrimaryText,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val icon = app.icon
-            if (icon != null) {
-                Image(
-                    bitmap = icon.asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clip(RoundedCornerShape(6.dp)),
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(PrimaryText.copy(alpha = 0.12f)),
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = app.label,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 120.dp),
-            )
-        }
-    }
-}
-
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
+private const val SEEK_MATCH_TOLERANCE = 0.02f
+private const val SEEK_TIMEOUT_MILLIS = 3_000L
 
 @Preview(name = "Music landscape", widthDp = 1024, heightDp = 600)
 @Composable
@@ -740,13 +703,12 @@ private fun MusicLandscapePreview() {
                 track = PreviewTrack,
             ),
             controlState = CockpitUiState(),
-            favourites = emptyList(),
             onPlayPause = {},
             onNext = {},
             onPrevious = {},
+            onSeek = {},
             onVolumeChange = {},
             onBrightnessChange = {},
-            onLaunchApp = {},
             onEnableMediaAccess = {},
         )
     }
@@ -759,13 +721,12 @@ private fun MusicIdlePreview() {
         MusicScreen(
             musicState = MusicUiState(hasAccess = false),
             controlState = CockpitUiState(),
-            favourites = emptyList(),
             onPlayPause = {},
             onNext = {},
             onPrevious = {},
+            onSeek = {},
             onVolumeChange = {},
             onBrightnessChange = {},
-            onLaunchApp = {},
             onEnableMediaAccess = {},
         )
     }
@@ -781,4 +742,5 @@ private val PreviewTrack = NowPlaying(
     canPlayPause = true,
     canSkipNext = true,
     canSkipPrevious = true,
+    canSeek = true,
 )

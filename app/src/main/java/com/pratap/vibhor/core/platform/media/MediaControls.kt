@@ -27,6 +27,9 @@ interface MediaControls {
 
     fun previous()
 
+    /** Seeks the active session to [positionMs]; a no-op when unsupported. */
+    fun seekTo(positionMs: Long)
+
     /** Releases platform listeners. Called when the view model is cleared. */
     fun release() = Unit
 }

@@ -59,6 +59,10 @@ class MusicViewModel(private val mediaControls: MediaControls) : ViewModel() {
         mediaControls.previous()
     }
 
+    fun seekTo(positionMs: Long) {
+        mediaControls.seekTo(positionMs)
+    }
+
     override fun onCleared() {
         mediaControls.release()
     }

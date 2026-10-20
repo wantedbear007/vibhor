@@ -5,6 +5,7 @@ import android.media.MediaMetadata
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.provider.Settings
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
@@ -23,6 +25,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Drives the screen with a real platform [MediaSession] hosted by the test
@@ -71,6 +74,7 @@ class MusicScreenTest {
 
         val pauseCalls = AtomicInteger()
         val nextCalls = AtomicInteger()
+        val seekPosition = AtomicLong(-1L)
         lateinit var session: MediaSession
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {
@@ -82,6 +86,10 @@ class MusicScreenTest {
 
                     override fun onSkipToNext() {
                         nextCalls.incrementAndGet()
+                    }
+
+                    override fun onSeekTo(pos: Long) {
+                        seekPosition.set(pos)
                     }
                 })
                 setMetadata(
@@ -98,7 +106,8 @@ class MusicScreenTest {
                                 PlaybackState.ACTION_PAUSE or
                                 PlaybackState.ACTION_PLAY_PAUSE or
                                 PlaybackState.ACTION_SKIP_TO_NEXT or
-                                PlaybackState.ACTION_SKIP_TO_PREVIOUS,
+                                PlaybackState.ACTION_SKIP_TO_PREVIOUS or
+                                PlaybackState.ACTION_SEEK_TO,
                         )
                         .setState(PlaybackState.STATE_PLAYING, 30_000L, 1f)
                         .build(),
@@ -116,7 +125,7 @@ class MusicScreenTest {
 
             composeRule.onNodeWithText("Test Track").assertIsDisplayed()
             composeRule.onNodeWithText("Test Artist").assertIsDisplayed()
-            composeRule.onNodeWithTag(MusicTestTags.ProgressBar)
+            composeRule.onNodeWithTag(MusicTestTags.ProgressBar, useUnmergedTree = true)
                 .assertHeightIsAtLeast(12.dp)
 
             composeRule.onNodeWithTag(MusicTestTags.PlayPause).performClick()
@@ -127,6 +136,13 @@ class MusicScreenTest {
 
             assertEquals(1, pauseCalls.get())
             assertTrue(nextCalls.get() >= 1)
+
+            composeRule.onNodeWithTag(MusicTestTags.Progress)
+                .performSemanticsAction(SemanticsActions.SetProgress) { it(0.5f) }
+            composeRule.waitUntil(timeoutMillis = 3_000L) {
+                seekPosition.get() == 90_000L
+            }
+            assertEquals(90_000L, seekPosition.get())
         } finally {
             instrumentation.runOnMainSync {
                 session.isActive = false

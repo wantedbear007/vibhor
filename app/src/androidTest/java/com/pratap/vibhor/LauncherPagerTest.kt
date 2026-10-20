@@ -38,7 +38,6 @@ class LauncherPagerTest {
         composeRule.onNodeWithTag(MusicTestTags.Card).assertIsDisplayed()
         composeRule.onNodeWithTag(MusicTestTags.VolumeSlider).assertIsDisplayed()
         composeRule.onNodeWithTag(MusicTestTags.BrightnessSlider).assertIsDisplayed()
-        composeRule.onNodeWithTag(MusicTestTags.Favourites).assertIsDisplayed()
         composeRule.onNodeWithText("Navigation").assertDoesNotExist()
     }
 }
