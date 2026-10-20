@@ -16,7 +16,7 @@ page combines fixed quick controls with the installed-app launcher.
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
 | `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
-| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
+| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Favourites button). |
 | `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
@@ -30,7 +30,7 @@ they can be faked in unit tests.
 
 `VibhorApp` hosts a `HorizontalPager` with page order **Cockpit (0) → Home (1) →
 Apps (2)**. Home is the default page. The pager does not wrap past the
-first or last page. Snap transitions target ~180 ms.
+first or last page. Snap transitions target ~260 ms.
 
 ```text
 VibhorApp (HorizontalPager)
@@ -60,6 +60,41 @@ or the Apps clock gear.
   instances as the other pages. The left control panel therefore shares real
   volume/brightness state with Cockpit while the app grid keeps its own search,
   tab, and scroll state.
+
+### Swipe animation styles
+
+Each pager page is wrapped in a `Box` with
+`Modifier.pageTransition(style, pagerState, page, motionEnabled)`
+(`core.ui.animation`). The modifier adds a `graphicsLayer` block that reads
+`pagerState.getOffsetDistanceInPages(page)` and maps it through the pure
+`pageTransitionValues(style, offset)` function. Because the offset is read
+inside the layer block, scrolling invalidates only the layer; page content is
+not recomposed per frame. `PageTransitionValues` carries the opacity, extra
+translation, scale, transform origin, 2D/3D rotation, corner radius, and
+shadow values for a style; the modifier writes them to the graphics layer
+(`rotationY` also sets the camera distance for perspective).
+
+| Style (`AnimationStyle`) | Transform applied on top of the pager slide |
+|---|---|
+| `SMOOTH_SLIDE` (default) | Opacity fades to 72% at one page away. |
+| `DEPTH` | Scale 1.0 → 0.92 and opacity 1.0 → 0.68 as pages move away; scaling is anchored on the edge facing the centre so mid-swipe pages never expose a wallpaper seam. |
+| `SOFT_FADE` | Full crossfade (`alpha = 1 - distance`); the pager slide is damped by a sine curve that peaks mid-transition and returns to zero at the edges. |
+| `PARALLAX` | Extra translation `-offset * 16%` of the page width, so the outgoing page slows down and the incoming page speeds up in both directions. |
+| `CARD_STACK` | Rounded corners (10–20%), a gentle `rotationZ` (up to ~2.2°), a soft shadow, and a damped slide so pages read as stacked cards. |
+| `TILT_CARDS` | The card treatment with a stronger `rotationZ` (up to ~7°) and larger corners (up to 26%). |
+| `CUBE` | `rotationY` up to 58° around the page edge that faces the centre, with a small corner radius, for a cube-face turn. |
+
+- The selected style is persisted in `LauncherSettings.animationStyle` and
+  collected by `VibhorApp`, so changing it in Settings applies immediately
+  without recreating the pager.
+- Pager snapping and programmatic `animateScrollToPage` calls (Back and the
+  Home-intent reset) share `PageTransitionDurationMillis` (260 ms,
+  `FastOutSlowInEasing`).
+- `rememberMotionEnabled()` mirrors the system animator duration scale and
+  refreshes on resume; when animations are disabled, `pageTransition` is a
+  no-op, snaps become instant, and Settings previews stay static.
+- The Settings card renders a miniature two-screen transition with the same
+  `pageTransitionValues` math, so previews cannot drift from the real effect.
 
 ## Wallpaper strategy (Home)
 
@@ -130,7 +165,7 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
             │                        │                        (AppDrawerContent)
             └──────────────► HomeViewModel  ──  favourites = installed ∩ persisted
                                      ▼
-                             Quick + popup on HomeScreen
+                             Favourites popup on HomeScreen
 ```
 
 - Icons are decoded off the main thread once per package set and reused; they
@@ -268,7 +303,8 @@ SettingsStore (core.platform interface)
   `clockFormat`, `accentColor`, and `background`, the launcher
   `backgroundOpacity` (0–1), the launcher-only `nightMode` flag, the
   clock-backdrop values (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1),
-  `showStatusBar`, and the favourite package-name set.
+  `showStatusBar`, the selected `animationStyle`, and the favourite
+  package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
@@ -276,7 +312,8 @@ SettingsStore (core.platform interface)
   `clock_scale`, `app_icon_scale`, `clock_face`, `clock_format`,
   `clock_blur_radius`, `background_darkness`, `show_status_bar`,
   `quick_button_scale`, `accent_color`, `background_color`,
-  `background_opacity`, `night_mode`, and `favourite_package_names`. The
+  `background_opacity`, `night_mode`, `animation_style`, and
+  `favourite_package_names`. The
   in-memory `StateFlow` is updated synchronously and the preference write is
   flushed with `apply()`. Enum keys store the stable string id and fall back to
   the default on unknown values.
@@ -300,12 +337,13 @@ SettingsStore (core.platform interface)
   accent fill, translucent track, tap or drag to change, and step snapping via
   the pure, unit-tested `snapToSteps` helper.
 - `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
-  `Clock backdrop`, `Launcher background`, `Appearance`, `Home & apps`). A
+  `Clock backdrop`, `Launcher background`, `Appearance`, `Home & apps`,
+  `Swipe animation`). A
   `BoxWithConstraints` breakpoint at 900dp switches from a stacked layout to a
   landscape dashboard: full-width Clock, Clock backdrop / Launcher background /
-  Appearance side by side, then full-width Home & apps. The clock-face row and
-  both swatch grids adapt to their own available width instead of fixed screen
-  sizes.
+  Appearance side by side, then full-width Home & apps and Swipe animation. The
+  clock-face row and both swatch grids adapt to their own available width instead
+  of fixed screen sizes.
 
 ### Clock faces (Home)
 

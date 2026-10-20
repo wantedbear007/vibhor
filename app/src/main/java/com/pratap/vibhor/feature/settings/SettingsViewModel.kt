@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pratap.vibhor.core.platform.AccentColor
+import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.LauncherBackground
@@ -40,6 +41,7 @@ class SettingsViewModel(
                 accentColor = settings.accentColor,
                 background = settings.background,
                 backgroundOpacity = settings.backgroundOpacity,
+                animationStyle = settings.animationStyle,
             )
         }
         .stateIn(
@@ -71,6 +73,8 @@ class SettingsViewModel(
 
     fun setBackgroundOpacity(opacity: Float) = settingsStore.setBackgroundOpacity(opacity)
 
+    fun setAnimationStyle(style: AnimationStyle) = settingsStore.setAnimationStyle(style)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
@@ -84,6 +88,7 @@ class SettingsViewModel(
         settingsStore.setBackground(LauncherBackground.DEFAULT)
         settingsStore.setBackgroundOpacity(LauncherSettings.DEFAULT_BACKGROUND_OPACITY)
         settingsStore.setNightMode(LauncherSettings.DEFAULT_NIGHT_MODE)
+        settingsStore.setAnimationStyle(AnimationStyle.DEFAULT)
     }
 
     companion object {

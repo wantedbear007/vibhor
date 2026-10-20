@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.settings
 
 import com.pratap.vibhor.core.platform.AccentColor
+import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.LauncherBackground
@@ -18,6 +19,7 @@ data class SettingsUiState(
     val accentColor: AccentColor = AccentColor.DEFAULT,
     val background: LauncherBackground = LauncherBackground.DEFAULT,
     val backgroundOpacity: Float = LauncherSettings.DEFAULT_BACKGROUND_OPACITY,
+    val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
 )
 
 object LauncherDefaults {

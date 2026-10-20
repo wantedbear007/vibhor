@@ -49,6 +49,7 @@
     <string name="settings_section_launcher_background">Launcher background</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_home_apps">Home &amp; apps</string>
+    <string name="settings_section_animations">Swipe animation</string>
     <string name="settings_clock_size">Clock size</string>
     <string name="settings_clock_face">Clock face</string>
     <string name="settings_clock_face_classic">Classic</string>
@@ -68,7 +69,7 @@
     <string name="settings_status_bar">Show status bar</string>
     <string name="settings_status_bar_summary">Hide for a cleaner Home; swipe down to reveal</string>
     <string name="settings_app_icon_size">App icon size</string>
-    <string name="settings_quick_button_size">Quick + button size</string>
+    <string name="settings_quick_button_size">Favourites button size</string>
     <string name="settings_accent_color">Accent color</string>
     <string name="settings_accent_blue">Blue</string>
     <string name="settings_accent_teal">Teal</string>
@@ -87,6 +88,15 @@
     <string name="settings_background_transparent">Transparent</string>
     <string name="settings_background_visibility_hint" formatted="false">0% shows the wallpaper.</string>
     <string name="settings_scale_value">%1$d%%</string>
+    <string name="settings_animations_hint">Choose how screens move when you swipe between them.</string>
+    <string name="settings_animation_smooth_slide">Smooth Slide</string>
+    <string name="settings_animation_depth">Depth</string>
+    <string name="settings_animation_soft_fade">Soft Fade</string>
+    <string name="settings_animation_parallax">Parallax</string>
+    <string name="settings_animation_card_stack">Card Stack</string>
+    <string name="settings_animation_tilt_cards">Tilt Cards</string>
+    <string name="settings_animation_cube">Cube</string>
     <string name="settings_reset">Reset to defaults</string>
+    <string name="home_quick_button">Favourites</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>
 </resources>

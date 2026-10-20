@@ -4,7 +4,11 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
@@ -31,6 +35,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pratap.vibhor.core.platform.AndroidAppLauncher
 import com.pratap.vibhor.core.platform.AppLauncher
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
+import com.pratap.vibhor.core.ui.animation.PageTransitionDurationMillis
+import com.pratap.vibhor.core.ui.animation.pageTransition
+import com.pratap.vibhor.core.ui.animation.rememberMotionEnabled
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
 import com.pratap.vibhor.feature.apps.AppDrawerViewModel
 import com.pratap.vibhor.feature.apps.UnifiedAppsScreen
@@ -49,8 +56,9 @@ object LauncherTestTags {
 /**
  * Three-page launcher. Page order is [Cockpit, Home, Apps]; the pager starts
  * on Home, never wraps around the ends, and snap transitions target roughly
- * 180 ms. The existing Home-intent reset flow (homeRequestToken) scrolls the
- * pager back to Home. Settings open as a full-screen overlay above the pager.
+ * 260 ms with the per-page effect of the persisted animation style. The
+ * existing Home-intent reset flow (homeRequestToken) scrolls the pager back
+ * to Home. Settings open as a full-screen overlay above the pager.
  */
 @Composable
 fun VibhorApp(homeRequestToken: Int = 0) {
@@ -68,13 +76,25 @@ fun VibhorApp(homeRequestToken: Int = 0) {
     // whenever the composition (re)enters, covering process recreation and
     // return-from-background. The system navigation bar is always left
     // visible so the user can never lock themselves out of system controls;
-    // when hidden, a swipe still reveals the status bar temporarily.
-    val statusBarVisible = LocalContext.current
-        .let { remember(it) { SharedPreferencesSettingsStore.get(it) } }
-        .settings
-        .collectAsStateWithLifecycle()
-        .value
-        .showStatusBar
+    // when hidden, a swipe still reveals the status bar temporarily. The
+    // swipe animation style comes from the same settings flow and applies
+    // immediately without recreating the pager.
+    val settingsStore = remember(context) { SharedPreferencesSettingsStore.get(context) }
+    val launcherSettings by settingsStore.settings.collectAsStateWithLifecycle()
+    val statusBarVisible = launcherSettings.showStatusBar
+    val animationStyle = launcherSettings.animationStyle
+    val motionEnabled = rememberMotionEnabled()
+    val pageAnimationSpec: AnimationSpec<Float> = remember(motionEnabled) {
+        if (motionEnabled) {
+            tween(
+                durationMillis = PageTransitionDurationMillis,
+                easing = FastOutSlowInEasing,
+            )
+        } else {
+            snap()
+        }
+    }
+
     val view = LocalView.current
     LaunchedEffect(statusBarVisible) {
         val controller = WindowCompat.getInsetsController(
@@ -94,7 +114,10 @@ fun VibhorApp(homeRequestToken: Int = 0) {
         if (homeRequestToken > 0 &&
             pagerState.settledPage != LauncherPage.Home.ordinal
         ) {
-            pagerState.animateScrollToPage(LauncherPage.Home.ordinal)
+            pagerState.animateScrollToPage(
+                page = LauncherPage.Home.ordinal,
+                animationSpec = pageAnimationSpec,
+            )
         }
     }
 
@@ -102,7 +125,10 @@ fun VibhorApp(homeRequestToken: Int = 0) {
     // settings back handler so settings takes precedence while open.
     BackHandler(enabled = pagerState.settledPage != LauncherPage.Home.ordinal) {
         scope.launch {
-            pagerState.animateScrollToPage(LauncherPage.Home.ordinal)
+            pagerState.animateScrollToPage(
+                page = LauncherPage.Home.ordinal,
+                animationSpec = pageAnimationSpec,
+            )
         }
     }
 
@@ -122,18 +148,29 @@ fun VibhorApp(homeRequestToken: Int = 0) {
             .testTag(LauncherTestTags.Pager),
         flingBehavior = PagerDefaults.flingBehavior(
             state = pagerState,
-            snapAnimationSpec = tween(durationMillis = 180),
+            snapAnimationSpec = pageAnimationSpec,
         ),
     ) { page ->
-        when (LauncherPage.entries[page]) {
-            LauncherPage.Apps -> AppsRoute(
-                appLauncher = appLauncher,
-                onOpenSettings = { settingsVisible = true },
-            )
-            LauncherPage.Home -> HomeRoute()
-            LauncherPage.Cockpit -> CockpitRoute(
-                onOpenSettings = { settingsVisible = true },
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pageTransition(
+                    style = animationStyle,
+                    pagerState = pagerState,
+                    page = page,
+                    motionEnabled = motionEnabled,
+                ),
+        ) {
+            when (LauncherPage.entries[page]) {
+                LauncherPage.Apps -> AppsRoute(
+                    appLauncher = appLauncher,
+                    onOpenSettings = { settingsVisible = true },
+                )
+                LauncherPage.Home -> HomeRoute()
+                LauncherPage.Cockpit -> CockpitRoute(
+                    onOpenSettings = { settingsVisible = true },
+                )
+            }
         }
     }
 
@@ -237,6 +274,7 @@ private fun SettingsRoute(
         onAccentColorChange = viewModel::setAccentColor,
         onBackgroundChange = viewModel::setBackground,
         onBackgroundOpacityChange = viewModel::setBackgroundOpacity,
+        onAnimationStyleChange = viewModel::setAnimationStyle,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,
     )

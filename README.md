@@ -108,7 +108,7 @@ Apps**, with Home as the default (middle) page.
 
 | Page | Content |
 |---|---|
-| **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
+| **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear on the clock line, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
@@ -118,8 +118,26 @@ Navigation gestures:
 - **Swipe right** (finger right) → Cockpit.
 - Paging does **not wrap** past the Apps or Cockpit edge.
 - **Back** from Cockpit or Apps returns to Home; Back on Home is left to the system.
-- Snap transitions target ~180 ms.
+- Snap transitions target ~260 ms and use the selected **swipe animation
+  style** (Settings → **Swipe animation**).
 - Pressing **Home** (launcher reset) always returns to the Home page, even from another page or after resume. This behavior is preserved unchanged from the foundation milestone.
+
+Swipe animation styles (all apply to every pager transition, in both
+directions, and respect the system animation setting):
+
+| Style | Effect |
+|---|---|
+| **Smooth Slide** (default) | The incoming screen slides into view with a subtle fade. |
+| **Depth** | The incoming screen scales gently forward while the outgoing screen recedes, with a soft fade. |
+| **Soft Fade** | The outgoing screen fades out while the incoming one fades in with minimal movement. |
+| **Parallax** | The incoming and outgoing screens move at slightly different rates for a restrained layered effect. |
+| **Card Stack** | Pages separate into rounded cards with a gentle tilt and soft shadow while the pager slide is damped mid-swipe. |
+| **Tilt Cards** | The card look with a stronger tilt and larger corner radius, livelier but still readable. |
+| **Cube** | Pages rotate in 3D around the edge that faces the centre, like two faces of a cube. |
+
+The selected style is saved and applied immediately; the **Swipe animation**
+settings card shows a compact preview for each option, and tapping the selected
+preview replays it.
 
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
@@ -171,17 +189,19 @@ contains:
 | Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
 | Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
-| Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
+| Favourites button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Favourites button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
+| Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Home, Cockpit, and Apps; each option shows a compact preview |
 
-Settings are grouped into five accent-marked cards: **Clock** (size, face,
+Settings are grouped into six accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
-visibility), **Appearance** (accent color, status bar), and **Home & apps**
-(Quick + button size, app icon size). On wide landscape displays the Clock
-card spans the top, Clock backdrop / Launcher background / Appearance share a
-row, and Home & apps runs full width with its two sliders side by side; narrow
-screens stack every card. Clock face previews form a single row in the Clock
-card and scroll horizontally only when space is tight.
+visibility), **Appearance** (accent color, status bar), **Home & apps**
+(Favourites button size, app icon size), and **Swipe animation** (seven selectable
+preview cards, four per row on wide screens and two per row on narrow ones). On wide
+landscape displays the Clock card spans the top, Clock backdrop / Launcher
+background / Appearance share a row, and Home & apps and Swipe animation run
+full width; narrow screens stack every card. Clock face previews form a single
+row in the Clock card and scroll horizontally only when space is tight.
 
 The launcher background applies to the unified Apps page, Cockpit, and Settings
 surfaces. Home continues to show the system wallpaper with its own
@@ -205,8 +225,8 @@ size** and **Reset** apply to all of them):
   second hand) with the date below. The second hand keeps real time while
   Home is visible.
 
-- **Reset to defaults** restores every setting, including the accent color and
-  launcher background.
+- **Reset to defaults** restores every setting, including the accent color,
+  launcher background, and swipe animation.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
@@ -262,7 +282,7 @@ app/src/main/java/com/pratap/vibhor/
 │       ├── navigation/          # LauncherPage enum (page order)
 │       └── theme/               # Colors, typography, spacing, shapes, accent CompositionLocal
 └── feature/
-    ├── home/                    # Wallpaper + clock + Quick + favourites (HomeViewModel, screen)
+    ├── home/                    # Wallpaper + clock + Favourites button (HomeViewModel, screen)
     ├── cockpit/                 # Clock rail + volume/brightness sliders (CockpitViewModel, screen)
     ├── apps/                    # Favourites/All tabs over the installed-app grid (AppDrawerViewModel, screen)
     └── settings/                # Every persisted launcher setting (SettingsViewModel, screen)

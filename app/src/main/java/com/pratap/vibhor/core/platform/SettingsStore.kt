@@ -24,6 +24,7 @@ data class LauncherSettings(
     val background: LauncherBackground = LauncherBackground.DEFAULT,
     val backgroundOpacity: Float = DEFAULT_BACKGROUND_OPACITY,
     val nightMode: Boolean = DEFAULT_NIGHT_MODE,
+    val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -75,6 +76,7 @@ interface SettingsStore {
     fun setBackground(background: LauncherBackground)
     fun setBackgroundOpacity(opacity: Float)
     fun setNightMode(enabled: Boolean)
+    fun setAnimationStyle(style: AnimationStyle)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -199,6 +201,10 @@ class InMemorySettingsStore(
 
     override fun setNightMode(enabled: Boolean) {
         state.update { it.copy(nightMode = enabled) }
+    }
+
+    override fun setAnimationStyle(style: AnimationStyle) {
+        state.update { it.copy(animationStyle = style) }
     }
 
     override fun addFavourite(packageName: String) {

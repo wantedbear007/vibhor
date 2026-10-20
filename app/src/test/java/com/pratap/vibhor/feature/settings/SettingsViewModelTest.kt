@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.settings
 
 import com.pratap.vibhor.core.platform.AccentColor
+import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.ClockFace
 import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
@@ -205,6 +206,45 @@ class SettingsViewModelTest {
 
         collection.cancel()
     }
+
+    @Test
+    fun `animation style updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(AnimationStyle.DEFAULT, viewModel.uiState.value.animationStyle)
+
+            viewModel.setAnimationStyle(AnimationStyle.PARALLAX)
+            advanceUntilIdle()
+
+            assertEquals(AnimationStyle.PARALLAX, viewModel.uiState.value.animationStyle)
+            assertEquals(AnimationStyle.PARALLAX, store.settings.value.animationStyle)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the default animation style`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setAnimationStyle(AnimationStyle.DEPTH)
+            advanceUntilIdle()
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertEquals(AnimationStyle.DEFAULT, viewModel.uiState.value.animationStyle)
+
+            collection.cancel()
+        }
 
     @Test
     fun `changing clock face updates ui state and persists to store`() =

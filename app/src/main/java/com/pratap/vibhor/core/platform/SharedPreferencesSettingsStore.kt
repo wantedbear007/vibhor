@@ -102,6 +102,11 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(nightMode = enabled) }
     }
 
+    override fun setAnimationStyle(style: AnimationStyle) {
+        prefs.edit { putString(KEY_ANIMATION_STYLE, style.id) }
+        state.update { it.copy(animationStyle = style) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -178,6 +183,9 @@ class SharedPreferencesSettingsStore private constructor(
             KEY_NIGHT_MODE,
             LauncherSettings.DEFAULT_NIGHT_MODE,
         ),
+        animationStyle = AnimationStyle.fromId(
+            prefs.getString(KEY_ANIMATION_STYLE, null),
+        ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -207,6 +215,7 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_BACKGROUND = "background_color"
         private const val KEY_BACKGROUND_OPACITY = "background_opacity"
         private const val KEY_NIGHT_MODE = "night_mode"
+        private const val KEY_ANIMATION_STYLE = "animation_style"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile
