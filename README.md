@@ -142,13 +142,15 @@ preview replays it.
 The Music page keeps the reference hierarchy: the astronaut stage above the
 player card, and the tall volume pill on the right. Album art, title, artist,
 position, duration, and transport availability all come from the active
-session. The astronaut bounces on the beat, sways, alternates toe-out dance
-steps, and pumps its arms while the stars twinkle — only while a real session
-is playing and the page is visible; when playback pauses the scene settles to a
-still pose and the equalizer stops animating. The page is a plain Canvas plus
-Compose shapes — no 3D scene, no blur pass, no audio capture. The player card
-shows an honest idle state when no session can be read, and an **Open settings**
-action when Vibhor is missing notification access.
+session. The player card gives the thumbnail the left 30% and stacks metadata,
+progress, and transport controls in the remaining 70%. The astronaut bounces
+on the beat, sways, alternates toe-out dance steps, and pumps its arms while
+the stars twinkle — only while a real session is playing and the page is
+visible; when playback pauses the scene settles to a still pose and the
+equalizer stops animating. The page is a plain Canvas plus Compose shapes — no
+3D scene, no blur pass, no audio capture. The player card shows an honest idle
+state when no session can be read, and an **Open settings** action when Vibhor
+is missing notification access.
 
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows

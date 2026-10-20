@@ -127,6 +127,26 @@ class MusicScreenTest {
 
             composeRule.onNodeWithText("Test Track").assertIsDisplayed()
             composeRule.onNodeWithText("Test Artist").assertIsDisplayed()
+
+            val playerContent = composeRule
+                .onNodeWithTag(MusicTestTags.PlayerContent, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
+            val thumbnail = composeRule
+                .onNodeWithTag(MusicTestTags.ThumbnailColumn, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
+            val albumArt = composeRule
+                .onNodeWithTag(MusicTestTags.AlbumArt, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
+            val title = composeRule
+                .onNodeWithTag(MusicTestTags.TrackTitle, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
+            assertEquals(0.30f, thumbnail.width / playerContent.width, 0.02f)
+            assertEquals(1f, albumArt.width / thumbnail.width, 0.02f)
+            assertTrue(
+                "The album thumbnail must sit left of the metadata",
+                albumArt.right <= title.left,
+            )
+
             val playedHeight = composeRule
                 .onNodeWithTag(MusicTestTags.ProgressBar, useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot.height

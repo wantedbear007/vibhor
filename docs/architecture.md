@@ -229,6 +229,9 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
 - Album art is taken from `METADATA_KEY_ALBUM_ART`/`METADATA_KEY_ART` when the
   playing app publishes it. There is no network or disk fetch, so a missing
   bitmap falls back to the gradient note tile.
+- The player card splits 30/70: the real album art is a square, center-cropped
+  thumbnail in the left column; the right column stacks the metadata and
+  equalizer, the seek bar, and the transport controls.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises.
 - The thick progress bar is a `Slider` bound to the real session. The played
