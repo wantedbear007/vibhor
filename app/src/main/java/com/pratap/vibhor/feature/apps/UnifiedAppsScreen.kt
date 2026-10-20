@@ -241,17 +241,19 @@ private fun QuickControlPanel(
         modifier = modifier.testTag(UnifiedAppsTestTags.ControlPanel),
     ) {
         val narrow = maxWidth < 260.dp
-        val clockSize = (maxWidth.value * if (narrow) 0.09f else 0.105f)
-            .coerceIn(if (narrow) 20f else 24f, if (narrow) 32f else 40f)
+        val clockSize = (maxWidth.value * if (narrow) 0.085f else 0.095f)
+            .coerceIn(if (narrow) 20f else 24f, if (narrow) 30f else 36f)
             .sp
 
         Column(modifier = Modifier.fillMaxSize()) {
             val settingsButtonSize = if (narrow) 40.dp else 48.dp
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Clock and date are one tight block: the date sits directly
+                // under the clock instead of below the taller settings row.
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = state.timeText,
                         fontFamily = FontFamily.SansSerif,
@@ -264,28 +266,27 @@ private fun QuickControlPanel(
                         maxLines = 1,
                         overflow = TextOverflow.Clip,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .testTag(UnifiedAppsTestTags.Clock),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    SettingsIconButton(
-                        onClick = onOpenSettings,
-                        buttonSize = settingsButtonSize,
-                        iconSize = if (narrow) 18.dp else 20.dp,
+                    Text(
+                        text = state.dateText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = SecondaryText,
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(UnifiedAppsTestTags.Date),
                     )
                 }
-                Text(
-                    text = state.dateText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = SecondaryText,
-                    textAlign = TextAlign.Start,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp)
-                        .testTag(UnifiedAppsTestTags.Date),
+                Spacer(modifier = Modifier.width(8.dp))
+                SettingsIconButton(
+                    onClick = onOpenSettings,
+                    buttonSize = settingsButtonSize,
+                    iconSize = if (narrow) 18.dp else 20.dp,
                 )
             }
 
