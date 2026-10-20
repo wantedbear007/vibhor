@@ -268,7 +268,7 @@ class AndroidMediaControls(context: Context) : MediaControls {
     }
 
     private companion object {
-        const val POSITION_TICK_MILLIS = 1_000L
+        const val POSITION_TICK_MILLIS = 500L
 
         const val PLAY_PAUSE_ACTIONS =
             PlaybackState.ACTION_PLAY_PAUSE or

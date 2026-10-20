@@ -447,10 +447,12 @@ private fun PlaybackProgress(
     // spot when the session confirms the seek.
     val fraction by animateFloatAsState(
         targetValue = pendingFraction ?: target,
+        // Match the platform's 500 ms media-position ticker so the bar
+        // reaches each new position as it arrives.
         animationSpec = if (pendingFraction != null) {
             snap()
         } else {
-            tween(durationMillis = 1_000, easing = LinearEasing)
+            tween(durationMillis = 500, easing = LinearEasing)
         },
         label = "playback-progress",
     )

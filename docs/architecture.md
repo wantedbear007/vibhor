@@ -201,7 +201,7 @@ MediaSessionManager (system) ── trusted notification-listener packages
             │
             ▼
 AndroidMediaControls (core.platform.media)  ── implements MediaControls
-            │  MediaController.Callback + 1 s position ticker
+            │  MediaController.Callback + 500 ms position ticker
             │  StateFlow<NowPlaying?> (null when nothing is readable)
             ▼
 MusicViewModel ── combine(nowPlaying, access) ── stateIn(WhileSubscribed(5s))
