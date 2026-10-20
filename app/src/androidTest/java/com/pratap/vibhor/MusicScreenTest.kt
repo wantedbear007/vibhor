@@ -6,7 +6,6 @@ import android.media.session.MediaSession
 import android.media.session.PlaybackState
 import android.provider.Settings
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -16,7 +15,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
-import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pratap.vibhor.feature.music.MusicTestTags
 import org.junit.Assert.assertEquals
@@ -129,8 +127,13 @@ class MusicScreenTest {
 
             composeRule.onNodeWithText("Test Track").assertIsDisplayed()
             composeRule.onNodeWithText("Test Artist").assertIsDisplayed()
-            composeRule.onNodeWithTag(MusicTestTags.ProgressBar, useUnmergedTree = true)
-                .assertHeightIsAtLeast(16.dp)
+            val playedHeight = composeRule
+                .onNodeWithTag(MusicTestTags.ProgressBar, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot.height
+            val trackHeight = composeRule
+                .onNodeWithTag(MusicTestTags.ProgressTrack, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot.height
+            assertEquals(2f, playedHeight / trackHeight, 0.05f)
 
             composeRule.onNodeWithTag(MusicTestTags.PlayPause).performClick()
             composeRule.waitUntil(timeoutMillis = 3_000L) { pauseCalls.get() == 1 }

@@ -201,7 +201,7 @@ MediaSessionManager (system) ── trusted notification-listener packages
             │
             ▼
 AndroidMediaControls (core.platform.media)  ── implements MediaControls
-            │  MediaController.Callback + 500 ms position ticker
+            │  MediaController.Callback + 1 s position ticker
             │  StateFlow<NowPlaying?> (null when nothing is readable)
             ▼
 MusicViewModel ── combine(nowPlaying, access) ── stateIn(WhileSubscribed(5s))
@@ -231,8 +231,9 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   bitmap falls back to the gradient note tile.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises.
-- The thick progress bar is a `Slider` bound to the real session. Dragging
-  updates the displayed position immediately, and releasing calls
+- The thick progress bar is a `Slider` bound to the real session. The played
+  portion is drawn twice as thick as the remaining track. Dragging updates the
+  displayed position immediately, and releasing calls
   `TransportControls.seekTo` when `ACTION_SEEK_TO` is advertised. The slider
   handles horizontal drags inside its bounds, so only swipes outside it move
   the pager. If the session never reports the new position, the optimistic

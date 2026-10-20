@@ -12,6 +12,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -90,6 +91,7 @@ object MusicTestTags {
     const val TrackArtist = "music_track_artist"
     const val Progress = "music_progress"
     const val ProgressBar = "music_progress_bar"
+    const val ProgressTrack = "music_progress_track"
     const val Equalizer = "music_equalizer"
     const val PlayPause = "music_play_pause"
     const val Next = "music_next"
@@ -447,12 +449,10 @@ private fun PlaybackProgress(
     // spot when the session confirms the seek.
     val fraction by animateFloatAsState(
         targetValue = pendingFraction ?: target,
-        // Match the platform's 500 ms media-position ticker so the bar
-        // reaches each new position as it arrives.
         animationSpec = if (pendingFraction != null) {
             snap()
         } else {
-            tween(durationMillis = 500, easing = LinearEasing)
+            tween(durationMillis = 1_000, easing = LinearEasing)
         },
         label = "playback-progress",
     )
@@ -502,26 +502,34 @@ private fun PlaybackProgress(
             thumb = {
                 Box(
                     modifier = Modifier
-                        .size(20.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(
                             if (seekable) accent else SecondaryText.copy(alpha = 0.45f),
-                        ),
+                        )
+                        .border(4.dp, DeepSlate, CircleShape),
                 )
             },
             track = { sliderState ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(16.dp)
-                        .clip(trackShape)
-                        .background(PrimaryText.copy(alpha = 0.12f))
-                        .testTag(MusicTestTags.ProgressBar),
+                        .height(32.dp),
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxHeight()
+                            .align(Alignment.Center)
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .clip(trackShape)
+                            .background(PrimaryText.copy(alpha = 0.12f))
+                            .testTag(MusicTestTags.ProgressTrack),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
                             .fillMaxWidth(sliderState.coercedValueAsFraction)
+                            .height(32.dp)
                             .clip(trackShape)
                             .background(
                                 Brush.horizontalGradient(
@@ -534,7 +542,8 @@ private fun PlaybackProgress(
                                         )
                                     },
                                 ),
-                            ),
+                            )
+                            .testTag(MusicTestTags.ProgressBar),
                     )
                 }
             },
