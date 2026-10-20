@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Vibhor</string>
+    <string name="navigation_title">Navigation</string>
+    <string name="navigation_open_hint">Tap to open</string>
+    <string name="navigation_empty">No navigation app found</string>
+    <string name="media_title">Media</string>
+    <string name="media_empty">No media playing</string>
+    <string name="apps_empty">No apps found</string>
+    <string name="apps_loading">Loading apps…</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_close">Close settings</string>
+    <string name="settings_clock_size">Clock size</string>
+    <string name="settings_clock_face">Clock face</string>
+    <string name="settings_clock_face_classic">Classic</string>
+    <string name="settings_clock_face_split">Split</string>
+    <string name="settings_clock_face_minimal">Minimal</string>
+    <string name="settings_clock_face_analog">Analog</string>
+    <string name="settings_app_icon_size">App icon size</string>
+    <string name="settings_scale_value">%1$d%%</string>
+    <string name="settings_reset">Reset to defaults</string>
+</resources>

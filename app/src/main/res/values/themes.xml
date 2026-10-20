@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Vibhor is always dark; the Compose theme owns the in-app palette.
+        windowShowWallpaper lets the system render the wallpaper behind the
+        transparent window (Home), so no storage permission is required and
+        no wallpaper bitmap is ever decoded. When no wallpaper is available
+        the window falls back to black plus the Home scrim.
+    -->
+    <style name="Theme.Vibhor" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

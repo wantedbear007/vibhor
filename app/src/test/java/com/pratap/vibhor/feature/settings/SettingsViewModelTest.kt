@@ -1,0 +1,126 @@
+package com.pratap.vibhor.feature.settings
+
+import com.pratap.vibhor.core.platform.ClockFace
+import com.pratap.vibhor.core.platform.InMemorySettingsStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class SettingsViewModelTest {
+
+    private val dispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `changing scales updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setClockScale(1.5f)
+            viewModel.setAppIconScale(0.75f)
+            advanceUntilIdle()
+
+            assertEquals(1.5f, viewModel.uiState.value.clockScale)
+            assertEquals(0.75f, viewModel.uiState.value.appIconScale)
+            assertEquals(1.5f, store.settings.value.clockScale)
+            assertEquals(0.75f, store.settings.value.appIconScale)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores scale of one`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setClockScale(2f)
+        advanceUntilIdle()
+        viewModel.resetToDefaults()
+        advanceUntilIdle()
+
+        assertEquals(1f, viewModel.uiState.value.clockScale)
+        assertEquals(1f, viewModel.uiState.value.appIconScale)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `scales are clamped to the supported range`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setClockScale(10f)
+        viewModel.setAppIconScale(0f)
+        advanceUntilIdle()
+
+        assertEquals(2f, viewModel.uiState.value.clockScale)
+        assertEquals(0.5f, viewModel.uiState.value.appIconScale)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `changing clock face updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setClockFace(ClockFace.ANALOG)
+            advanceUntilIdle()
+
+            assertEquals(ClockFace.ANALOG, viewModel.uiState.value.clockFace)
+            assertEquals(ClockFace.ANALOG, store.settings.value.clockFace)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the default clock face`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setClockFace(ClockFace.MINIMAL)
+        advanceUntilIdle()
+        viewModel.resetToDefaults()
+        advanceUntilIdle()
+
+        assertEquals(ClockFace.DEFAULT, viewModel.uiState.value.clockFace)
+
+        collection.cancel()
+    }
+}
