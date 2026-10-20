@@ -60,8 +60,21 @@ Notes:
   system broadcasts such as `ACTION_TIME_CHANGED` and
   `ACTION_TIMEZONE_CHANGED` are delivered.
 - **Background restrictions.** Android 9 restricts background services and
-  implicit broadcasts. Vibhor avoids both; it registers the time receiver only
-  while the clock flow is collected.
+  implicit broadcasts. Vibhor avoids both; it registers the time receiver and
+  the Wi-Fi/Bluetooth state receivers only while their state flows are
+  collected.
+- **Wi-Fi and Bluetooth toggles.** On API 28 the manifest declares the legacy
+  normal permissions `ACCESS_WIFI_STATE`, `CHANGE_WIFI_STATE`, `BLUETOOTH`, and
+  `BLUETOOTH_ADMIN`; these are granted at install time and allow the quick
+  tiles to read and change real adapter state. Android 10+ blocks
+  `WifiManager.setWifiEnabled`, and Android 12+ requires runtime Bluetooth
+  permissions. The implementation catches refusals and publishes the unchanged
+  real state instead of an optimistic toggle; unsupported or inaccessible
+  radios are shown as unavailable.
+- **System night mode.** Normal apps cannot toggle system Night Light or global
+  dark mode on API 28 without privileged access. The Apps page's Night mode is
+  therefore a persisted launcher dimming layer scoped to that page, not a fake
+  system toggle.
 - **No predictive back.** `OnBackPressedDispatcher`/`BackHandler` is the
   supported mechanism; the predictive-back APIs from Android 13+ are not
   assumed.
@@ -72,10 +85,10 @@ Notes:
   the app relies on the theme window background for startup. The window
   background is transparent so the system wallpaper shows through on Home; the
   Compose theme supplies the dark background on the Cockpit and Apps pages.
-- **Settings persistence.** The launcher settings (clock size, app icon size)
-  are stored with `SharedPreferences`, which is available on every API level
-  including 28. No DataStore dependency and no backup-agent or device-protected
-  storage concerns apply; the preferences are internal and non-sensitive.
+- **Settings persistence.** Launcher settings are stored with
+  `SharedPreferences`, which is available on every API level including 28. No
+  DataStore dependency and no backup-agent or device-protected storage concerns
+  apply; the preferences are internal and non-sensitive.
 
 ## Wallpaper strategy and why no storage permission
 
@@ -124,6 +137,12 @@ for this use case.
 - Android 12+ splash screen, splash-screen animation, and themed app icons
 - Predictive back (`OnBackInvokedCallback`) and Android 13+ back animations
 - Bluetooth and location permission changes introduced after Android 9
+- `WifiManager.setWifiEnabled` behavior on Android 10+ and the
+  `BLUETOOTH_CONNECT` / `BLUETOOTH_SCAN` runtime permissions introduced in
+  Android 12; the API 28 quick toggles must not assume those calls still work
+  on newer devices
+- System Night Light / global dark-mode writes, which require privileged
+  permissions on API 28 and are not attempted by the launcher
 
 When adding a feature, check the API level of every platform API used and
 guard newer APIs with `Build.VERSION.SDK_INT` or use AndroidX compatibility

@@ -83,6 +83,7 @@ class SettingsViewModel(
         settingsStore.setAccentColor(AccentColor.DEFAULT)
         settingsStore.setBackground(LauncherBackground.DEFAULT)
         settingsStore.setBackgroundOpacity(LauncherSettings.DEFAULT_BACKGROUND_OPACITY)
+        settingsStore.setNightMode(LauncherSettings.DEFAULT_NIGHT_MODE)
     }
 
     companion object {

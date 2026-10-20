@@ -5,6 +5,8 @@ import com.pratap.vibhor.core.platform.DeviceControls
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
+import com.pratap.vibhor.core.platform.QuickControls
+import com.pratap.vibhor.core.platform.QuickControlsState
 import com.pratap.vibhor.core.time.ClockTicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +53,7 @@ class CockpitViewModelTest {
             clockTicker = FakeClockTicker(instant),
             settingsStore = InMemorySettingsStore(),
             deviceControls = controls,
+            quickControls = FakeQuickControls(),
             is24HourFormat = { false },
         )
 
@@ -75,6 +78,7 @@ class CockpitViewModelTest {
                 ),
             ),
             deviceControls = FakeDeviceControls(),
+            quickControls = FakeQuickControls(),
         )
 
         val collection = launch { viewModel.uiState.collect { } }
@@ -95,6 +99,7 @@ class CockpitViewModelTest {
                 LauncherSettings(clockFormat = ClockFormat.H24),
             ),
             deviceControls = FakeDeviceControls(),
+            quickControls = FakeQuickControls(),
             is24HourFormat = { false },
         )
 
@@ -113,6 +118,7 @@ class CockpitViewModelTest {
             clockTicker = FakeClockTicker(ZonedDateTime.now()),
             settingsStore = InMemorySettingsStore(),
             deviceControls = controls,
+            quickControls = FakeQuickControls(),
         )
 
         viewModel.setVolume(0.75f)
@@ -126,6 +132,91 @@ class CockpitViewModelTest {
 
         assertEquals(0.75f, viewModel.uiState.value.volumeLevel)
         assertEquals(0.3f, viewModel.uiState.value.brightnessLevel)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `ui state exposes real connectivity and persisted night mode`() =
+        runTest(dispatcher) {
+            val quickControls = FakeQuickControls(
+                QuickControlsState(
+                    wifiSupported = true,
+                    wifiEnabled = true,
+                    bluetoothSupported = true,
+                    bluetoothEnabled = false,
+                ),
+            )
+            val viewModel = CockpitViewModel(
+                clockTicker = FakeClockTicker(ZonedDateTime.now()),
+                settingsStore = InMemorySettingsStore(
+                    LauncherSettings(nightMode = true),
+                ),
+                deviceControls = FakeDeviceControls(),
+                quickControls = quickControls,
+            )
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(true, viewModel.uiState.value.wifiSupported)
+            assertEquals(true, viewModel.uiState.value.wifiEnabled)
+            assertEquals(true, viewModel.uiState.value.bluetoothSupported)
+            assertEquals(false, viewModel.uiState.value.bluetoothEnabled)
+            assertEquals(true, viewModel.uiState.value.nightMode)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `quick toggles request real state changes and publish actual state`() =
+        runTest(dispatcher) {
+            val quickControls = FakeQuickControls(
+                QuickControlsState(
+                    wifiSupported = true,
+                    wifiEnabled = false,
+                    bluetoothSupported = true,
+                    bluetoothEnabled = true,
+                ),
+            )
+            val viewModel = CockpitViewModel(
+                clockTicker = FakeClockTicker(ZonedDateTime.now()),
+                settingsStore = InMemorySettingsStore(),
+                deviceControls = FakeDeviceControls(),
+                quickControls = quickControls,
+            )
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.toggleWifi()
+            viewModel.toggleBluetooth()
+            advanceUntilIdle()
+
+            assertEquals(true, quickControls.current.wifiEnabled)
+            assertEquals(false, quickControls.current.bluetoothEnabled)
+            assertEquals(true, viewModel.uiState.value.wifiEnabled)
+            assertEquals(false, viewModel.uiState.value.bluetoothEnabled)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `night mode toggle is persisted`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = CockpitViewModel(
+            clockTicker = FakeClockTicker(ZonedDateTime.now()),
+            settingsStore = store,
+            deviceControls = FakeDeviceControls(),
+            quickControls = FakeQuickControls(),
+        )
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.toggleNightMode()
+        advanceUntilIdle()
+
+        assertEquals(true, store.settings.value.nightMode)
+        assertEquals(true, viewModel.uiState.value.nightMode)
 
         collection.cancel()
     }
@@ -150,6 +241,24 @@ class CockpitViewModelTest {
 
         override fun setScreenBrightness(fraction: Float) {
             brightness = fraction
+        }
+
+        override fun observeChanges(): Flow<Unit> = flowOf(Unit)
+    }
+
+    private class FakeQuickControls(
+        initial: QuickControlsState = QuickControlsState(),
+    ) : QuickControls {
+        var current: QuickControlsState = initial
+
+        override fun state(): QuickControlsState = current
+
+        override fun setWifiEnabled(enabled: Boolean) {
+            current = current.copy(wifiEnabled = enabled)
+        }
+
+        override fun setBluetoothEnabled(enabled: Boolean) {
+            current = current.copy(bluetoothEnabled = enabled)
         }
 
         override fun observeChanges(): Flow<Unit> = flowOf(Unit)

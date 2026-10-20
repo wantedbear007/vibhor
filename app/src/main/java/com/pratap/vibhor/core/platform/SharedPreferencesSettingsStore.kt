@@ -97,6 +97,11 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(backgroundOpacity = clamped) }
     }
 
+    override fun setNightMode(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_NIGHT_MODE, enabled) }
+        state.update { it.copy(nightMode = enabled) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -169,6 +174,10 @@ class SharedPreferencesSettingsStore private constructor(
                 LauncherSettings.MIN_BACKGROUND_OPACITY,
                 LauncherSettings.MAX_BACKGROUND_OPACITY,
             ),
+        nightMode = prefs.getBoolean(
+            KEY_NIGHT_MODE,
+            LauncherSettings.DEFAULT_NIGHT_MODE,
+        ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -197,6 +206,7 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_ACCENT_COLOR = "accent_color"
         private const val KEY_BACKGROUND = "background_color"
         private const val KEY_BACKGROUND_OPACITY = "background_opacity"
+        private const val KEY_NIGHT_MODE = "night_mode"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

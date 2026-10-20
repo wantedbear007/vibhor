@@ -3,7 +3,8 @@
 Vibhor is a single-module Android app with feature-oriented packages. The
 architecture is deliberately small: MVVM with a unidirectional state flow, no
 dependency injection framework, no database, and no navigation library. The
-launcher UI is a three-page horizontal pager (Apps, Home, Cockpit).
+launcher UI is a three-page horizontal pager (Apps, Home, Cockpit); the Apps
+page combines fixed quick controls with the installed-app launcher.
 
 ## Package responsibilities
 
@@ -13,17 +14,17 @@ launcher UI is a three-page horizontal pager (Apps, Home, Cockpit).
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
 | `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Apps, Home, Cockpit). |
 | `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
-| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
+| `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Quick + favourites). |
 | `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
-| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, and `AppDrawerScreen` (Material 3 header, search field, segmented Favourites/All tabs, adaptive tonal app grid). |
+| `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the right-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
 
 UI code does not access Android system services directly. All system
 integrations live in `core.platform` behind small interfaces (`ClockTicker`,
-`InstalledAppsSource`, `AppLauncher`, `DeviceControls`), so they can be faked
-in unit tests.
+`InstalledAppsSource`, `AppLauncher`, `DeviceControls`, `QuickControls`), so
+they can be faked in unit tests.
 
 ## Pager and screen host
 
@@ -33,23 +34,31 @@ first or last page. Snap transitions target ~180 ms.
 
 ```text
 VibhorApp (HorizontalPager)
-├── LauncherPage.Apps    → AppDrawerScreen + AppDrawerViewModel
-├── LauncherPage.Home    → HomeScreen + HomeViewModel
+├── LauncherPage.Apps    → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
+│                          ├── fixed quick-control rail (clock, sound, brightness, radio tiles)
+│                          └── embedded AppDrawerContent (search, tabs, app grid)
+├── LauncherPage.Home    → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
 └── LauncherPage.Cockpit → CockpitScreen + CockpitViewModel
-       └── gear button (side rail) → SettingsScreen + SettingsViewModel (overlay)
+       ├── gear button (side rail) ─┐
+       └── Apps quick controls ─────┴─→ SettingsScreen + SettingsViewModel (overlay)
 ```
 
 - **Swipe left** (finger left) advances toward Cockpit; **swipe right** opens
-  Apps. This follows standard pager index semantics for the chosen page order.
+  the unified Apps page. This follows standard pager index semantics for the
+  chosen page order.
 - **Back** from Cockpit or Apps animates back to Home. Back on Home is disabled
   so the system default applies.
 - A repeated **Home press** delivers `onNewIntent`; `MainActivity` bumps
   `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` scrolls the pager
   back to Home. This launcher-reset behavior is unchanged from the foundation.
 - **Settings** is an overlay (not a pager page) toggled from the Cockpit side
-  rail. `settingsVisible` is held in `rememberSaveable` inside `VibhorApp`, and
-  a dedicated `BackHandler` closes Settings before the pager's own Back
-  handling applies.
+  rail or the Apps quick-control panel. `settingsVisible` is held in
+  `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
+  Settings before the pager's own Back handling applies.
+- The Apps route reuses the same `AppDrawerViewModel` and `CockpitViewModel`
+  instances as the other pages. The left control panel therefore shares real
+  volume/brightness state with Cockpit while the app grid keeps its own search,
+  tab, and scroll state.
 
 ## Wallpaper strategy (Home)
 
@@ -116,7 +125,8 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
             │  Flow<List<InstalledApp>>, re-emitted on package changes
             ├──────────────► AppDrawerViewModel  ──  stateIn(WhileSubscribed(5s))
             │                        ▼
-            │                StateFlow<AppDrawerUiState>  ──►  AppDrawerScreen
+            │                StateFlow<AppDrawerUiState>  ──►  UnifiedAppsScreen
+            │                        │                        (AppDrawerContent)
             └──────────────► HomeViewModel  ──  favourites = installed ∩ persisted
                                      ▼
                              Quick + popup on HomeScreen
@@ -134,14 +144,18 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
 - `AppDrawerViewModel` filters the active tab by label (case-insensitive, after
   trimming the query) and exposes the result as `displayedApps`; the persisted
   `appIconScale` still drives icon, label, and column sizing. `AppDrawerScreen`
-  adds a Material 3 header, pill search field, segmented tabs, and rounded
+  keeps the Material 3 header, pill search field, segmented tabs, and rounded
   tonal tiles, with every color sourced from the theme and persisted accent.
+- `AppDrawerContent` is the reusable, background-free part of that screen. The
+  standalone `AppDrawerScreen` wraps it for previews/tests, while
+  `UnifiedAppsScreen` embeds it in the right-hand panel with compact tile
+  sizing (large icon, centered single-line label, adaptive column count).
 
 ### Cockpit device controls
 
-`CockpitViewModel` combines the clock ticker, settings, and
-`DeviceControls.observeChanges()`; `DeviceControls` is the small platform
-interface implemented by `AndroidDeviceControls`:
+`CockpitViewModel` combines the clock ticker, settings, `DeviceControls`, and
+`QuickControls`; the two platform interfaces are implemented by
+`AndroidDeviceControls` and `AndroidQuickControls`:
 
 - **Volume** reads and writes `AudioManager.STREAM_MUSIC`. Slider fraction →
   index mapping is a pure function (`DeviceLevels`) and is unit tested. A
@@ -155,6 +169,37 @@ interface implemented by `AndroidDeviceControls`:
 - The sliders are custom Canvas composables (`VerticalControlSlider`) with
   `detectDragGestures`: the top of the track is the maximum, the bottom the
   minimum. No third-party slider library is used.
+
+### Unified Apps quick controls
+
+`UnifiedAppsScreen` splits the right-swipe page into a fixed control rail and
+the embedded `AppDrawerContent`. The rail is about 30% of the usable landscape
+width (with a 38% fallback in portrait), separated from the app grid by a
+one-pixel gradient divider. The launcher grid scrolls independently; the rail
+does not.
+
+- The rail renders the clock and date from `CockpitUiState`, a compact Settings
+  shortcut, the same real media-volume and window-brightness values as Cockpit,
+  and a 2×2 tile grid for Bluetooth, Wi-Fi, Night mode, and Settings.
+- Tapping a slider uses the existing device-control callbacks. Hardware volume
+  changes still arrive through the shared `CockpitViewModel`, so the left rail
+  and Cockpit stay consistent.
+- `QuickControls` exposes `state()` plus legacy Wi-Fi/Bluetooth setters and an
+  `observeChanges()` broadcast flow for `WIFI_STATE_CHANGED_ACTION` and
+  `BluetoothAdapter.ACTION_STATE_CHANGED`. `AndroidQuickControls` uses the API 28
+  normal permissions and wraps platform calls in `runCatching`; refusals leave
+  the actual adapter state unchanged. Unsupported hardware is disabled and
+  labelled **Unavailable**.
+- Toggles are never optimistic. After a request, `CockpitViewModel` requests a
+  fresh real-state read and the broadcast receiver publishes subsequent
+  transitions.
+- **Night mode** is a persisted launcher-page dimming layer (black plus a faint
+  violet tint) because Android 9 does not allow a normal app to toggle system
+  Night Light or global dark mode. It applies only to the unified Apps page so
+  Home and Cockpit remain unchanged.
+- The unified page uses a fixed pink/violet gradient for the brightness pill and
+  pink Night-mode highlight, while the active accent still drives Bluetooth,
+  Wi-Fi, search, tabs, and app highlights.
 
 ### Accent color and theming
 
@@ -176,8 +221,12 @@ MainActivity ── VibhorTheme(accentColor) ── MaterialTheme.primary
 
 Screens must read accents from `VibhorThemeColors.accent` (or
 `MaterialTheme.colorScheme.primary`); hardcoded accent literals are not used
-anywhere in feature code. A new accent option is added once in `AccentColor`,
-once in the theme palette, and once in the Settings swatch row.
+anywhere in feature code. The unified Apps page intentionally uses the fixed
+pink/violet secondary palette for the brightness slider and Night-mode
+highlight to preserve the reference design's blue/pink contrast; primary
+interactive states still follow the selected accent. A new accent option is
+added once in `AccentColor`, once in the theme palette, and once in the
+Settings swatch row.
 
 ### Settings persistence
 
@@ -197,9 +246,9 @@ SettingsStore (core.platform interface)
 - `LauncherSettings` holds the clamped scale multipliers (`clockScale`,
   `appIconScale`, `quickButtonScale`), the selected `clockFace`,
   `clockFormat`, `accentColor`, and `background`, the launcher
-  `backgroundOpacity` (0–1), the clock-backdrop values
-  (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1), `showStatusBar`, and the
-  favourite package-name set.
+  `backgroundOpacity` (0–1), the launcher-only `nightMode` flag, the
+  clock-backdrop values (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1),
+  `showStatusBar`, and the favourite package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
@@ -207,14 +256,18 @@ SettingsStore (core.platform interface)
   `clock_scale`, `app_icon_scale`, `clock_face`, `clock_format`,
   `clock_blur_radius`, `background_darkness`, `show_status_bar`,
   `quick_button_scale`, `accent_color`, `background_color`,
-  `background_opacity`, and `favourite_package_names`. The in-memory
-  `StateFlow` is updated synchronously and the preference write is flushed
-  with `apply()`. Enum keys store the stable string id and fall back to the
-  default on unknown values.
+  `background_opacity`, `night_mode`, and `favourite_package_names`. The
+  in-memory `StateFlow` is updated synchronously and the preference write is
+  flushed with `apply()`. Enum keys store the stable string id and fall back to
+  the default on unknown values.
 - Both `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings`
-  so the clock format applies to the Home clock **and** the Cockpit rail
-  clock. `ClockFormat.SYSTEM` consults `DateFormat.is24HourFormat`; `H12`/`H24`
-  override it regardless of the device setting.
+  so the clock format applies to the Home clock, the Cockpit rail clock, and
+  the unified Apps control clock. `ClockFormat.SYSTEM` consults
+  `DateFormat.is24HourFormat`; `H12`/`H24` override it regardless of the device
+  setting.
+- `CockpitViewModel` also combines `QuickControls.observeChanges()` so the
+  radio tiles publish real adapter state. Both the Apps route and Cockpit route
+  resolve the same activity-scoped ViewModel instance.
 - `HomeViewModel` starts the app list with an empty-emission `onStart` so the
   clock never waits for the installed-app scan; favourites update when
   discovery completes.
@@ -290,13 +343,15 @@ following intent filter:
   behind a small interface, with presentation in a new `feature.media` package.
   Media playback itself stays outside the launcher. Do not simulate playback
   metadata.
-- **New controls:** extend `DeviceControls` (core.platform) and surface them on
-  the existing Cockpit screen; keep Android service access behind the interface
-  so unit tests use a fake.
+- **New controls:** extend `DeviceControls` or `QuickControls` (core.platform)
+  and surface them on the existing Cockpit screen or unified Apps rail; keep
+  Android service access behind the interface so unit tests use a fake.
 - **Settings / preferences:** new preferences should be added as fields of
   `LauncherSettings` with clamped defaults, persisted with a stable key, and
-  surfaced on the existing `SettingsScreen`. New UI must take its accent from
-  `VibhorThemeColors.accent`, never a literal.
+  surfaced on the existing `SettingsScreen` unless they are intentionally
+  controlled from a quick-control tile. New UI must take its primary accent
+  from `VibhorThemeColors.accent`, and any fixed secondary highlight should be
+  defined in the theme palette rather than inline literals.
 - **More screens:** introduce a navigation library only when deep links,
   nested graphs, or many screens make it pay for itself. The pager is
   sufficient for the three launcher pages.

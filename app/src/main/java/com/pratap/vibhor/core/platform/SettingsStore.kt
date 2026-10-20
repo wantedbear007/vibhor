@@ -23,6 +23,7 @@ data class LauncherSettings(
     val accentColor: AccentColor = AccentColor.DEFAULT,
     val background: LauncherBackground = LauncherBackground.DEFAULT,
     val backgroundOpacity: Float = DEFAULT_BACKGROUND_OPACITY,
+    val nightMode: Boolean = DEFAULT_NIGHT_MODE,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -44,6 +45,9 @@ data class LauncherSettings(
         const val MIN_BACKGROUND_OPACITY = 0f
         const val MAX_BACKGROUND_OPACITY = 1f
         const val DEFAULT_BACKGROUND_OPACITY = 1f
+
+        /** Launcher-only night dimming; system night mode stays untouched. */
+        const val DEFAULT_NIGHT_MODE = false
 
         const val DEFAULT_SHOW_STATUS_BAR = true
 
@@ -70,6 +74,7 @@ interface SettingsStore {
     fun setAccentColor(color: AccentColor)
     fun setBackground(background: LauncherBackground)
     fun setBackgroundOpacity(opacity: Float)
+    fun setNightMode(enabled: Boolean)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -190,6 +195,10 @@ class InMemorySettingsStore(
                 ),
             )
         }
+    }
+
+    override fun setNightMode(enabled: Boolean) {
+        state.update { it.copy(nightMode = enabled) }
     }
 
     override fun addFavourite(packageName: String) {

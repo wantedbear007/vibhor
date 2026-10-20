@@ -19,6 +19,17 @@
     <string name="apps_favourite_action">Toggle favourite</string>
     <string name="apps_tab_favourites">Favourites</string>
     <string name="apps_tab_all">All</string>
+    <string name="apps_volume">Sound volume</string>
+    <string name="apps_brightness">Screen brightness</string>
+    <string name="apps_quick_bluetooth">Bluetooth</string>
+    <string name="apps_quick_wifi">Wi-Fi</string>
+    <string name="apps_quick_night">Night mode</string>
+    <string name="apps_quick_settings">Settings</string>
+    <string name="apps_quick_on">On</string>
+    <string name="apps_quick_off">Off</string>
+    <string name="apps_quick_unavailable">Unavailable</string>
+    <string name="apps_quick_open">Open</string>
+    <string name="apps_slider_value">%1$d%%</string>
     <plurals name="apps_count">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>

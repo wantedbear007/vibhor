@@ -121,48 +121,77 @@ fun AppDrawerScreen(
             .testTag(AppDrawerTestTags.Page),
         color = state.background.toColor().copy(alpha = state.backgroundOpacity),
     ) {
-        Column(
+        AppDrawerContent(
+            state = state,
+            onAppClick = onAppClick,
+            onTabSelected = onTabSelected,
+            onAppLongPress = onAppLongPress,
+            onSearchQueryChange = onSearchQueryChange,
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding(),
-        ) {
-            AppDrawerHeader(
-                state = state,
-                onSearchQueryChange = onSearchQueryChange,
-                onTabSelected = onTabSelected,
-            )
+        )
+    }
+}
 
-            val content = when {
-                state.isLoading &&
-                    state.apps.isEmpty() &&
-                    state.favouriteApps.isEmpty() -> DrawerContent.Loading
-                state.displayedApps.isEmpty() -> DrawerContent.Empty
-                else -> DrawerContent.Grid
-            }
+/**
+ * The app launcher without its own background or window insets. The unified
+ * app page embeds this in the right-hand panel beside the quick controls; the
+ * standalone [AppDrawerScreen] keeps the original full-screen behavior.
+ */
+@Composable
+fun AppDrawerContent(
+    state: AppDrawerUiState,
+    onAppClick: (InstalledApp) -> Unit,
+    onTabSelected: (AppDrawerTab) -> Unit,
+    onAppLongPress: (InstalledApp) -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    headerTopPadding: Dp = 20.dp,
+    horizontalPadding: Dp = 24.dp,
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+    ) {
+        AppDrawerHeader(
+            state = state,
+            onSearchQueryChange = onSearchQueryChange,
+            onTabSelected = onTabSelected,
+            topPadding = headerTopPadding,
+            horizontalPadding = horizontalPadding,
+        )
 
-            Crossfade(
-                targetState = content,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                animationSpec = tween(durationMillis = 180),
-                label = "app-drawer-content",
-            ) { target ->
-                when (target) {
-                    DrawerContent.Loading -> LoadingContent(Modifier.fillMaxSize())
-                    DrawerContent.Empty -> EmptyContent(
-                        state = state,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    DrawerContent.Grid -> AppGrid(
-                        apps = state.displayedApps,
-                        iconScale = state.iconScale,
-                        favouritePackageNames = state.favouritePackageNames,
-                        onAppClick = onAppClick,
-                        onAppLongPress = onAppLongPress,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+        val content = when {
+            state.isLoading &&
+                state.apps.isEmpty() &&
+                state.favouriteApps.isEmpty() -> DrawerContent.Loading
+            state.displayedApps.isEmpty() -> DrawerContent.Empty
+            else -> DrawerContent.Grid
+        }
+
+        Crossfade(
+            targetState = content,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            animationSpec = tween(durationMillis = 180),
+            label = "app-drawer-content",
+        ) { target ->
+            when (target) {
+                DrawerContent.Loading -> LoadingContent(Modifier.fillMaxSize())
+                DrawerContent.Empty -> EmptyContent(
+                    state = state,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                DrawerContent.Grid -> AppGrid(
+                    apps = state.displayedApps,
+                    iconScale = state.iconScale,
+                    favouritePackageNames = state.favouritePackageNames,
+                    onAppClick = onAppClick,
+                    onAppLongPress = onAppLongPress,
+                    horizontalPadding = horizontalPadding,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }
@@ -173,12 +202,19 @@ private fun AppDrawerHeader(
     state: AppDrawerUiState,
     onSearchQueryChange: (String) -> Unit,
     onTabSelected: (AppDrawerTab) -> Unit,
+    topPadding: Dp,
+    horizontalPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 16.dp),
+            .padding(
+                start = horizontalPadding,
+                end = horizontalPadding,
+                top = topPadding,
+                bottom = 16.dp,
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(
@@ -197,7 +233,7 @@ private fun AppDrawerHeader(
         }
 
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            if (maxWidth >= 840.dp) {
+            if (maxWidth >= 600.dp) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -211,7 +247,7 @@ private fun AppDrawerHeader(
                     AppDrawerTabs(
                         selectedTab = state.selectedTab,
                         onTabSelected = onTabSelected,
-                        modifier = Modifier.width(360.dp),
+                        modifier = Modifier.width(300.dp),
                     )
                 }
             } else {
@@ -546,22 +582,23 @@ private fun AppGrid(
     favouritePackageNames: Set<String>,
     onAppClick: (InstalledApp) -> Unit,
     onAppLongPress: (InstalledApp) -> Unit,
+    horizontalPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(
-        modifier = modifier.padding(horizontal = 24.dp),
+        modifier = modifier.padding(horizontal = horizontalPadding),
     ) {
         val spacing = 16.dp
-        val minTileWidth = 190.dp * iconScale
+        val minTileWidth = 136.dp * iconScale
         val columns = ((maxWidth + spacing) / (minTileWidth + spacing))
             .toInt()
             .coerceIn(2, 8)
         val tileWidth = (maxWidth - spacing * (columns - 1)) / columns
-        val iconSize = (140.dp * iconScale)
-            .coerceAtMost(tileWidth - 32.dp)
-            .coerceAtLeast(48.dp)
-        val labelSize = (24f * iconScale).coerceAtLeast(13f).sp
-        val labelLineHeight = (30f * iconScale).coerceAtLeast(18f).sp
+        val iconSize = (76.dp * iconScale)
+            .coerceAtMost(tileWidth - 28.dp)
+            .coerceAtLeast(36.dp)
+        val labelSize = (16f * iconScale).coerceAtLeast(12f).sp
+        val labelLineHeight = (20f * iconScale).coerceAtLeast(16f).sp
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
@@ -606,7 +643,7 @@ private fun AppTile(
     val accent = VibhorThemeColors.accent
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(24.dp)
     val containerColor by animateColorAsState(
         targetValue = if (pressed) DeepSlate else DeepSlate.copy(alpha = 0.55f),
         animationSpec = tween(durationMillis = 120),
@@ -647,7 +684,7 @@ private fun AppTile(
                 onLongClick = onLongPress,
                 onClick = onClick,
             )
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 14.dp, vertical = 14.dp)
             .testTag(AppDrawerTestTags.Item),
     ) {
         Column(

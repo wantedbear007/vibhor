@@ -8,6 +8,11 @@ data class CockpitUiState(
     val dateText: String = "",
     val volumeLevel: Float = 0.5f,
     val brightnessLevel: Float = 0.5f,
+    val wifiSupported: Boolean = false,
+    val wifiEnabled: Boolean = false,
+    val bluetoothSupported: Boolean = false,
+    val bluetoothEnabled: Boolean = false,
+    val nightMode: Boolean = false,
     val background: LauncherBackground = LauncherBackground.DEFAULT,
     val backgroundOpacity: Float = LauncherSettings.DEFAULT_BACKGROUND_OPACITY,
 )

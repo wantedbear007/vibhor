@@ -8,12 +8,12 @@ application.
 This milestone turns the foundation into a three-screen automotive launcher.
 The screens are laid out on a horizontal pager: **Home** (system wallpaper and
 a large clock), **Cockpit** (clock rail plus sound and brightness controls), and
-**Apps** (favourites and a grid of installed launcher apps). The system
-wallpaper is rendered by Android behind the window, so no storage permission is
-required and no wallpaper bitmap is ever decoded. A **Settings** overlay is
-reachable from the Cockpit rail and persists every tunable option — including
-the launcher-wide accent color and surface background — through
-`SharedPreferences`.
+**Apps** (a unified page with fixed quick controls beside the installed-app
+launcher). The system wallpaper is rendered by Android behind the window, so no
+storage permission is required and no wallpaper bitmap is ever decoded. A
+**Settings** overlay is reachable from the Cockpit rail and the Apps quick
+controls, and persists every tunable option — including the launcher-wide
+accent color and surface background — through `SharedPreferences`.
 
 ## Target device
 
@@ -110,39 +110,54 @@ Cockpit**, with Home as the default (middle) page.
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | **Favourites** and **All** tabs with a rounded search field, over an adaptive grid of rounded tonal app tiles; tapping launches the app, long-pressing toggles a favourite. Search filters the active tab by app label. |
+| **Apps** | Unified right-swipe screen: a fixed quick-control panel at roughly 30% width (clock/date, Settings shortcut, tall sound and brightness pills, and Bluetooth / Wi-Fi / Night mode / Settings tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a rounded search field, and an adaptive grid of rounded app tiles; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
 - **Swipe left** (finger left) → Cockpit.
-- **Swipe right** (finger right) → Apps.
+- **Swipe right** (finger right) → unified Apps page.
 - Paging does **not wrap** past the Apps or Cockpit edge.
 - **Back** from Cockpit or Apps returns to Home; Back on Home is left to the system.
 - Snap transitions target ~180 ms.
 - Pressing **Home** (launcher reset) always returns to the Home page, even from another page or after resume. This behavior is preserved unchanged from the foundation milestone.
 
-The Apps page follows the same Material 3 styling as Settings: a title and app
-count, a pill-shaped search field, segmented Favourites/All tabs, and rounded
-tonal app tiles with subtle pressed feedback. Columns and tile sizes adapt to
-the screen width and the persisted app-icon-size setting; labels stay on one
-line and ellipsize when needed. Its surface follows the persisted launcher
-background, so it can share the Home wallpaper at low visibility.
+The unified Apps page divides the landscape into a control rail and an app
+area. The rail stays fixed while the app grid scrolls independently. It follows
+the same Material 3 styling as Settings: a large digital clock, a pill-shaped
+search field, segmented Favourites/All tabs, and rounded tonal app tiles with
+subtle pressed feedback. The app columns and tile sizes adapt to the available
+width and the persisted app-icon-size setting; labels stay on one line and
+ellipsize when needed. The page surface follows the persisted launcher
+background, so it can share the Home wallpaper at low visibility. The app grid
+uses compact tiles sized for the right-hand panel, with large icons and centered
+labels.
+
+Sound and brightness read and write the same real device channels as Cockpit.
+Wi-Fi and Bluetooth reflect actual adapter state and request real state changes;
+unsupported radios are shown as unavailable rather than fabricated. On Android
+9 the legacy normal permissions allow those toggles. Night mode is a persisted
+launcher-page dimming layer, because toggling the system Night Light requires
+privileged access.
+
+Settings opens from the Cockpit rail and from both the compact gear beside the
+Apps clock and the Settings quick tile.
 
 ## Settings
 
 A full-screen **Settings** overlay (not a pager page) opens from the gear
-button in the Cockpit side rail. It contains:
+button in the Cockpit side rail or from the quick-control panel on the Apps
+page. It contains:
 
 | Setting | Range | Default | Effect |
 |---|---|---|---|
 | Clock size | 50%–200% (5% steps) | 100% | Multiplier on the computed Home clock size |
 | Clock face | Classic / Split / Minimal / Bold / Elegant / Analog | Classic | Which clock face renders on Home (see below) |
-| Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock **and** the Cockpit rail clock |
+| Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock, the Cockpit rail clock, and the Apps control clock |
 | Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
-| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Single accent used by every screen and every future control |
-| Launcher background | Midnight / Slate / Graphite / Black / Navy / Ocean | Midnight | Base surface color for Apps, Cockpit, and Settings; Home keeps the wallpaper |
+| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, selection states, and app highlights; the Apps brightness pill keeps its pink/violet reference gradient |
+| Launcher background | Midnight / Slate / Graphite / Black / Navy / Ocean | Midnight | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Quick + button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Quick + button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
@@ -156,11 +171,11 @@ row, and Home & apps runs full width with its two sliders side by side; narrow
 screens stack every card. Clock face previews form a single row in the Clock
 card and scroll horizontally only when space is tight.
 
-The launcher background applies to the Apps, Cockpit, and Settings surfaces.
-Home continues to show the system wallpaper with its own clock-backdrop blur
-and darkness. A transparent launcher background lets the same wallpaper show
-through the other pages; while Settings is open, the pager is hidden so the
-overlay shows the wallpaper instead of the page underneath.
+The launcher background applies to the unified Apps page, Cockpit, and Settings
+surfaces. Home continues to show the system wallpaper with its own
+clock-backdrop blur and darkness. A transparent launcher background lets the
+same wallpaper show through the other pages; while Settings is open, the pager
+is hidden so the overlay shows the wallpaper instead of the page underneath.
 
 Every slider on this screen uses the same thick pill track as the Cockpit
 volume and brightness controls: tap or drag anywhere on the pill, with values
@@ -183,7 +198,9 @@ size** and **Reset** apply to all of them):
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
-  never hardcoded in a screen, so new UI automatically follows the choice.
+  never hardcoded in a screen, so new primary UI automatically follows the
+  choice. The unified Apps brightness pill uses the theme's fixed pink/violet
+  secondary gradient to keep the blue/pink reference contrast.
 - Scales are multipliers on sizes computed per screen, so the same settings
   work across densities and orientations.
 - **Back** (or the close button) dismisses Settings without leaving Home.
@@ -198,7 +215,15 @@ size** and **Reset** apply to all of them):
 - Cockpit volume drives the media stream through `AudioManager`; brightness is
   a window-level override for the current activity (no `WRITE_SETTINGS`), so it
   resets once the window is gone. First-party hard keys stay in sync through a
-  runtime volume-change receiver.
+  runtime volume-change receiver. The unified Apps page uses the same controls.
+- Wi-Fi and Bluetooth quick controls use the legacy API 28 normal permissions.
+  Their state comes from the actual system services and changes are never
+  applied optimistically. Newer Android versions restrict Wi-Fi enabling and
+  require runtime Bluetooth permissions, so a refused request leaves the real
+  state unchanged and may show the radio as unavailable.
+- Night mode on the Apps page is a persisted launcher dimming layer, not the
+  system Night Light. Android 9 does not grant normal apps the privileged access
+  needed to toggle the system setting.
 - There is no turn-by-turn navigation, media session, weather, location,
   vehicle, or CAN bus integration.
 - No boot receiver, background service, database, networking, or analytics.

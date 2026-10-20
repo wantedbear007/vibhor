@@ -189,6 +189,24 @@ class SettingsViewModelTest {
         }
 
     @Test
+    fun `reset to defaults restores night mode off`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        store.setNightMode(true)
+        advanceUntilIdle()
+        viewModel.resetToDefaults()
+        advanceUntilIdle()
+
+        assertEquals(false, store.settings.value.nightMode)
+
+        collection.cancel()
+    }
+
+    @Test
     fun `changing clock face updates ui state and persists to store`() =
         runTest(dispatcher) {
             val store = InMemorySettingsStore()

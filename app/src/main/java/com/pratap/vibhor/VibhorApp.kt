@@ -29,8 +29,8 @@ import com.pratap.vibhor.core.platform.AndroidAppLauncher
 import com.pratap.vibhor.core.platform.AppLauncher
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
-import com.pratap.vibhor.feature.apps.AppDrawerScreen
 import com.pratap.vibhor.feature.apps.AppDrawerViewModel
+import com.pratap.vibhor.feature.apps.UnifiedAppsScreen
 import com.pratap.vibhor.feature.cockpit.CockpitScreen
 import com.pratap.vibhor.feature.cockpit.CockpitViewModel
 import com.pratap.vibhor.feature.home.HomeScreen
@@ -123,7 +123,10 @@ fun VibhorApp(homeRequestToken: Int = 0) {
         ),
     ) { page ->
         when (LauncherPage.entries[page]) {
-            LauncherPage.Apps -> AppsRoute(appLauncher = appLauncher)
+            LauncherPage.Apps -> AppsRoute(
+                appLauncher = appLauncher,
+                onOpenSettings = { settingsVisible = true },
+            )
             LauncherPage.Home -> HomeRoute()
             LauncherPage.Cockpit -> CockpitRoute(
                 onOpenSettings = { settingsVisible = true },
@@ -153,17 +156,27 @@ private fun HomeRoute(
 @Composable
 private fun AppsRoute(
     appLauncher: AppLauncher,
-    viewModel: AppDrawerViewModel = viewModel(factory = AppDrawerViewModel.Factory),
+    onOpenSettings: () -> Unit,
+    appViewModel: AppDrawerViewModel = viewModel(factory = AppDrawerViewModel.Factory),
+    controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    AppDrawerScreen(
-        state = state,
+    val appState by appViewModel.uiState.collectAsStateWithLifecycle()
+    val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
+    UnifiedAppsScreen(
+        appState = appState,
+        controlState = controlState,
+        onVolumeChange = controlViewModel::setVolume,
+        onBrightnessChange = controlViewModel::setBrightness,
+        onToggleWifi = controlViewModel::toggleWifi,
+        onToggleBluetooth = controlViewModel::toggleBluetooth,
+        onToggleNightMode = controlViewModel::toggleNightMode,
+        onOpenSettings = onOpenSettings,
         onAppClick = { app ->
             appLauncher.launch(app.packageName, app.activityName)
         },
-        onTabSelected = viewModel::selectTab,
-        onAppLongPress = { app -> viewModel.toggleFavourite(app.packageName) },
-        onSearchQueryChange = viewModel::setSearchQuery,
+        onTabSelected = appViewModel::selectTab,
+        onAppLongPress = { app -> appViewModel.toggleFavourite(app.packageName) },
+        onSearchQueryChange = appViewModel::setSearchQuery,
     )
 }
 
