@@ -9,4 +9,20 @@
         </intent>
     </queries>
 
+    <application>
+        <!--
+            Deliberately declares MAIN + LAUNCHER without CATEGORY_DEFAULT.
+            The system launcher still shows such apps, so app discovery must
+            list this test package too. Used by InstalledAppsSourceTest.
+        -->
+        <activity
+            android:name="com.pratap.vibhor.TestLauncherActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
 </manifest>

@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
@@ -61,10 +60,9 @@ class AndroidInstalledAppsSource(
     private fun loadInstalledApps(): List<InstalledApp> {
         val packageManager = context.packageManager
         val mainIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        val resolveInfos = packageManager.queryIntentActivities(
-            mainIntent,
-            PackageManager.MATCH_DEFAULT_ONLY,
-        )
+        // Do not require CATEGORY_DEFAULT here: many launcher activities only
+        // declare MAIN + LAUNCHER, and the system launcher lists them anyway.
+        val resolveInfos = packageManager.queryIntentActivities(mainIntent, 0)
         val collator = Collator.getInstance()
         return resolveInfos
             .asSequence()
