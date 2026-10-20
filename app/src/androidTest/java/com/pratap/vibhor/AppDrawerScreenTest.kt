@@ -1,7 +1,10 @@
 package com.pratap.vibhor
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -80,8 +83,18 @@ class AppDrawerScreenTest {
             .performClick()
         composeRule.runOnIdle { assertEquals("", query.value) }
 
-        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites).performClick()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll)
+            .assertIsSelected()
+            .assertHasClickAction()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites)
+            .assertHasClickAction()
+            .performClick()
         composeRule.runOnIdle { assertEquals(AppDrawerTab.Favourites, tab.value) }
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabFavourites).assertIsSelected()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).assertIsNotSelected()
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).performClick()
+        composeRule.runOnIdle { assertEquals(AppDrawerTab.All, tab.value) }
+        composeRule.onNodeWithTag(AppDrawerTestTags.TabAll).assertIsSelected()
 
         composeRule.onAllNodesWithTag(AppDrawerTestTags.Item)
             .onFirst()

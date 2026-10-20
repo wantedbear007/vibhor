@@ -110,7 +110,7 @@ Apps**, with Home as the default (middle) page.
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a small **Quick +** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
 | **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
-| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear on the clock line, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps **Favourites** and **All** tabs, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
+| **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear on the clock line, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
@@ -125,7 +125,8 @@ The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
 the same Material 3 styling as Settings: a compact, left-aligned digital clock,
 labelled Volume and Brightness sliders, a filled Material 3 search field,
-primary Favourites/All tabs, and tonal Material 3 app cards with the standard
+a pill-shaped Favourites/All segmented control with rounded ends and a divider,
+and tonal Material 3 app cards with the standard
 ripple. The default appearance is a vivid blue accent on a true-black surface;
 both sliders use the active accent color. Quick tiles are accent-tinted
 when off and fill solid with the accent when active. The app columns and tile

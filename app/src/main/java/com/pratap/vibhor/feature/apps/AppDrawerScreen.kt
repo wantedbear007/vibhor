@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.apps
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +32,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,13 +41,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -69,6 +70,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -372,34 +374,89 @@ private fun AppSearchField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppDrawerTabs(
     selectedTab: AppDrawerTab,
     onTabSelected: (AppDrawerTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    PrimaryTabRow(
-        selectedTabIndex = selectedTab.ordinal,
-        modifier = modifier,
-        containerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.primary,
-        divider = {},
+    val colorScheme = MaterialTheme.colorScheme
+    val pillShape = RoundedCornerShape(percent = 50)
+    val leftSegmentShape = RoundedCornerShape(
+        topStartPercent = 50,
+        bottomStartPercent = 50,
+    )
+    val rightSegmentShape = RoundedCornerShape(
+        topEndPercent = 50,
+        bottomEndPercent = 50,
+    )
+
+    Surface(
+        modifier = modifier.height(48.dp),
+        shape = pillShape,
+        color = colorScheme.surfaceVariant.copy(alpha = 0.68f),
+        border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.28f)),
     ) {
-        AppDrawerTab.entries.forEach { tab ->
-            Tab(
-                selected = tab == selectedTab,
-                onClick = { onTabSelected(tab) },
-                modifier = Modifier.testTag(tab.testTag),
-                text = {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .selectableGroup(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppDrawerTab.entries.forEachIndexed { index, tab ->
+                val selected = tab == selectedTab
+                val background by animateColorAsState(
+                    targetValue = if (selected) {
+                        colorScheme.primary.copy(alpha = 0.22f)
+                    } else {
+                        Color.Transparent
+                    },
+                    animationSpec = tween(durationMillis = 160),
+                    label = "drawer-tab-background",
+                )
+                val contentColor by animateColorAsState(
+                    targetValue = if (selected) {
+                        colorScheme.primary
+                    } else {
+                        colorScheme.onSurfaceVariant
+                    },
+                    animationSpec = tween(durationMillis = 160),
+                    label = "drawer-tab-content",
+                )
+                val segmentShape = if (index == 0) leftSegmentShape else rightSegmentShape
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(segmentShape)
+                        .background(background)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = { onTabSelected(tab) },
+                        )
+                        .testTag(tab.testTag),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Text(
                         text = stringResource(tab.labelRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = contentColor,
                         maxLines = 1,
                     )
-                },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                }
+
+                if (index != AppDrawerTab.entries.lastIndex) {
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .fillMaxHeight()
+                            .background(colorScheme.outline.copy(alpha = 0.30f)),
+                    )
+                }
+            }
         }
     }
 }

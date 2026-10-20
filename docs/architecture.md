@@ -145,9 +145,10 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
 - `AppDrawerViewModel` filters the active tab by label (case-insensitive, after
   trimming the query) and exposes the result as `displayedApps`; the persisted
   `appIconScale` still drives icon, label, and column sizing. `AppDrawerScreen`
-  keeps the Material 3 header, filled search field, primary tab row, and tonal
-  Material 3 app cards with the standard ripple, with every color sourced from
-  the theme and persisted accent.
+  keeps the Material 3 header, filled search field, pill-shaped Favourites/All
+  segmented control with rounded ends and a divider, and tonal Material 3 app
+  cards with the standard ripple, with every color sourced from the theme and
+  persisted accent.
 - `AppDrawerContent` is the reusable, background-free part of that screen. The
   standalone `AppDrawerScreen` wraps it for previews/tests, while
   `UnifiedAppsScreen` embeds it in the right-hand panel with compact tile
