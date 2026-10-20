@@ -397,7 +397,6 @@ private fun AppDrawerTabs(
         modifier = modifier.height(TextFieldDefaults.MinHeight),
         shape = pillShape,
         color = colorScheme.surfaceVariant.copy(alpha = 0.68f),
-        border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.28f)),
     ) {
         Row(
             modifier = Modifier
