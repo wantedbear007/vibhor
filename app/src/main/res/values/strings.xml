@@ -33,7 +33,7 @@
     <string name="brightness_sync_message">Allow Vibhor to modify system settings so the Brightness slider stays in sync with your device brightness. Without this access, brightness changes apply only while Vibhor is open.</string>
     <string name="brightness_sync_confirm">Open settings</string>
     <string name="brightness_sync_cancel">Not now</string>
-    <string name="apps_slider_value">%1$d%%</string>
+    <string name="slider_value">%1$d%%</string>
     <plurals name="apps_count">
         <item quantity="one">%1$d app</item>
         <item quantity="other">%1$d apps</item>
@@ -99,4 +99,16 @@
     <string name="settings_reset">Reset to defaults</string>
     <string name="home_quick_button">Favourites</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>
+    <string name="music_favourites">Favourites</string>
+    <string name="music_idle_title">No music playing</string>
+    <string name="music_idle_body">Start playback in any media app</string>
+    <string name="music_access_body">Allow notification access so Vibhor can read and control the active media session.</string>
+    <string name="music_access_action">Open settings</string>
+    <string name="music_play">Play</string>
+    <string name="music_pause">Pause</string>
+    <string name="music_previous">Previous</string>
+    <string name="music_next">Next</string>
+    <string name="music_unknown_title">Unknown track</string>
+    <string name="music_unknown_artist">Unknown artist</string>
+    <string name="music_album_art">Album artwork</string>
 </resources>

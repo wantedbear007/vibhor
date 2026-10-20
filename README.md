@@ -6,14 +6,14 @@ app; it is not an Android Auto, Android Automotive, or Car App Library
 application.
 
 This milestone turns the foundation into a three-screen automotive launcher.
-The screens are laid out on a horizontal pager: **Home** (system wallpaper and
-a large clock), **Cockpit** (clock rail plus sound and brightness controls), and
-**Apps** (a unified page with fixed quick controls beside the installed-app
-launcher). The system wallpaper is rendered by Android behind the window, so no
-storage permission is required and no wallpaper bitmap is ever decoded. A
-**Settings** overlay is reachable from the Cockpit rail and the Apps quick
-controls, and persists every tunable option — including the launcher-wide
-accent color and surface background — through `SharedPreferences`.
+The screens are laid out on a horizontal pager: **Music** (astronaut stage, the
+real active media session, and sound/brightness sliders), **Home** (system
+wallpaper and a large clock), and **Apps** (a unified page with fixed quick
+controls beside the installed-app launcher). The system wallpaper is rendered by
+Android behind the window, so no storage permission is required and no wallpaper
+bitmap is ever decoded. A **Settings** overlay is reachable from the Apps quick
+controls, and persists every tunable option — including the launcher-wide accent
+color and surface background — through `SharedPreferences`.
 
 ## Target device
 
@@ -103,21 +103,21 @@ adb shell am start -n com.pratap.vibhor/.MainActivity
 
 ## Launcher screens and gestures
 
-The launcher is a three-page horizontal pager. Page order is **Cockpit → Home →
+The launcher is a three-page horizontal pager. Page order is **Music → Home →
 Apps**, with Home as the default (middle) page.
 
 | Page | Content |
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
-| **Cockpit** | Clock rail with Settings entry, plus two wide vertical sliders: media volume and screen brightness. No fabricated navigation or media state. |
+| **Music** | A lightweight Canvas astronaut on a moon (left), the real active media session in a rounded player card (centre), tall volume/brightness pills (right), and a compact favourites strip (bottom). Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
 
 - **Swipe left** (finger left) → unified Apps page.
-- **Swipe right** (finger right) → Cockpit.
-- Paging does **not wrap** past the Apps or Cockpit edge.
-- **Back** from Cockpit or Apps returns to Home; Back on Home is left to the system.
+- **Swipe right** (finger right) → Music page.
+- Paging does **not wrap** past the Apps or Music edge.
+- **Back** from Music or Apps returns to Home; Back on Home is left to the system.
 - Snap transitions target ~260 ms and use the selected **swipe animation
   style** (Settings → **Swipe animation**).
 - Pressing **Home** (launcher reset) always returns to the Home page, even from another page or after resume. This behavior is preserved unchanged from the foundation milestone.
@@ -139,6 +139,17 @@ The selected style is saved and applied immediately; the **Swipe animation**
 settings card shows a compact preview for each option, and tapping the selected
 preview replays it.
 
+The Music page keeps the reference hierarchy: the astronaut stage on the left,
+the player card in the centre, and the two tall pills on the right, with the
+favourites strip spanning the bottom. Album art, title, artist, position,
+duration, and transport availability all come from the active session. The
+astronaut bobs, nods, taps its feet, and twinkles only while a real session is
+playing and the page is visible; when playback pauses the scene settles to a
+still pose and the equalizer stops animating. The page is a plain Canvas plus
+Compose shapes — no 3D scene, no blur pass, no audio capture. The player card
+shows an honest idle state when no session can be read, and an **Open settings**
+action when Vibhor is missing notification access.
+
 The unified Apps page divides the landscape into a control rail and an app
 area. The rail stays fixed while the app grid scrolls independently. It follows
 the same Material 3 styling as Settings: a compact, left-aligned digital clock,
@@ -155,7 +166,8 @@ decorative gradient; at low visibility it shares the Home wallpaper. The app
 grid uses compact cards sized for the right-hand panel, with large icons and
 centered labels.
 
-Sound and brightness read and write the same real device channels as Cockpit.
+Sound and brightness read and write the same real device channels as the Music
+page.
 Volume changes made with hardware keys or by another app are reflected live;
 brightness observes the global system setting. On first use the Brightness
 slider offers to grant the special **Modify system settings** access so it can
@@ -169,29 +181,27 @@ adapter state. On Android 9 the legacy normal permissions allow those
 toggles. Night mode is a persisted launcher-page dimming layer, because toggling
 the system Night Light requires privileged access.
 
-Settings opens from the Cockpit rail and from the compact gear beside the
-Apps clock.
+Settings opens from the compact gear beside the Apps clock.
 
 ## Settings
 
 A full-screen **Settings** overlay (not a pager page) opens from the gear
-button in the Cockpit side rail or from the gear beside the Apps clock. It
-contains:
+button beside the Apps clock. It contains:
 
 | Setting | Range | Default | Effect |
 |---|---|---|---|
 | Clock size | 50%–200% (5% steps) | 100% | Multiplier on the computed Home clock size |
 | Clock face | Classic / Split / Minimal / Bold / Elegant / Analog | Classic | Which clock face renders on Home (see below) |
-| Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock, the Cockpit rail clock, and the Apps control clock |
+| Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock and the Apps control clock |
 | Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
 | Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
-| Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the unified Apps page, Cockpit, and Settings; Home keeps the wallpaper |
+| Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the Music page, unified Apps page, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Favourites button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Favourites button |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
-| Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Home, Cockpit, and Apps; each option shows a compact preview |
+| Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Music, Home, and Apps; each option shows a compact preview |
 
 Settings are grouped into six accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
@@ -203,13 +213,13 @@ background / Appearance share a row, and Home & apps and Swipe animation run
 full width; narrow screens stack every card. Clock face previews form a single
 row in the Clock card and scroll horizontally only when space is tight.
 
-The launcher background applies to the unified Apps page, Cockpit, and Settings
-surfaces. Home continues to show the system wallpaper with its own
+The launcher background applies to the Music page, the unified Apps page, and
+Settings surfaces. Home continues to show the system wallpaper with its own
 clock-backdrop blur and darkness. A transparent launcher background lets the
 same wallpaper show through the other pages; while Settings is open, the pager
 is hidden so the overlay shows the wallpaper instead of the page underneath.
 
-Every slider on this screen uses the same thick pill track as the Cockpit
+Every slider on this screen uses the same thick pill track as the Music
 volume and brightness controls: tap or drag anywhere on the pill, with values
 snapping to the supported stops.
 
@@ -243,7 +253,8 @@ size** and **Reset** apply to all of them):
   a wallpaper bitmap. On devices where no wallpaper is available the screen
   falls back to a dark background.
 - Clock blur requires Android 12+; on Android 9 the darkness layer still works.
-- Cockpit volume drives the media stream through `AudioManager`; both sliders
+- The Music page and the Apps page share the same volume and brightness
+  controls. Volume drives the media stream through `AudioManager`; both sliders
   follow external system changes through live platform observers. Brightness
   writes the global `Settings.System.SCREEN_BRIGHTNESS` value when the user
   grants the special **Modify system settings** access, which is requested in
@@ -259,8 +270,17 @@ size** and **Reset** apply to all of them):
 - Night mode on the Apps page is a persisted launcher dimming layer, not the
   system Night Light. Android 9 does not grant normal apps the privileged access
   needed to toggle the system setting.
-- There is no turn-by-turn navigation, media session, weather, location,
-  vehicle, or CAN bus integration.
+- Media sessions on stock Android 9 are only readable by apps the user has
+  granted **notification access**. Vibhor ships a notification-listener service
+  for that single purpose; it never reads or stores notifications. Until access
+  is granted the Music card shows its idle state with an **Open settings**
+  action, and nothing is faked. Session metadata, art, duration, and transport
+  availability depend entirely on what the playing app publishes; unsupported
+  actions stay disabled and unknown fields fall back to neutral labels.
+- The Music progress bar is a readout; seeking is not exposed, so horizontal
+  drags never compete with the pager gesture.
+- There is no turn-by-turn navigation, weather, location, vehicle, or CAN bus
+  integration.
 - No boot receiver, background service, database, networking, or analytics.
 - The clock updates once per minute while the screen is visible and reacts to
   system time and time-zone changes. It does not run in the background.
@@ -273,17 +293,20 @@ size** and **Reset** apply to all of them):
 ```text
 app/src/main/java/com/pratap/vibhor/
 ├── MainActivity.kt              # Launcher entry point, edge-to-edge, home-reset, accent theme host
-├── VibhorApp.kt                 # Pager host (Apps/Home/Cockpit) + Settings overlay
+├── VibhorApp.kt                 # Pager host (Music/Home/Apps) + Settings overlay
 ├── core/
 │   ├── platform/                # App discovery, launcher, clock ticker, settings store, accent/device controls
-│   ├── time/                    # Clock abstraction and formatting (incl. split-time pieces)
+│   │   └── media/               # Real media-session reader + notification-listener access
+│   ├── time/                    # Clock abstraction, clock and playback-time formatting
 │   └── ui/
 │       ├── clock/               # Six stateless clock-face composables (shared by Home + Settings)
+│       ├── components/          # Shared rounded pill slider (Apps + Music)
 │       ├── navigation/          # LauncherPage enum (page order)
 │       └── theme/               # Colors, typography, spacing, shapes, accent CompositionLocal
 └── feature/
     ├── home/                    # Wallpaper + clock + Favourites button (HomeViewModel, screen)
-    ├── cockpit/                 # Clock rail + volume/brightness sliders (CockpitViewModel, screen)
+    ├── music/                   # Media player + astronaut stage (MusicViewModel, screen)
+    ├── cockpit/                 # Device-control view model shared by Music and Apps
     ├── apps/                    # Favourites/All tabs over the installed-app grid (AppDrawerViewModel, screen)
     └── settings/                # Every persisted launcher setting (SettingsViewModel, screen)
 ```

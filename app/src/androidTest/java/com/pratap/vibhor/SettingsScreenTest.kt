@@ -5,16 +5,16 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.LauncherBackground
-import com.pratap.vibhor.feature.cockpit.CockpitTestTags
+import com.pratap.vibhor.feature.apps.AppDrawerTestTags
+import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
 import com.pratap.vibhor.feature.settings.SettingsTestTags
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -25,13 +25,22 @@ class SettingsScreenTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
+    /** Opens the non-Home Apps page and taps its gear. */
+    private fun openSettings() {
+        if (composeRule.onAllNodesWithTag(AppDrawerTestTags.Page)
+                .fetchSemanticsNodes().isEmpty()
+        ) {
+            composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeLeft() }
+        }
+        composeRule.onNodeWithTag(AppDrawerTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.SettingsButton).performClick()
+        composeRule.onNodeWithTag(SettingsTestTags.Page).assertIsDisplayed()
+    }
+
     @Test
     fun settingsPageShowsGroupedSections() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
-        composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Settings").performClick()
+        openSettings()
 
-        composeRule.onNodeWithTag(SettingsTestTags.Page).assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.SectionClock).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionClockBackdrop).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionLauncherBackground).assertExists()
@@ -53,9 +62,7 @@ class SettingsScreenTest {
 
     @Test
     fun animationStyleCanBeSelected() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
-        composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Settings").performClick()
+        openSettings()
 
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).performScrollTo()
         composeRule.onNodeWithTag(
@@ -68,9 +75,7 @@ class SettingsScreenTest {
 
     @Test
     fun animationStylePersistsAndSurvivesRecreation() {
-        composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
-        composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription("Settings").performClick()
+        openSettings()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).performScrollTo()
         composeRule.onNodeWithTag(
             SettingsTestTags.AnimationOptionPrefix + AnimationStyle.PARALLAX.id,
@@ -95,12 +100,7 @@ class SettingsScreenTest {
         ) {
             composeRule.onNodeWithTag(SettingsTestTags.Close).performClick()
         }
-        if (composeRule.onAllNodesWithTag(CockpitTestTags.Page)
-                .fetchSemanticsNodes().isEmpty()
-        ) {
-            composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
-        }
-        composeRule.onNodeWithContentDescription("Settings").performClick()
+        openSettings()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).performScrollTo()
         composeRule.onNodeWithTag(
             SettingsTestTags.AnimationOptionPrefix + AnimationStyle.PARALLAX.id,

@@ -9,7 +9,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
-import com.pratap.vibhor.feature.cockpit.CockpitTestTags
+import com.pratap.vibhor.feature.music.MusicTestTags
 import org.junit.Rule
 import org.junit.Test
 
@@ -30,12 +30,15 @@ class LauncherPagerTest {
     }
 
     @Test
-    fun swipeRightFromHomeOpensCockpit() {
+    fun swipeRightFromHomeOpensMusic() {
         composeRule.onNodeWithTag(LauncherTestTags.Pager).performTouchInput { swipeRight() }
 
-        composeRule.onNodeWithTag(CockpitTestTags.Page).assertIsDisplayed()
-        composeRule.onNodeWithTag(CockpitTestTags.VolumeSlider).assertIsDisplayed()
-        composeRule.onNodeWithTag(CockpitTestTags.BrightnessSlider).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.Page).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.Astronaut).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.Card).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.VolumeSlider).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.BrightnessSlider).assertIsDisplayed()
+        composeRule.onNodeWithTag(MusicTestTags.Favourites).assertIsDisplayed()
         composeRule.onNodeWithText("Navigation").assertDoesNotExist()
     }
 }

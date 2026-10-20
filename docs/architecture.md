@@ -3,8 +3,10 @@
 Vibhor is a single-module Android app with feature-oriented packages. The
 architecture is deliberately small: MVVM with a unidirectional state flow, no
 dependency injection framework, no database, and no navigation library. The
-launcher UI is a three-page horizontal pager (Cockpit, Home, Apps); the Apps
-page combines fixed quick controls with the installed-app launcher.
+launcher UI is a three-page horizontal pager (Music, Home, Apps); the Apps
+page combines fixed quick controls with the installed-app launcher, and the
+Music page pairs a lightweight astronaut illustration with the real active
+media session.
 
 ## Package responsibilities
 
@@ -12,12 +14,15 @@ page combines fixed quick controls with the installed-app launcher.
 |---|---|
 | `com.pratap.vibhor` | `MainActivity` (launcher entry point, edge-to-edge, home-reset, accent theme host) and `VibhorApp` (horizontal pager host + Settings overlay). |
 | `core.ui.theme` | Single source of truth for colors, typography, spacing, and shapes. The active accent lives in a `CompositionLocal` driven by the persisted setting. |
-| `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Cockpit, Home, Apps). |
-| `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face). |
+| `core.ui.navigation` | `LauncherPage` enum defining the pager page order (Music, Home, Apps). |
+| `core.time` | `ClockTicker` abstraction and pure date/time formatting functions (including split-time pieces for the Split clock face and `formatPlaybackTime` for media positions). |
 | `core.platform` | Android system integrations: `SystemClockTicker`, installed-app discovery (`InstalledAppsSource`), app launching (`AppLauncher`), device controls (`DeviceControls`), quick connectivity controls (`QuickControls`), and settings persistence (`SettingsStore` + `SharedPreferencesSettingsStore`). Also the `ClockFace`, `ClockFormat`, `AccentColor`, and `LauncherBackground` enums. |
+| `core.platform.media` | `MediaControls` interface, `AndroidMediaControls` (platform `MediaSessionManager`/`MediaController`), the `NowPlaying` snapshot, and the opt-in `VibhorNotificationListenerService` that makes the package trusted for session access. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
+| `core.ui.components` | Shared controls: the horizontal settings `PillSlider` and the vertical `VerticalPillSlider` used by both the Apps rail and the Music page. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Favourites button). |
-| `feature.cockpit` | `CockpitUiState`, `CockpitViewModel`, and `CockpitScreen` (clock rail, Settings entry point, custom sound and brightness sliders). |
+| `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume/brightness pills, favourites strip). |
+| `feature.cockpit` | `CockpitUiState` and `CockpitViewModel` (real device controls, connectivity, night mode, and the Apps clock), shared by the Music and Apps pages. |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
 
@@ -28,38 +33,38 @@ they can be faked in unit tests.
 
 ## Pager and screen host
 
-`VibhorApp` hosts a `HorizontalPager` with page order **Cockpit (0) → Home (1) →
+`VibhorApp` hosts a `HorizontalPager` with page order **Music (0) → Home (1) →
 Apps (2)**. Home is the default page. The pager does not wrap past the
 first or last page. Snap transitions target ~260 ms.
 
 ```text
 VibhorApp (HorizontalPager)
-├── LauncherPage.Cockpit → CockpitScreen + CockpitViewModel
-├── LauncherPage.Home    → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
-└── LauncherPage.Apps    → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
+├── LauncherPage.Music → MusicScreen + MusicViewModel + CockpitViewModel + HomeViewModel (favourites)
+├── LauncherPage.Home  → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
+└── LauncherPage.Apps  → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
        ├── fixed quick-control rail (clock + settings gear, sound, brightness, radio/night tiles)
        └── embedded AppDrawerContent (search, tabs, app grid)
 
-SettingsScreen + SettingsViewModel (overlay) opens from the Cockpit gear
-or the Apps clock gear.
+SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
 ```
 
 - **Swipe left** (finger left) opens the unified Apps page; **swipe right**
-  opens Cockpit. This follows standard pager index semantics for the chosen
+  opens Music. This follows standard pager index semantics for the chosen
   page order.
-- **Back** from Cockpit or Apps animates back to Home. Back on Home is disabled
+- **Back** from Music or Apps animates back to Home. Back on Home is disabled
   so the system default applies.
 - A repeated **Home press** delivers `onNewIntent`; `MainActivity` bumps
   `homeRequestToken`, and a `LaunchedEffect` in `VibhorApp` scrolls the pager
   back to Home. This launcher-reset behavior is unchanged from the foundation.
-- **Settings** is an overlay (not a pager page) toggled from the Cockpit side
-  rail or the Apps clock gear. `settingsVisible` is held in
+- **Settings** is an overlay (not a pager page) toggled from the Apps clock
+  gear. `settingsVisible` is held in
   `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
   Settings before the pager's own Back handling applies.
-- The Apps route reuses the same `AppDrawerViewModel` and `CockpitViewModel`
-  instances as the other pages. The left control panel therefore shares real
-  volume/brightness state with Cockpit while the app grid keeps its own search,
-  tab, and scroll state.
+- The Apps route reuses process-scoped `AppDrawerViewModel` and
+  `CockpitViewModel` instances, and the Music route reuses the same
+  `CockpitViewModel` plus `HomeViewModel` for favourites. Volume/brightness
+  state is therefore shared between the two pages while the app grid keeps its
+  own search, tab, and scroll state.
 
 ### Swipe animation styles
 
@@ -108,8 +113,8 @@ no wallpaper is available. See
 [android-compatibility.md](android-compatibility.md) for the API-level
 reasoning.
 
-The persisted **Launcher background** uses the same window wallpaper. Apps,
-Cockpit, and Settings draw the selected background color at the configured
+The persisted **Launcher background** uses the same window wallpaper. Music,
+Apps, and Settings draw the selected background color at the configured
 visibility on top of the window; at 0% the color is fully transparent and the
 wallpaper shows through. Home deliberately keeps the wallpaper and its clock
 backdrop controls. While the Settings overlay is visible, the pager is drawn
@@ -189,7 +194,55 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
   `UnifiedAppsScreen` embeds it in the right-hand panel with compact tile
   sizing (large icon, centered single-line label, adaptive column count).
 
-### Cockpit device controls
+### Media sessions (Music)
+
+```text
+MediaSessionManager (system) ── trusted notification-listener packages
+            │
+            ▼
+AndroidMediaControls (core.platform.media)  ── implements MediaControls
+            │  MediaController.Callback + 1 s position ticker
+            │  StateFlow<NowPlaying?> (null when nothing is readable)
+            ▼
+MusicViewModel ── combine(nowPlaying, access) ── stateIn(WhileSubscribed(5s))
+            │
+            ▼
+MusicScreen ── album art, title/artist, progress, transport, equalizer
+            └── AstronautScene ── Canvas animation driven by isPlaying
+```
+
+- `NowPlaying` carries only real session values: title, artist, album art,
+  playing flag, position, duration, and which transport actions the session
+  advertises. Missing metadata becomes neutral labels; unsupported actions stay
+  disabled.
+- On stock Android 9 an ordinary app cannot enumerate sessions. Vibhor ships a
+  `NotificationListenerService` (manifest permission
+  `BIND_NOTIFICATION_LISTENER_SERVICE`) so the user can grant **notification
+  access**. The service never overrides notification callbacks and never reads
+  or stores notification content; it only makes the package trusted by
+  `MediaSessionService`.
+- `AndroidMediaControls` registers an active-sessions listener with its own
+  listener component, prefers a session that is actually playing, keeps a
+  paused session selected while it remains listed, and re-binds when another
+  app starts playing. Every platform call is wrapped: a vanished session can
+  never crash the launcher.
+- Album art is taken from `METADATA_KEY_ALBUM_ART`/`METADATA_KEY_ART` when the
+  playing app publishes it. There is no network or disk fetch, so a missing
+  bitmap falls back to the gradient note tile.
+- The play/pause and skip buttons call `MediaController.TransportControls`;
+  the player card only renders actions the session advertises.
+- Progress is a readout, not a seek control, so it never competes with the
+  pager's horizontal drag.
+- `refresh()` is re-run on `ON_RESUME` from the Music route, so granting or
+  revoking notification access in system settings takes effect on return.
+- `AstronautScene` is a single Canvas. The infinite transitions (bob, nod, foot
+  tap, star twinkle, glow, equalizer sweep) are read **inside the draw pass**
+  and only while `isPlaying` is true; when playback pauses, nothing is read,
+  nothing redraws, and the pose settles to neutral. The page is not composed
+  when it is off-screen, and Compose's frame clock stops while the app is
+  backgrounded, so no stage animation runs when it cannot be seen.
+
+### Device controls (Music + Apps)
 
 `CockpitViewModel` combines the clock ticker, settings, `DeviceControls`, and
 `QuickControls`; the two platform interfaces are implemented by
@@ -208,9 +261,10 @@ AndroidInstalledAppsSource (core.platform)  ── implements InstalledAppsSourc
   brightness setting plus the same fallback poll reflects external changes.
   The Apps page asks for that access in context the first time the Brightness
   slider is used; declining leaves the fallback in place.
-- The sliders are custom Canvas composables (`VerticalControlSlider`) with
-  `detectDragGestures`: the top of the track is the maximum, the bottom the
-  minimum. No third-party slider library is used.
+- The Music page and the Apps rail share `VerticalPillSlider`
+  (`core.ui.components`): a fully rounded track whose top is the maximum, tap
+  or drag anywhere to change, with the icon and percentage embedded in the
+  pill. No third-party slider library is used.
 
 ### Unified Apps quick controls
 
@@ -222,12 +276,12 @@ does not.
 
 - The rail renders a compact left-aligned clock and date from `CockpitUiState`,
   with the Settings gear sharing the clock's line, the same real
-  media-volume and system-brightness values as Cockpit with visible **Volume**
-  and **Brightness** labels, a Bluetooth/Wi-Fi row, and a full-width Night mode
-  tile.
+  media-volume and system-brightness values as the Music page with visible
+  **Volume** and **Brightness** labels, a Bluetooth/Wi-Fi row, and a full-width
+  Night mode tile.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume
   changes still arrive through the shared `CockpitViewModel`, so the left rail
-  and Cockpit stay consistent.
+  and the Music sliders stay consistent.
 - Both pill sliders use the active accent color. Inactive quick tiles use an
   accent-tinted surface, border, icon, and status text; active tiles fill with
   the solid accent and switch their content to the accent-on color.
@@ -250,7 +304,7 @@ does not.
 - **Night mode** is a persisted launcher-page dimming layer (a black overlay)
   because Android 9 does not allow a normal app to toggle system
   Night Light or global dark mode. It applies only to the unified Apps page so
-  Home and Cockpit remain unchanged.
+  Home and Music remain unchanged.
 - The active accent drives both sliders, the radio tiles, the Night-mode
   highlight, search, tabs, and app highlights.
 
@@ -317,14 +371,14 @@ SettingsStore (core.platform interface)
   in-memory `StateFlow` is updated synchronously and the preference write is
   flushed with `apply()`. Enum keys store the stable string id and fall back to
   the default on unknown values.
-- Both `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings`
-  so the clock format applies to the Home clock, the Cockpit rail clock, and
-  the unified Apps control clock. `ClockFormat.SYSTEM` consults
+- `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings` so
+  the clock format applies to the Home clock and the unified Apps control
+  clock. `ClockFormat.SYSTEM` consults
   `DateFormat.is24HourFormat`; `H12`/`H24` override it regardless of the device
   setting.
 - `CockpitViewModel` also combines `QuickControls.observeChanges()` so the
-  radio tiles publish real adapter state. Both the Apps route and Cockpit route
-  resolve the same activity-scoped ViewModel instance.
+  radio tiles publish real adapter state. The Apps and Music routes resolve the
+  same activity-scoped ViewModel instance.
 - `HomeViewModel` starts the app list with an empty-emission `onStart` so the
   clock never waits for the installed-app scan; favourites update when
   discovery completes.
@@ -333,7 +387,7 @@ SettingsStore (core.platform interface)
 - ViewModels receive a `SettingsStore` through their factories and expose
   derived state in their own `UiState`; composables stay stateless.
 - Every Settings slider uses the shared `PillSlider` (`core.ui.components`),
-  the horizontal counterpart of the Cockpit track: a 48dp fully rounded pill,
+  the horizontal counterpart of the Music/Apps pill: a 48dp fully rounded pill,
   accent fill, translucent track, tap or drag to change, and step snapping via
   the pure, unit-tested `snapToSteps` helper.
 - `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
@@ -396,14 +450,13 @@ following intent filter:
 
 ## Where future work belongs
 
-- **Media:** a `core.platform` media-session source (for example
-  `MediaSessionManager` or a notification listener, subject to permissions)
-  behind a small interface, with presentation in a new `feature.media` package.
-  Media playback itself stays outside the launcher. Do not simulate playback
-  metadata.
+- **Media:** extend `MediaControls`/`AndroidMediaControls` (core.platform.media)
+  and `NowPlaying` when a new session capability is needed (for example seeking
+  or queue metadata), then surface it in `feature.music`. Playback itself stays
+  outside the launcher, and nothing may be simulated.
 - **New controls:** extend `DeviceControls` or `QuickControls` (core.platform)
-  and surface them on the existing Cockpit screen or unified Apps rail; keep
-  Android service access behind the interface so unit tests use a fake.
+  and surface them on the Music page or the unified Apps rail; keep Android
+  service access behind the interface so unit tests use a fake.
 - **Settings / preferences:** new preferences should be added as fields of
   `LauncherSettings` with clamped defaults, persisted with a stable key, and
   surfaced on the existing `SettingsScreen` unless they are intentionally

@@ -30,6 +30,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pratap.vibhor.core.platform.AndroidAppLauncher
@@ -41,12 +44,15 @@ import com.pratap.vibhor.core.ui.animation.rememberMotionEnabled
 import com.pratap.vibhor.core.ui.navigation.LauncherPage
 import com.pratap.vibhor.feature.apps.AppDrawerViewModel
 import com.pratap.vibhor.feature.apps.UnifiedAppsScreen
-import com.pratap.vibhor.feature.cockpit.CockpitScreen
 import com.pratap.vibhor.feature.cockpit.CockpitViewModel
 import com.pratap.vibhor.feature.home.HomeScreen
 import com.pratap.vibhor.feature.home.HomeViewModel
+import com.pratap.vibhor.feature.music.MusicScreen
+import com.pratap.vibhor.feature.music.MusicViewModel
 import com.pratap.vibhor.feature.settings.SettingsScreen
 import com.pratap.vibhor.feature.settings.SettingsViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 object LauncherTestTags {
@@ -54,7 +60,7 @@ object LauncherTestTags {
 }
 
 /**
- * Three-page launcher. Page order is [Cockpit, Home, Apps]; the pager starts
+ * Three-page launcher. Page order is [Music, Home, Apps]; the pager starts
  * on Home, never wraps around the ends, and snap transitions target roughly
  * 260 ms with the per-page effect of the persisted animation style. The
  * existing Home-intent reset flow (homeRequestToken) scrolls the pager back
@@ -121,7 +127,7 @@ fun VibhorApp(homeRequestToken: Int = 0) {
         }
     }
 
-    // Pager back: from Cockpit/Apps return to Home. Registered before the
+    // Pager back: from Music/Apps return to Home. Registered before the
     // settings back handler so settings takes precedence while open.
     BackHandler(enabled = pagerState.settledPage != LauncherPage.Home.ordinal) {
         scope.launch {
@@ -167,9 +173,7 @@ fun VibhorApp(homeRequestToken: Int = 0) {
                     onOpenSettings = { settingsVisible = true },
                 )
                 LauncherPage.Home -> HomeRoute()
-                LauncherPage.Cockpit -> CockpitRoute(
-                    onOpenSettings = { settingsVisible = true },
-                )
+                LauncherPage.Music -> MusicRoute(appLauncher = appLauncher)
             }
         }
     }
@@ -242,16 +246,50 @@ private fun AppsRoute(
 }
 
 @Composable
-private fun CockpitRoute(
-    onOpenSettings: () -> Unit,
-    viewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
+private fun MusicRoute(
+    appLauncher: AppLauncher,
+    controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
+    musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory),
+    homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    CockpitScreen(
-        state = state,
-        onVolumeChange = viewModel::setVolume,
-        onBrightnessChange = viewModel::setBrightness,
-        onOpenSettings = onOpenSettings,
+    val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
+    val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
+    // HomeViewModel's state ticks with the clock; only favourites matter here.
+    val favouritesFlow = remember(homeViewModel) {
+        homeViewModel.uiState
+            .map { it.favourites }
+            .distinctUntilChanged()
+    }
+    val favourites by favouritesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Notification access is granted in system settings; re-check on return.
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                musicViewModel.refreshAccess()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    MusicScreen(
+        musicState = musicState,
+        controlState = controlState,
+        favourites = favourites,
+        onPlayPause = musicViewModel::playPause,
+        onNext = musicViewModel::next,
+        onPrevious = musicViewModel::previous,
+        onVolumeChange = controlViewModel::setVolume,
+        onBrightnessChange = controlViewModel::setBrightness,
+        onLaunchApp = { app -> appLauncher.launch(app.packageName, app.activityName) },
+        onEnableMediaAccess = {
+            runCatching {
+                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            }
+        },
     )
 }
 

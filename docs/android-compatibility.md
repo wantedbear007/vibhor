@@ -8,8 +8,8 @@ version branching for older platforms. In particular:
 
 - `java.time` (clock, formatting, durations) is available from API 26, so no
   core-library desugaring is needed.
-- Adaptive launcher icons, `LauncherApps`, `MediaSessionManager`, and the
-  notification APIs used by future milestones exist on API 28.
+- Adaptive launcher icons, `LauncherApps`, platform `MediaSessionManager` /
+  `MediaController`, and notification-listener services exist on API 28.
 - The app does not need to support Android 8 or older devices.
 
 `minSdk` must not be raised to work around dependency issues. If a future
@@ -79,6 +79,15 @@ Notes:
   permissions. The implementation catches refusals and publishes the unchanged
   real state instead of an optimistic toggle; unsupported or inaccessible
   radios are shown as unavailable.
+- **Media sessions require notification access.** On API 28 an ordinary app
+  cannot enumerate other apps' media sessions unless it is an enabled
+  notification listener or holds `MEDIA_CONTENT_CONTROL` (a signature
+  permission). Vibhor declares a no-op `NotificationListenerService` with
+  `BIND_NOTIFICATION_LISTENER_SERVICE` so the user can grant access; the service
+  overrides no notification callbacks. Until access is granted, the Music card
+  shows an idle state with a shortcut to the system notification-access screen
+  instead of pretending a session exists. Session content and transport
+  availability are read from `PlaybackState`/`MediaMetadata`, never inferred.
 - **System night mode.** Normal apps cannot toggle system Night Light or global
   dark mode on API 28 without privileged access. The Apps page's Night mode is
   therefore a persisted launcher dimming layer scoped to that page, not a fake
@@ -92,7 +101,7 @@ Notes:
 - **No splash screen API.** The Android 12 splash screen API is not available;
   the app relies on the theme window background for startup. The window
   background is transparent so the system wallpaper shows through on Home; the
-  Compose theme supplies the dark background on the Cockpit and Apps pages.
+  Compose theme supplies the dark background on the Music and Apps pages.
 - **Settings persistence.** Launcher settings are stored with
   `SharedPreferences`, which is available on every API level including 28. No
   DataStore dependency and no backup-agent or device-protected storage concerns

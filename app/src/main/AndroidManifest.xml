@@ -67,6 +67,23 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Opt-in notification access. Stock Android only lets a trusted
+            notification listener enumerate media sessions; this service never
+            reads notifications, it exists so the Music screen can show and
+            control the real active session. The user grants access from the
+            Music screen or system settings.
+        -->
+        <service
+            android:name=".core.platform.media.VibhorNotificationListenerService"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
