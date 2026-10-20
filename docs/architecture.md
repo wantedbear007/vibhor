@@ -232,9 +232,9 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
 - The player card splits 30/70: the real album art is a full-height,
   center-cropped thumbnail in the left column, inset by the same gutter as the
   card's top and bottom; the right column stacks the metadata and equalizer,
-  the seek bar, and the transport controls. The landscape card wraps the
-  transport content instead of reserving half the stage, and uses a uniform
-  20 dp content gutter.
+  the seek bar, and the transport controls. The landscape card keeps the
+  half-stage minimum height, with the thumbnail filling that full inner height
+  and a uniform 20 dp content gutter.
 - The play/pause and skip buttons call `MediaController.TransportControls`;
   the player card only renders actions the session advertises. The transport
   glyphs are rounded, iOS-style shapes, with an 80 dp rounded-square play/pause

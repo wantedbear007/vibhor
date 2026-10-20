@@ -61,8 +61,8 @@ class MusicScreenTest {
             astronaut.bottom <= card.top,
         )
         assertTrue(
-            "The reduced player card should leave the astronaut stage larger",
-            astronaut.height > card.height,
+            "The player card should be taller than the astronaut stage",
+            card.height > astronaut.height,
         )
     }
 

@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -62,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.media.NowPlaying
@@ -136,7 +138,7 @@ fun MusicScreen(
         ) {
             val landscape = maxWidth > maxHeight
             val sliderColumnWidth = (maxWidth * 0.20f).coerceIn(180.dp, 264.dp)
-            val card: @Composable (Modifier, Boolean) -> Unit = { cardModifier, fillHeight ->
+            val card: @Composable (Modifier, Boolean, Dp) -> Unit = { cardModifier, fillHeight, minContentHeight ->
                 MusicCard(
                     track = track,
                     hasAccess = musicState.hasAccess,
@@ -146,11 +148,13 @@ fun MusicScreen(
                     onSeek = onSeek,
                     onEnableMediaAccess = onEnableMediaAccess,
                     fillHeight = fillHeight,
+                    minContentHeight = minContentHeight,
                     modifier = cardModifier,
                 )
             }
 
             if (landscape) {
+                val playerMinHeight = maxHeight * 0.50f
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier
@@ -171,8 +175,11 @@ fun MusicScreen(
                                     .weight(1f),
                             )
                             card(
-                                Modifier.fillMaxWidth(),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = playerMinHeight),
                                 false,
+                                (playerMinHeight - PlayerCardPadding * 2).coerceAtLeast(0.dp),
                             )
                         }
                         VolumePill(
@@ -200,6 +207,7 @@ fun MusicScreen(
                             .fillMaxWidth()
                             .weight(1f),
                         true,
+                        0.dp,
                     )
                     VolumePill(
                         state = controlState,
@@ -224,6 +232,7 @@ private fun MusicCard(
     onSeek: (Long) -> Unit,
     onEnableMediaAccess: () -> Unit,
     fillHeight: Boolean,
+    minContentHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -235,7 +244,7 @@ private fun MusicCard(
         Column(
             modifier = Modifier
                 .then(if (fillHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
-                .padding(20.dp),
+                .padding(PlayerCardPadding),
             verticalArrangement = Arrangement.Center,
         ) {
             if (track == null) {
@@ -251,6 +260,7 @@ private fun MusicCard(
                     onPrevious = onPrevious,
                     onSeek = onSeek,
                     fillHeight = fillHeight,
+                    minContentHeight = minContentHeight,
                 )
             }
         }
@@ -265,11 +275,13 @@ private fun TrackPlayer(
     onPrevious: () -> Unit,
     onSeek: (Long) -> Unit,
     fillHeight: Boolean,
+    minContentHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .then(if (fillHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+            .heightIn(min = minContentHeight)
             .testTag(MusicTestTags.PlayerContent),
         contentAlignment = Alignment.Center,
     ) {
@@ -724,6 +736,7 @@ private fun VolumePill(
     }
 }
 
+private val PlayerCardPadding = 20.dp
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
 private const val SEEK_MATCH_WINDOW_MS = 1_000L
 private const val SEEK_TIMEOUT_MILLIS = 3_000L
