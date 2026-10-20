@@ -61,8 +61,8 @@ class MusicScreenTest {
             astronaut.bottom <= card.top,
         )
         assertTrue(
-            "The player card should be taller than the astronaut stage",
-            card.height > astronaut.height,
+            "The reduced player card should leave the astronaut stage larger",
+            astronaut.height > card.height,
         )
     }
 
@@ -131,6 +131,9 @@ class MusicScreenTest {
             val playerContent = composeRule
                 .onNodeWithTag(MusicTestTags.PlayerContent, useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot
+            val card = composeRule
+                .onNodeWithTag(MusicTestTags.Card, useUnmergedTree = true)
+                .fetchSemanticsNode().boundsInRoot
             val thumbnail = composeRule
                 .onNodeWithTag(MusicTestTags.ThumbnailColumn, useUnmergedTree = true)
                 .fetchSemanticsNode().boundsInRoot
@@ -142,6 +145,10 @@ class MusicScreenTest {
                 .fetchSemanticsNode().boundsInRoot
             assertEquals(0.30f, thumbnail.width / playerContent.width, 0.02f)
             assertEquals(1f, albumArt.width / thumbnail.width, 0.02f)
+            assertEquals(1f, albumArt.height / thumbnail.height, 0.02f)
+            val leftInset = albumArt.left - card.left
+            assertEquals(leftInset, albumArt.top - card.top, 1f)
+            assertEquals(leftInset, card.bottom - albumArt.bottom, 1f)
             assertTrue(
                 "The album thumbnail must sit left of the metadata",
                 albumArt.right <= title.left,

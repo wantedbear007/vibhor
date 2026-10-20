@@ -19,12 +19,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -153,7 +151,6 @@ fun MusicScreen(
             }
 
             if (landscape) {
-                val playerMinHeight = maxHeight * 0.50f
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier
@@ -174,9 +171,7 @@ fun MusicScreen(
                                     .weight(1f),
                             )
                             card(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = playerMinHeight),
+                                Modifier.fillMaxWidth(),
                                 false,
                             )
                         }
@@ -240,7 +235,7 @@ private fun MusicCard(
         Column(
             modifier = Modifier
                 .then(if (fillHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
-                .padding(horizontal = 26.dp, vertical = 22.dp),
+                .padding(20.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             if (track == null) {
@@ -255,6 +250,7 @@ private fun MusicCard(
                     onNext = onNext,
                     onPrevious = onPrevious,
                     onSeek = onSeek,
+                    fillHeight = fillHeight,
                 )
             }
         }
@@ -268,100 +264,108 @@ private fun TrackPlayer(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     onSeek: (Long) -> Unit,
+    fillHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
+            .then(if (fillHeight) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
             .testTag(MusicTestTags.PlayerContent),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .weight(0.30f)
-                .testTag(MusicTestTags.ThumbnailColumn),
-            contentAlignment = Alignment.Center,
-        ) {
-            AlbumArtwork(
-                art = track.albumArt,
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.weight(0.30f))
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
-            )
-        }
-        Column(
-            modifier = Modifier
-                .weight(0.70f)
-                .padding(start = 24.dp),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = track.title.ifBlank { stringResource(R.string.music_unknown_title) },
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = PrimaryText,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(MusicTestTags.TrackTitle),
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = track.artist ?: stringResource(R.string.music_unknown_artist),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = SecondaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.testTag(MusicTestTags.TrackArtist),
+                    .weight(0.70f)
+                    .padding(start = 24.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = track.title.ifBlank {
+                                stringResource(R.string.music_unknown_title)
+                            },
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = PrimaryText,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.testTag(MusicTestTags.TrackTitle),
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = track.artist ?: stringResource(R.string.music_unknown_artist),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SecondaryText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.testTag(MusicTestTags.TrackArtist),
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    EqualizerBars(
+                        playing = track.isPlaying,
+                        modifier = Modifier
+                            .width(58.dp)
+                            .height(24.dp),
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                EqualizerBars(
-                    playing = track.isPlaying,
-                    modifier = Modifier
-                        .width(58.dp)
-                        .height(24.dp),
+
+                Spacer(modifier = Modifier.height(VibhorSpacing.md))
+
+                PlaybackProgress(
+                    positionMs = track.positionMs,
+                    durationMs = track.durationMs,
+                    canSeek = track.canSeek,
+                    onSeek = onSeek,
                 )
+
+                Spacer(modifier = Modifier.height(VibhorSpacing.md))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        VibhorSpacing.xl,
+                        Alignment.CenterHorizontally,
+                    ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TransportButton(
+                        iconRes = R.drawable.ic_skip_previous,
+                        contentDescription = stringResource(R.string.music_previous),
+                        enabled = track.canSkipPrevious,
+                        onClick = onPrevious,
+                        testTag = MusicTestTags.Previous,
+                    )
+                    PlayPauseButton(
+                        playing = track.isPlaying,
+                        enabled = track.canPlayPause,
+                        onClick = onPlayPause,
+                    )
+                    TransportButton(
+                        iconRes = R.drawable.ic_skip_next,
+                        contentDescription = stringResource(R.string.music_next),
+                        enabled = track.canSkipNext,
+                        onClick = onNext,
+                        testTag = MusicTestTags.Next,
+                    )
+                }
             }
+        }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            PlaybackProgress(
-                positionMs = track.positionMs,
-                durationMs = track.durationMs,
-                canSeek = track.canSeek,
-                onSeek = onSeek,
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    VibhorSpacing.xl,
-                    Alignment.CenterHorizontally,
-                ),
-                verticalAlignment = Alignment.CenterVertically,
+        Box(modifier = Modifier.matchParentSize()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth(0.30f)
+                    .fillMaxHeight()
+                    .testTag(MusicTestTags.ThumbnailColumn),
             ) {
-                TransportButton(
-                    iconRes = R.drawable.ic_skip_previous,
-                    contentDescription = stringResource(R.string.music_previous),
-                    enabled = track.canSkipPrevious,
-                    onClick = onPrevious,
-                    testTag = MusicTestTags.Previous,
-                )
-                PlayPauseButton(
-                    playing = track.isPlaying,
-                    enabled = track.canPlayPause,
-                    onClick = onPlayPause,
-                )
-                TransportButton(
-                    iconRes = R.drawable.ic_skip_next,
-                    contentDescription = stringResource(R.string.music_next),
-                    enabled = track.canSkipNext,
-                    onClick = onNext,
-                    testTag = MusicTestTags.Next,
+                AlbumArtwork(
+                    art = track.albumArt,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

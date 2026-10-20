@@ -142,8 +142,10 @@ preview replays it.
 The Music page keeps the reference hierarchy: the astronaut stage above the
 player card, and the tall volume pill on the right. Album art, title, artist,
 position, duration, and transport availability all come from the active
-session. The player card gives the thumbnail the left 30% and stacks metadata,
-progress, and transport controls in the remaining 70%. The astronaut bounces
+session. The compact player card wraps its controls and gives the thumbnail
+the left 30% at full content height, with matching 20 dp insets on the left,
+top, and bottom, stacking metadata, progress, and transport controls in the
+remaining 70%. The astronaut bounces
 on the beat, sways, alternates toe-out dance steps, and pumps its arms while
 the stars twinkle — only while a real session is playing and the page is
 visible; when playback pauses the scene settles to a still pose and the
