@@ -236,7 +236,7 @@ private fun MusicCard(
 ) {
     Surface(
         modifier = modifier.testTag(MusicTestTags.Card),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(PlayerCardCornerRadius),
         color = DeepSlate.copy(alpha = 0.74f),
         border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.08f)),
     ) {
@@ -431,7 +431,7 @@ private fun AlbumArtwork(
     art: Bitmap?,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(AlbumArtCornerRadius)
     if (art != null) {
         Image(
             bitmap = art.asImageBitmap(),
@@ -736,6 +736,8 @@ private fun VolumePill(
 }
 
 private val PlayerCardPadding = 20.dp
+private val PlayerCardCornerRadius = 24.dp
+private val AlbumArtCornerRadius = 28.dp
 private val VolumePillWidth = 132.dp
 private val EQ_TWO_PI = (2.0 * Math.PI).toFloat()
 private const val SEEK_MATCH_WINDOW_MS = 1_000L

@@ -149,9 +149,11 @@ player card, and the compact tall volume pill on the right. Album art, title,
 artist, position, duration, and transport availability all come from the
 active session. The player card fills at least half the stage in landscape and
 gives the thumbnail the left 30% at full content height, with matching 20 dp
-insets on the left, top, and bottom, stacking metadata, progress, and transport
-controls in the remaining 70%. The astronaut bounces on the beat, sways,
-alternates toe-out dance steps, and pumps its arms while the stars twinkle —
+insets on the left, top, and bottom. The card's 24 dp corners and the album
+art's 28 dp corners keep the nested edges visually matched, stacking metadata,
+progress, and transport controls in the remaining 70%. The astronaut bounces on
+the beat, sways, alternates toe-out dance steps, and pumps its arms while the
+stars twinkle —
 only while a real session is playing and the page is visible; when playback
 pauses the scene settles to a still pose and the equalizer stops animating. The
 transport uses large, rounded iOS-style glyphs sized for tablet touch inside a
