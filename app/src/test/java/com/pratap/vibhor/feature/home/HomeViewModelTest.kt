@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.home
 
 import com.pratap.vibhor.core.platform.ClockFace
+import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.time.ClockTicker
@@ -111,6 +112,48 @@ class HomeViewModelTest {
 
             collection.cancel()
         }
+
+    @Test
+    fun `24-hour override wins over the system setting`() = runTest(dispatcher) {
+        val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+        val viewModel = HomeViewModel(
+            clockTicker = FakeClockTicker(instant),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(clockFormat = ClockFormat.H24),
+            ),
+            is24HourFormat = { false },
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals("18:42", viewModel.uiState.value.timeText)
+        assertEquals("18", viewModel.uiState.value.hourText)
+        assertEquals("", viewModel.uiState.value.meridiemText)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `12-hour override wins over the system setting`() = runTest(dispatcher) {
+        val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+        val viewModel = HomeViewModel(
+            clockTicker = FakeClockTicker(instant),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(clockFormat = ClockFormat.H12),
+            ),
+            is24HourFormat = { true },
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals("6:42 PM", viewModel.uiState.value.timeText)
+        assertEquals("6", viewModel.uiState.value.hourText)
+        assertEquals("PM", viewModel.uiState.value.meridiemText)
+
+        collection.cancel()
+    }
 
     private class FakeClockTicker(
         private val instant: ZonedDateTime,

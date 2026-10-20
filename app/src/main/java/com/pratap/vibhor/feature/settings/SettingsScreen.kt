@@ -389,6 +389,7 @@ private fun SettingsLandscapePreview() {
             ),
             onClockScaleChange = {},
             onClockFaceChange = {},
+            onClockFormatChange = {},
             onAppIconScaleChange = {},
             onResetToDefaults = {},
             onClose = {},

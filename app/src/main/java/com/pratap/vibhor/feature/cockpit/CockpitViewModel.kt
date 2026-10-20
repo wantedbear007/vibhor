@@ -7,8 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pratap.vibhor.core.platform.AndroidNavigationAppsSource
+import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.NavigationApp
 import com.pratap.vibhor.core.platform.NavigationAppsSource
+import com.pratap.vibhor.core.platform.SettingsStore
+import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import com.pratap.vibhor.core.platform.SystemClockTicker
 import com.pratap.vibhor.core.time.ClockTicker
 import com.pratap.vibhor.core.time.formatClockDate
@@ -25,6 +28,7 @@ import kotlinx.coroutines.launch
 class CockpitViewModel(
     clockTicker: ClockTicker,
     private val navigationAppsSource: NavigationAppsSource,
+    settingsStore: SettingsStore,
     is24HourFormat: () -> Boolean = { false },
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
@@ -34,9 +38,15 @@ class CockpitViewModel(
     val uiState: StateFlow<CockpitUiState> = combine(
         clockTicker.ticks(),
         navigationApps,
-    ) { now, apps ->
+        settingsStore.settings,
+    ) { now, apps, settings ->
+        val use24Hour = when (settings.clockFormat) {
+            ClockFormat.H24 -> true
+            ClockFormat.H12 -> false
+            ClockFormat.SYSTEM -> is24HourFormat()
+        }
         CockpitUiState(
-            timeText = formatClockTime(now, is24Hour = is24HourFormat()),
+            timeText = formatClockTime(now, is24Hour = use24Hour),
             dateText = formatClockDate(now),
             navigationApp = apps.firstOrNull(),
         )
@@ -61,6 +71,7 @@ class CockpitViewModel(
                 CockpitViewModel(
                     clockTicker = SystemClockTicker(application),
                     navigationAppsSource = AndroidNavigationAppsSource(application),
+                    settingsStore = SharedPreferencesSettingsStore.get(application),
                     is24HourFormat = { DateFormat.is24HourFormat(application) },
                 )
             }

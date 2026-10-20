@@ -149,6 +149,7 @@ private fun SettingsRoute(
         state = state,
         onClockScaleChange = viewModel::setClockScale,
         onClockFaceChange = viewModel::setClockFace,
+        onClockFormatChange = viewModel::setClockFormat,
         onAppIconScaleChange = viewModel::setAppIconScale,
         onResetToDefaults = viewModel::resetToDefaults,
         onClose = onClose,

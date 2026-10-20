@@ -142,16 +142,21 @@ SettingsStore (core.platform interface)
 ```
 
 - `LauncherSettings` holds two clamped scale multipliers (`clockScale` and
-  `appIconScale`, range 0.5–2.0, default 1.0) and the selected `clockFace`
-  (`ClockFace`, default `CLASSIC`).
+  `appIconScale`, range 0.5–2.0, default 1.0), the selected `clockFace`
+  (`ClockFace`, default `CLASSIC`), and the selected `clockFormat`
+  (`ClockFormat`, default `SYSTEM`).
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
   over the `vibhor_launcher_settings` preferences file (keys `clock_scale`,
-  `app_icon_scale`, `clock_face`); the in-memory `StateFlow` is updated
-  synchronously and the preference write is flushed with `apply()`. The
-  `clock_face` key stores the enum's stable string id and falls back to
-  `CLASSIC` on unknown values.
+  `app_icon_scale`, `clock_face`, `clock_format`); the in-memory `StateFlow`
+  is updated synchronously and the preference write is flushed with `apply()`.
+  The `clock_face` and `clock_format` keys store the enum's stable string id
+  and fall back to the default on unknown values.
+- Both `HomeViewModel` and `CockpitViewModel` combine `settingsStore.settings`
+  so the clock format applies to the Home clock **and** the Cockpit rail
+  clock. `ClockFormat.SYSTEM` consults `DateFormat.is24HourFormat`; `H12`/`H24`
+  override it regardless of the device setting.
 - Scales multiply sizes computed per screen (clock size on Home; icon, cell,
   and label sizes on Apps), so a single pair of settings works across
   densities, orientations, and future content changes.

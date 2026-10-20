@@ -15,6 +15,10 @@
     <string name="settings_clock_face_split">Split</string>
     <string name="settings_clock_face_minimal">Minimal</string>
     <string name="settings_clock_face_analog">Analog</string>
+    <string name="settings_clock_format">Time format</string>
+    <string name="settings_clock_format_system">System</string>
+    <string name="settings_clock_format_12">12-hour</string>
+    <string name="settings_clock_format_24">24-hour</string>
     <string name="settings_app_icon_size">App icon size</string>
     <string name="settings_scale_value">%1$d%%</string>
     <string name="settings_reset">Reset to defaults</string>

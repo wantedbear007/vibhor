@@ -1,6 +1,7 @@
 package com.pratap.vibhor.feature.settings
 
 import com.pratap.vibhor.core.platform.ClockFace
+import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -120,6 +121,42 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(ClockFace.DEFAULT, viewModel.uiState.value.clockFace)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `changing clock format updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setClockFormat(ClockFormat.H24)
+            advanceUntilIdle()
+
+            assertEquals(ClockFormat.H24, viewModel.uiState.value.clockFormat)
+            assertEquals(ClockFormat.H24, store.settings.value.clockFormat)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the default clock format`() = runTest(dispatcher) {
+        val store = InMemorySettingsStore()
+        val viewModel = SettingsViewModel(store)
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        viewModel.setClockFormat(ClockFormat.H12)
+        advanceUntilIdle()
+        viewModel.resetToDefaults()
+        advanceUntilIdle()
+
+        assertEquals(ClockFormat.DEFAULT, viewModel.uiState.value.clockFormat)
 
         collection.cancel()
     }

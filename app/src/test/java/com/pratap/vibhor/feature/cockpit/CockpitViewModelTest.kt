@@ -1,5 +1,8 @@
 package com.pratap.vibhor.feature.cockpit
 
+import com.pratap.vibhor.core.platform.ClockFormat
+import com.pratap.vibhor.core.platform.InMemorySettingsStore
+import com.pratap.vibhor.core.platform.LauncherSettings
 import com.pratap.vibhor.core.platform.NavigationApp
 import com.pratap.vibhor.core.platform.NavigationAppsSource
 import com.pratap.vibhor.core.time.ClockTicker
@@ -53,6 +56,7 @@ class CockpitViewModelTest {
             val viewModel = CockpitViewModel(
                 clockTicker = FakeClockTicker(instant),
                 navigationAppsSource = FakeNavigationAppsSource(listOf(app)),
+                settingsStore = InMemorySettingsStore(),
                 is24HourFormat = { false },
                 ioDispatcher = dispatcher,
             )
@@ -66,6 +70,27 @@ class CockpitViewModelTest {
 
             collection.cancel()
         }
+
+    @Test
+    fun `rail clock follows the configured 24-hour format`() = runTest(dispatcher) {
+        val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+        val viewModel = CockpitViewModel(
+            clockTicker = FakeClockTicker(instant),
+            navigationAppsSource = FakeNavigationAppsSource(emptyList()),
+            settingsStore = InMemorySettingsStore(
+                LauncherSettings(clockFormat = ClockFormat.H24),
+            ),
+            is24HourFormat = { false },
+            ioDispatcher = dispatcher,
+        )
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals("18:42", viewModel.uiState.value.timeText)
+
+        collection.cancel()
+    }
 
     private class FakeClockTicker(
         private val instant: ZonedDateTime,

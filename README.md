@@ -130,6 +130,7 @@ button in the Cockpit side rail. It contains:
 |---|---|---|---|
 | Clock size | 50%–200% (5% steps) | 100% | Multiplier on the computed Home clock size |
 | Clock face | Classic / Split / Minimal / Analog | Classic | Which clock face renders on Home (see below) |
+| Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock **and** the Cockpit rail clock |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
 
 Clock faces (each sizes itself from the same computed clock size, so **Clock
@@ -142,7 +143,7 @@ size** and **Reset** apply to all of them):
   second hand) with the date below. The second hand keeps real time while
   Home is visible.
 
-- **Reset to defaults** restores both sliders to 100% and the clock face to Classic.
+- **Reset to defaults** restores both sliders to 100% and the clock face and time format to their defaults.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - Scales are multipliers on sizes computed per screen, so the same settings

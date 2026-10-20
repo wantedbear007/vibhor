@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.pratap.vibhor.core.platform.ClockFace
+import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.SettingsStore
 import com.pratap.vibhor.core.platform.SharedPreferencesSettingsStore
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +29,7 @@ class SettingsViewModel(
                 clockScale = settings.clockScale,
                 appIconScale = settings.appIconScale,
                 clockFace = settings.clockFace,
+                clockFormat = settings.clockFormat,
             )
         }
         .stateIn(
@@ -42,10 +44,13 @@ class SettingsViewModel(
 
     fun setClockFace(face: ClockFace) = settingsStore.setClockFace(face)
 
+    fun setClockFormat(format: ClockFormat) = settingsStore.setClockFormat(format)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherDefaults.Scale)
         settingsStore.setAppIconScale(LauncherDefaults.Scale)
         settingsStore.setClockFace(ClockFace.DEFAULT)
+        settingsStore.setClockFormat(ClockFormat.DEFAULT)
     }
 
     companion object {
