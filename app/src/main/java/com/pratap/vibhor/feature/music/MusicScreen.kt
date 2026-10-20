@@ -95,15 +95,14 @@ object MusicTestTags {
     const val Next = "music_next"
     const val Previous = "music_previous"
     const val VolumeSlider = "music_volume_slider"
-    const val BrightnessSlider = "music_brightness_slider"
     const val Idle = "music_idle"
     const val AccessAction = "music_access_action"
 }
 
 /**
  * Music page: the astronaut stage above the real media session and the device
- * volume/brightness pills on the right. The layout keeps that hierarchy in
- * landscape and stacks the stage, player, and pills cleanly in portrait.
+ * volume pill on the right. The layout keeps that hierarchy in
+ * landscape and stacks the stage, player, and pill cleanly in portrait.
  */
 @Composable
 fun MusicScreen(
@@ -114,7 +113,6 @@ fun MusicScreen(
     onPrevious: () -> Unit,
     onSeek: (Long) -> Unit,
     onVolumeChange: (Float) -> Unit,
-    onBrightnessChange: (Float) -> Unit,
     onEnableMediaAccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -177,10 +175,9 @@ fun MusicScreen(
                                 false,
                             )
                         }
-                        SliderPair(
+                        VolumePill(
                             state = controlState,
                             onVolumeChange = onVolumeChange,
-                            onBrightnessChange = onBrightnessChange,
                             modifier = Modifier
                                 .width(sliderColumnWidth)
                                 .fillMaxHeight(),
@@ -204,10 +201,9 @@ fun MusicScreen(
                             .weight(1f),
                         true,
                     )
-                    SliderPair(
+                    VolumePill(
                         state = controlState,
                         onVolumeChange = onVolumeChange,
-                        onBrightnessChange = onBrightnessChange,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(228.dp),
@@ -665,44 +661,27 @@ private fun EqualizerBars(
 }
 
 @Composable
-private fun SliderPair(
+private fun VolumePill(
     state: CockpitUiState,
     onVolumeChange: (Float) -> Unit,
-    onBrightnessChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val accent = VibhorThemeColors.accent
-    BoxWithConstraints(modifier = modifier) {
-        val gap = 20.dp
-        val sliderWidth = ((maxWidth - gap) / 2).coerceAtMost(132.dp)
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            VerticalPillSlider(
-                value = state.volumeLevel,
-                onValueChange = onVolumeChange,
-                iconRes = R.drawable.ic_volume_up,
-                label = stringResource(R.string.apps_volume),
-                fillColors = listOf(accent, accent.copy(alpha = 0.58f)),
-                testTag = MusicTestTags.VolumeSlider,
-                modifier = Modifier
-                    .width(sliderWidth)
-                    .fillMaxHeight(),
-            )
-            VerticalPillSlider(
-                value = state.brightnessLevel,
-                onValueChange = onBrightnessChange,
-                iconRes = R.drawable.ic_brightness,
-                label = stringResource(R.string.apps_brightness),
-                fillColors = listOf(accent, accent.copy(alpha = 0.58f)),
-                testTag = MusicTestTags.BrightnessSlider,
-                modifier = Modifier
-                    .width(sliderWidth)
-                    .fillMaxHeight(),
-            )
-        }
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        VerticalPillSlider(
+            value = state.volumeLevel,
+            onValueChange = onVolumeChange,
+            iconRes = R.drawable.ic_volume_up,
+            label = stringResource(R.string.apps_volume),
+            fillColors = listOf(accent, accent.copy(alpha = 0.58f)),
+            testTag = MusicTestTags.VolumeSlider,
+            modifier = Modifier
+                .width(132.dp)
+                .fillMaxHeight(),
+        )
     }
 }
 
@@ -725,7 +704,6 @@ private fun MusicLandscapePreview() {
             onPrevious = {},
             onSeek = {},
             onVolumeChange = {},
-            onBrightnessChange = {},
             onEnableMediaAccess = {},
         )
     }
@@ -743,7 +721,6 @@ private fun MusicIdlePreview() {
             onPrevious = {},
             onSeek = {},
             onVolumeChange = {},
-            onBrightnessChange = {},
             onEnableMediaAccess = {},
         )
     }

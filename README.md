@@ -7,7 +7,7 @@ application.
 
 This milestone turns the foundation into a three-screen automotive launcher.
 The screens are laid out on a horizontal pager: **Music** (astronaut stage, the
-real active media session, and sound/brightness sliders), **Home** (system
+real active media session, and a volume slider), **Home** (system
 wallpaper and a large clock), and **Apps** (a unified page with fixed quick
 controls beside the installed-app launcher). The system wallpaper is rendered by
 Android behind the window, so no storage permission is required and no wallpaper
@@ -109,7 +109,7 @@ Apps**, with Home as the default (middle) page.
 | Page | Content |
 |---|---|
 | **Home** (default) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
-| **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card, with tall volume/brightness pills on the right. Never shows fabricated tracks or playback state. |
+| **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card, with a tall volume pill on the right. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, and Bluetooth / Wi-Fi / Night mode tiles) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
 Navigation gestures:
@@ -167,7 +167,7 @@ grid uses compact cards sized for the right-hand panel, with large icons and
 centered labels.
 
 Sound and brightness read and write the same real device channels as the Music
-page.
+volume control.
 Volume changes made with hardware keys or by another app are reflected live;
 brightness observes the global system setting. On first use the Brightness
 slider offers to grant the special **Modify system settings** access so it can
@@ -220,7 +220,7 @@ same wallpaper show through the other pages; while Settings is open, the pager
 is hidden so the overlay shows the wallpaper instead of the page underneath.
 
 Every slider on this screen uses the same thick pill track as the Music
-volume and brightness controls: tap or drag anywhere on the pill, with values
+volume control: tap or drag anywhere on the pill, with values
 snapping to the supported stops.
 
 Clock faces (each sizes itself from the same computed clock size, so **Clock
@@ -253,15 +253,16 @@ size** and **Reset** apply to all of them):
   a wallpaper bitmap. On devices where no wallpaper is available the screen
   falls back to a dark background.
 - Clock blur requires Android 12+; on Android 9 the darkness layer still works.
-- The Music page and the Apps page share the same volume and brightness
-  controls. Volume drives the media stream through `AudioManager`; both sliders
-  follow external system changes through live platform observers. Brightness
-  writes the global `Settings.System.SCREEN_BRIGHTNESS` value when the user
-  grants the special **Modify system settings** access, which is requested in
-  context from the Brightness slider on the Apps page. Without that access it
-  falls back to a window-level override for the current activity, so it resets
-  once the window is gone. First-party hard keys stay in sync through a runtime
-  volume-change receiver. The unified Apps page uses the same controls.
+- The Music page and the Apps page share the same real volume control. Volume
+  drives the media stream through `AudioManager`; both sliders follow external
+  system changes through live platform observers. Brightness is available on
+  the Apps rail and writes the global `Settings.System.SCREEN_BRIGHTNESS` value
+  when the user grants the special **Modify system settings** access, which is
+  requested in context from the Brightness slider on the Apps page. Without
+  that access it falls back to a window-level override for the current
+  activity, so it resets once the window is gone. First-party hard keys stay in
+  sync through a runtime volume-change receiver. The unified Apps page uses the
+  same controls.
 - Wi-Fi and Bluetooth quick controls use the legacy API 28 normal permissions.
   Their state comes from the actual system services and changes are never
   applied optimistically. Newer Android versions restrict Wi-Fi enabling and

@@ -21,7 +21,7 @@ media session.
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `core.ui.components` | Shared controls: the horizontal settings `PillSlider` and the vertical `VerticalPillSlider` used by both the Apps rail and the Music page. |
 | `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Favourites button). |
-| `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume/brightness pills). |
+| `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume pill). |
 | `feature.cockpit` | `CockpitUiState` and `CockpitViewModel` (real device controls, connectivity, night mode, and the Apps clock), shared by the Music and Apps pages. |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
 | `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting). |
@@ -62,9 +62,9 @@ SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
   Settings before the pager's own Back handling applies.
 - The Apps route reuses process-scoped `AppDrawerViewModel` and
   `CockpitViewModel` instances, and the Music route reuses the same
-  `CockpitViewModel` plus `HomeViewModel` for favourites. Volume/brightness
-  state is therefore shared between the two pages while the app grid keeps its
-  own search, tab, and scroll state.
+  `CockpitViewModel` plus `HomeViewModel` for favourites. Volume and brightness
+  state is therefore shared through the same view model; the Music page
+  presents volume only, while the Apps rail exposes both.
 
 ### Swipe animation styles
 
@@ -279,13 +279,12 @@ one-pixel gradient divider. The launcher grid scrolls independently; the rail
 does not.
 
 - The rail renders a compact left-aligned clock and date from `CockpitUiState`,
-  with the Settings gear sharing the clock's line, the same real
-  media-volume and system-brightness values as the Music page with visible
-  **Volume** and **Brightness** labels, a Bluetooth/Wi-Fi row, and a full-width
-  Night mode tile.
+  with the Settings gear sharing the clock's line, the real media-volume and
+  system-brightness values with visible **Volume** and **Brightness** labels, a
+  Bluetooth/Wi-Fi row, and a full-width Night mode tile.
 - Tapping a slider uses the existing device-control callbacks. Hardware volume
   changes still arrive through the shared `CockpitViewModel`, so the left rail
-  and the Music sliders stay consistent.
+  and the Music volume pill stay consistent.
 - Both pill sliders use the active accent color. Inactive quick tiles use an
   accent-tinted surface, border, icon, and status text; active tiles fill with
   the solid accent and switch their content to the accent-on color.

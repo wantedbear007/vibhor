@@ -272,7 +272,6 @@ private fun MusicRoute(
         onPrevious = musicViewModel::previous,
         onSeek = musicViewModel::seekTo,
         onVolumeChange = controlViewModel::setVolume,
-        onBrightnessChange = controlViewModel::setBrightness,
         onEnableMediaAccess = {
             runCatching {
                 context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
