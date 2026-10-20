@@ -195,6 +195,10 @@ does not.
 - Both pill sliders use the active accent color. Inactive quick tiles use an
   accent-tinted surface, border, icon, and status text; active tiles fill with
   the solid accent and switch their content to the accent-on color.
+- Long-pressing the Bluetooth or Wi-Fi tile opens the matching Android Settings
+  page (`ACTION_BLUETOOTH_SETTINGS` or `ACTION_WIFI_SETTINGS`) without changing
+  the adapter state. The long-press action remains available while a radio is
+  unsupported so it can be diagnosed from system settings.
 - The page background is exactly the persisted launcher background at the
   configured opacity, with no decorative backdrop gradient. At low opacity the
   system wallpaper shows through.

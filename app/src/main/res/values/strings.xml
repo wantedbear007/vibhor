@@ -27,6 +27,8 @@
     <string name="apps_quick_on">On</string>
     <string name="apps_quick_off">Off</string>
     <string name="apps_quick_unavailable">Unavailable</string>
+    <string name="apps_quick_bluetooth_settings">Open Bluetooth settings</string>
+    <string name="apps_quick_wifi_settings">Open Wi-Fi settings</string>
     <string name="brightness_sync_title">Sync with system brightness?</string>
     <string name="brightness_sync_message">Allow Vibhor to modify system settings so the Brightness slider stays in sync with your device brightness. Without this access, brightness changes apply only while Vibhor is open.</string>
     <string name="brightness_sync_confirm">Open settings</string>

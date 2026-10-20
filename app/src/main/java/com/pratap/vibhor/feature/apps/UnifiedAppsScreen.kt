@@ -6,11 +6,15 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -54,6 +58,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
@@ -107,6 +112,8 @@ fun UnifiedAppsScreen(
     onBrightnessChange: (Float) -> Unit,
     onToggleWifi: () -> Unit,
     onToggleBluetooth: () -> Unit,
+    onOpenBluetoothSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     onOpenSettings: () -> Unit,
     onRequestSystemBrightnessPermission: () -> Unit,
@@ -155,6 +162,8 @@ fun UnifiedAppsScreen(
                         },
                         onToggleWifi = onToggleWifi,
                         onToggleBluetooth = onToggleBluetooth,
+                        onOpenBluetoothSettings = onOpenBluetoothSettings,
+                        onOpenWifiSettings = onOpenWifiSettings,
                         onToggleNightMode = onToggleNightMode,
                         onOpenSettings = onOpenSettings,
                         modifier = Modifier
@@ -223,6 +232,8 @@ private fun QuickControlPanel(
     onBrightnessChange: (Float) -> Unit,
     onToggleWifi: () -> Unit,
     onToggleBluetooth: () -> Unit,
+    onOpenBluetoothSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -333,6 +344,8 @@ private fun QuickControlPanel(
                 state = state,
                 onToggleWifi = onToggleWifi,
                 onToggleBluetooth = onToggleBluetooth,
+                onOpenBluetoothSettings = onOpenBluetoothSettings,
+                onOpenWifiSettings = onOpenWifiSettings,
                 onToggleNightMode = onToggleNightMode,
             )
         }
@@ -518,12 +531,16 @@ private fun QuickControlGrid(
     state: CockpitUiState,
     onToggleWifi: () -> Unit,
     onToggleBluetooth: () -> Unit,
+    onOpenBluetoothSettings: () -> Unit,
+    onOpenWifiSettings: () -> Unit,
     onToggleNightMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val on = stringResource(R.string.apps_quick_on)
     val off = stringResource(R.string.apps_quick_off)
     val unavailable = stringResource(R.string.apps_quick_unavailable)
+    val bluetoothSettingsLabel = stringResource(R.string.apps_quick_bluetooth_settings)
+    val wifiSettingsLabel = stringResource(R.string.apps_quick_wifi_settings)
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -542,6 +559,8 @@ private fun QuickControlGrid(
                 enabled = state.bluetoothSupported,
                 highlight = VibhorThemeColors.accent,
                 onClick = onToggleBluetooth,
+                onLongClick = onOpenBluetoothSettings,
+                longClickLabel = bluetoothSettingsLabel,
                 testTag = UnifiedAppsTestTags.BluetoothTile,
                 modifier = Modifier.weight(1f),
             )
@@ -557,6 +576,8 @@ private fun QuickControlGrid(
                 enabled = state.wifiSupported,
                 highlight = VibhorThemeColors.accent,
                 onClick = onToggleWifi,
+                onLongClick = onOpenWifiSettings,
+                longClickLabel = wifiSettingsLabel,
                 testTag = UnifiedAppsTestTags.WifiTile,
                 modifier = Modifier.weight(1f),
             )
@@ -575,6 +596,7 @@ private fun QuickControlGrid(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun QuickControlTile(
     @DrawableRes iconRes: Int,
@@ -585,9 +607,13 @@ private fun QuickControlTile(
     highlight: Color,
     onClick: () -> Unit,
     testTag: String,
+    onLongClick: (() -> Unit)? = null,
+    longClickLabel: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(20.dp)
+    val interactionSource = remember { MutableInteractionSource() }
+    val indication = LocalIndication.current
     val accentOn = VibhorThemeColors.accentOn
     val containerColor by animateColorAsState(
         targetValue = when {
@@ -621,11 +647,19 @@ private fun QuickControlTile(
     }
 
     Surface(
-        onClick = onClick,
-        enabled = enabled,
         modifier = modifier
             .height(74.dp)
             .alpha(if (enabled) 1f else 0.55f)
+            .clip(shape)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = if (enabled) indication else null,
+                enabled = enabled || onLongClick != null,
+                role = Role.Button,
+                onLongClickLabel = longClickLabel,
+                onLongClick = onLongClick,
+                onClick = { if (enabled) onClick() },
+            )
             .testTag(testTag),
         shape = shape,
         color = containerColor,
@@ -787,6 +821,8 @@ private fun UnifiedAppsLandscapePreview() {
             onBrightnessChange = {},
             onToggleWifi = {},
             onToggleBluetooth = {},
+            onOpenBluetoothSettings = {},
+            onOpenWifiSettings = {},
             onToggleNightMode = {},
             onOpenSettings = {},
             onRequestSystemBrightnessPermission = {},

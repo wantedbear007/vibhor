@@ -1,5 +1,8 @@
 package com.pratap.vibhor
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -39,6 +42,17 @@ class UnifiedAppsScreenTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag(AppDrawerTestTags.Grid).assertIsDisplayed()
+    }
+
+    @Test
+    fun connectivityTilesExposeSystemSettingsLongPress() {
+        openUnifiedApps()
+
+        val longClickAction = SemanticsMatcher.keyIsDefined(SemanticsActions.OnLongClick)
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.BluetoothTile).assert(longClickAction)
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.WifiTile).assert(longClickAction)
+        composeRule.onNodeWithTag(UnifiedAppsTestTags.NightTile)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
     }
 
     @Test

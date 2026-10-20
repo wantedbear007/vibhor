@@ -173,6 +173,16 @@ private fun AppsRoute(
         onBrightnessChange = controlViewModel::setBrightness,
         onToggleWifi = controlViewModel::toggleWifi,
         onToggleBluetooth = controlViewModel::toggleBluetooth,
+        onOpenBluetoothSettings = {
+            runCatching {
+                context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
+        },
+        onOpenWifiSettings = {
+            runCatching {
+                context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+            }
+        },
         onToggleNightMode = controlViewModel::toggleNightMode,
         onOpenSettings = onOpenSettings,
         onRequestSystemBrightnessPermission = {

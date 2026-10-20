@@ -144,7 +144,9 @@ write system brightness and stay in sync. If that access is declined, the
 slider falls back to the previous window-level override and continues to work
 only while Vibhor is visible. Wi-Fi and Bluetooth reflect actual adapter state
 and request real state changes; unsupported radios are shown as unavailable
-rather than fabricated. On Android 9 the legacy normal permissions allow those
+rather than fabricated. Long-pressing either connectivity tile opens the
+matching Bluetooth or Wi-Fi page in Android Settings without changing the
+adapter state. On Android 9 the legacy normal permissions allow those
 toggles. Night mode is a persisted launcher-page dimming layer, because toggling
 the system Night Light requires privileged access.
 
