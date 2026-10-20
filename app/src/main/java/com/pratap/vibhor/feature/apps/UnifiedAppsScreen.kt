@@ -245,7 +245,8 @@ private fun QuickControlPanel(
                     .weight(1f),
             ) {
                 val spacing = 20.dp
-                val sliderWidth = ((maxWidth - spacing) / 2).coerceAtMost(118.dp)
+                // Trim 2dp (about 4px at 2x density) from the previous maximum width.
+                val sliderWidth = (((maxWidth - spacing) / 2) - 2.dp).coerceAtMost(116.dp)
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(
