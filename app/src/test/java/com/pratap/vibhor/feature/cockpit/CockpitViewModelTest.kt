@@ -280,6 +280,55 @@ class CockpitViewModelTest {
             collection.cancel()
         }
 
+    @Test
+    fun `blackout applies temporary brightness and restores the previous level`() =
+        runTest(dispatcher) {
+            val controls = FakeDeviceControls(brightness = 0.72f)
+            val viewModel = CockpitViewModel(
+                clockTicker = FakeClockTicker(ZonedDateTime.now()),
+                settingsStore = InMemorySettingsStore(),
+                deviceControls = controls,
+                quickControls = FakeQuickControls(),
+            )
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.enterBlackout(0.05f)
+            advanceUntilIdle()
+
+            assertEquals(0.05f, controls.brightness)
+            assertEquals(0.05f, controls.temporaryBrightness)
+            assertEquals(0.05f, viewModel.uiState.value.brightnessLevel)
+
+            viewModel.exitBlackout()
+            advanceUntilIdle()
+
+            assertEquals(null, controls.temporaryBrightness)
+            assertEquals(0.72f, controls.brightness)
+            assertEquals(0.72f, viewModel.uiState.value.brightnessLevel)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `re-entering blackout keeps the original brightness to restore`() =
+        runTest(dispatcher) {
+            val controls = FakeDeviceControls(brightness = 0.64f)
+            val viewModel = CockpitViewModel(
+                clockTicker = FakeClockTicker(ZonedDateTime.now()),
+                settingsStore = InMemorySettingsStore(),
+                deviceControls = controls,
+                quickControls = FakeQuickControls(),
+            )
+
+            viewModel.enterBlackout(0.05f)
+            viewModel.enterBlackout(0.2f)
+            viewModel.exitBlackout()
+
+            assertEquals(0.64f, controls.brightness)
+            assertEquals(null, controls.temporaryBrightness)
+        }
+
     private class FakeClockTicker(
         private val instant: ZonedDateTime,
     ) : ClockTicker {
@@ -293,6 +342,9 @@ class CockpitViewModelTest {
         var canWriteBrightness: Boolean = true,
     ) : DeviceControls {
         private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        private var brightnessBeforeTemporary = brightness
+        var temporaryBrightness: Float? = null
+            private set
 
         fun emitChange() {
             changes.tryEmit(Unit)
@@ -313,7 +365,22 @@ class CockpitViewModelTest {
         override fun screenBrightness(): Float = brightness
 
         override fun setScreenBrightness(fraction: Float) {
+            temporaryBrightness = null
             brightness = fraction
+        }
+
+        override fun setTemporaryScreenBrightness(fraction: Float) {
+            if (temporaryBrightness == null) {
+                brightnessBeforeTemporary = brightness
+            }
+            temporaryBrightness = fraction
+            brightness = fraction
+        }
+
+        override fun clearTemporaryScreenBrightness() {
+            if (temporaryBrightness == null) return
+            temporaryBrightness = null
+            brightness = brightnessBeforeTemporary
         }
 
         override fun canWriteSystemBrightness(): Boolean = canWriteBrightness

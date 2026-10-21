@@ -7,6 +7,7 @@ import com.pratap.vibhor.core.platform.ClockFormat
 import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.InMemorySettingsStore
 import com.pratap.vibhor.core.platform.LauncherBackground
+import com.pratap.vibhor.core.platform.LauncherSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -57,7 +58,25 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `reset to defaults restores scale of one`() = runTest(dispatcher) {
+    fun `fresh settings use the installer defaults`() = runTest(dispatcher) {
+        val viewModel = SettingsViewModel(InMemorySettingsStore())
+
+        val collection = launch { viewModel.uiState.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(
+            LauncherSettings.DEFAULT_CLOCK_SCALE,
+            viewModel.uiState.value.clockScale,
+        )
+        assertEquals(LauncherSettings.DEFAULT_SCALE, viewModel.uiState.value.appIconScale)
+        assertEquals(AccentColor.WHITE, viewModel.uiState.value.accentColor)
+        assertEquals(LauncherBackground.BLACK, viewModel.uiState.value.background)
+
+        collection.cancel()
+    }
+
+    @Test
+    fun `reset restores half-size clock and full-size app icons`() = runTest(dispatcher) {
         val store = InMemorySettingsStore()
         val viewModel = SettingsViewModel(store)
 
@@ -65,12 +84,16 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         viewModel.setClockScale(2f)
+        viewModel.setAppIconScale(1.5f)
         advanceUntilIdle()
         viewModel.resetToDefaults()
         advanceUntilIdle()
 
-        assertEquals(1f, viewModel.uiState.value.clockScale)
-        assertEquals(1f, viewModel.uiState.value.appIconScale)
+        assertEquals(
+            LauncherSettings.DEFAULT_CLOCK_SCALE,
+            viewModel.uiState.value.clockScale,
+        )
+        assertEquals(LauncherSettings.DEFAULT_SCALE, viewModel.uiState.value.appIconScale)
 
         collection.cancel()
     }
@@ -358,4 +381,75 @@ class SettingsViewModelTest {
 
         collection.cancel()
     }
+
+    @Test
+    fun `blackout brightness updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(
+                LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
+                viewModel.uiState.value.blackoutBrightness,
+            )
+
+            viewModel.setBlackoutBrightness(0.35f)
+            advanceUntilIdle()
+
+            assertEquals(0.35f, viewModel.uiState.value.blackoutBrightness)
+            assertEquals(0.35f, store.settings.value.blackoutBrightness)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the default blackout brightness`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setBlackoutBrightness(0.8f)
+            advanceUntilIdle()
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertEquals(
+                LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
+                viewModel.uiState.value.blackoutBrightness,
+            )
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `blackout brightness is clamped to the supported range`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setBlackoutBrightness(2f)
+            advanceUntilIdle()
+            assertEquals(
+                LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+                viewModel.uiState.value.blackoutBrightness,
+            )
+
+            viewModel.setBlackoutBrightness(0f)
+            advanceUntilIdle()
+            assertEquals(
+                LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+                viewModel.uiState.value.blackoutBrightness,
+            )
+
+            collection.cancel()
+        }
 }

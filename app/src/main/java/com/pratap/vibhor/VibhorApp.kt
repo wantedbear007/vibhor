@@ -3,6 +3,8 @@ package com.pratap.vibhor
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.view.View
+import android.view.ViewTreeObserver
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -90,10 +92,10 @@ fun VibhorApp(
 
     // Status bar visibility follows the persisted setting and is re-applied
     // whenever the composition (re)enters, covering process recreation and
-    // return-from-background. The system navigation bar is always left
-    // visible so the user can never lock themselves out of system controls;
-    // when hidden, a swipe still reveals the status bar temporarily. The
-    // swipe animation style comes from the same settings flow and applies
+    // return-from-background. Blackout hides both the status and navigation
+    // bars so only the black page remains; transient bars can still be swiped
+    // in temporarily, so the system controls are never unreachable. The swipe
+    // animation style comes from the same settings flow and applies
     // immediately without recreating the pager.
     val statusBarVisible = launcherSettings.showStatusBar
     val animationStyle = launcherSettings.animationStyle
@@ -117,10 +119,52 @@ fun VibhorApp(
         )
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        if (statusBarVisible && !blackoutVisible) {
-            controller.show(WindowInsetsCompat.Type.statusBars())
+        if (blackoutVisible) {
+            controller.hide(WindowInsetsCompat.Type.systemBars())
         } else {
-            controller.hide(WindowInsetsCompat.Type.statusBars())
+            // Leave the navigation bar available everywhere outside Blackout,
+            // even if the user prefers the status bar hidden.
+            controller.show(WindowInsetsCompat.Type.navigationBars())
+            if (statusBarVisible) {
+                controller.show(WindowInsetsCompat.Type.statusBars())
+            } else {
+                controller.hide(WindowInsetsCompat.Type.statusBars())
+            }
+        }
+    }
+
+    // The system's one-time immersive-mode confirmation, a transient swipe, or
+    // a dialog can reveal the bars again. While Blackout is active, immediately
+    // re-hide them so the page stays completely black. The listener is removed
+    // as soon as Blackout closes.
+    @Suppress("DEPRECATION")
+    DisposableEffect(blackoutVisible) {
+        if (!blackoutVisible) {
+            onDispose { }
+        } else {
+            val controller = WindowCompat.getInsetsController(
+                (view.context as android.app.Activity).window,
+                view,
+            )
+            val hiddenFlags = View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+                if (hasFocus) {
+                    controller.hide(WindowInsetsCompat.Type.systemBars())
+                }
+            }
+            view.viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+            view.setOnSystemUiVisibilityChangeListener { visibility ->
+                if ((visibility and hiddenFlags) != hiddenFlags) {
+                    view.post {
+                        controller.hide(WindowInsetsCompat.Type.systemBars())
+                    }
+                }
+            }
+            onDispose {
+                view.viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
+                view.setOnSystemUiVisibilityChangeListener(null)
+            }
         }
     }
 
@@ -192,7 +236,9 @@ fun VibhorApp(
                     onOpenSettings = { settingsVisible = true },
                     onOpenBlackout = { blackoutVisible = true },
                 )
-                LauncherPage.Home -> HomeRoute()
+                LauncherPage.Home -> HomeRoute(
+                    onOpenBlackout = { blackoutVisible = true },
+                )
                 LauncherPage.Music -> MusicRoute()
             }
         }
@@ -203,12 +249,16 @@ fun VibhorApp(
     }
 
     if (blackoutVisible) {
-        BlackoutRoute(onDismiss = { blackoutVisible = false })
+        BlackoutRoute(
+            brightness = launcherSettings.blackoutBrightness,
+            onDismiss = { blackoutVisible = false },
+        )
     }
 }
 
 @Composable
 private fun HomeRoute(
+    onOpenBlackout: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -218,6 +268,7 @@ private fun HomeRoute(
         state = state,
         onLaunchApp = { app -> appLauncher.launch(app.packageName, app.activityName) },
         onOpenAppDrawer = { /* no-op for now; can be extended */ },
+        onOpenBlackout = onOpenBlackout,
     )
 }
 
@@ -311,12 +362,22 @@ private fun MusicRoute(
 
 @Composable
 private fun BlackoutRoute(
+    brightness: Float,
     onDismiss: () -> Unit,
     controlViewModel: CockpitViewModel = viewModel(factory = CockpitViewModel.Factory),
     musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory),
 ) {
     val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
     val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Keep the brightness keyed to the view model rather than the value: a
+    // changing value must not dispose/re-enter and capture the already-dimmed
+    // brightness as the state to restore.
+    DisposableEffect(controlViewModel) {
+        controlViewModel.enterBlackout(brightness)
+        onDispose { controlViewModel.exitBlackout() }
+    }
+
     BlackoutScreen(
         timeText = controlState.timeText,
         trackTitle = musicState.track?.title,
@@ -346,6 +407,7 @@ private fun SettingsRoute(
         onBackgroundOpacityChange = viewModel::setBackgroundOpacity,
         onAnimationStyleChange = viewModel::setAnimationStyle,
         onHomeButtonTargetChange = viewModel::setHomeButtonTarget,
+        onBlackoutBrightnessChange = viewModel::setBlackoutBrightness,
         onChangeWallpaper = {
             runCatching {
                 context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER))

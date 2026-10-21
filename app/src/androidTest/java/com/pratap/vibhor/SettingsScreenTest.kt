@@ -1,6 +1,7 @@
 package com.pratap.vibhor
 
 import android.content.Context
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -8,9 +9,11 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.test.platform.app.InstrumentationRegistry
+import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
 import com.pratap.vibhor.core.platform.HomeButtonTarget
 import com.pratap.vibhor.core.platform.LauncherBackground
@@ -52,8 +55,12 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag(SettingsTestTags.SectionAppearance).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionHomeApps).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionHomeButton).assertExists()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionBlackout).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.ClockSlider).assertExists()
+        composeRule.onNodeWithTag(SettingsTestTags.BlackoutBrightnessSlider)
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.WallpaperButton)
             .performScrollTo()
             .assertIsDisplayed()
@@ -144,5 +151,59 @@ class SettingsScreenTest {
         )
             .performScrollTo()
             .assertIsSelected()
+    }
+
+    @Test
+    fun whiteAccentCanBeSelectedAndPersists() {
+        openSettings()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionAppearance).performScrollTo()
+
+        // Move away from the white installer default first so this verifies a
+        // real selection change rather than the initial state.
+        composeRule.onNodeWithTag(
+            SettingsTestTags.AccentOptionPrefix + AccentColor.PINK.id,
+        )
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+        composeRule.onNodeWithTag(
+            SettingsTestTags.AccentOptionPrefix + AccentColor.WHITE.id,
+        )
+            .performScrollTo()
+            .performClick()
+            .assertIsSelected()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val stored = context
+            .getSharedPreferences("vibhor_launcher_settings", Context.MODE_PRIVATE)
+            .getString("accent_color", null)
+        assertEquals(AccentColor.WHITE.id, stored)
+    }
+
+    @Test
+    fun blackoutBrightnessPersistsToPreferences() {
+        openSettings()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionBlackout).performScrollTo()
+        composeRule.onNodeWithTag(SettingsTestTags.BlackoutBrightnessSlider)
+            .performScrollTo()
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                setProgress(20f)
+            }
+        composeRule.waitForIdle()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = context.getSharedPreferences(
+            "vibhor_launcher_settings",
+            Context.MODE_PRIVATE,
+        )
+        assertEquals(0.2f, prefs.getFloat("blackout_brightness", -1f), 0.0001f)
+
+        // Restore the 5% default so the next test starts from a known state.
+        composeRule.onNodeWithTag(SettingsTestTags.BlackoutBrightnessSlider)
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                setProgress(5f)
+            }
+        composeRule.waitForIdle()
+        assertEquals(0.05f, prefs.getFloat("blackout_brightness", -1f), 0.0001f)
     }
 }

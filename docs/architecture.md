@@ -20,12 +20,12 @@ media session.
 | `core.platform.media` | `MediaControls` interface, `AndroidMediaControls` (platform `MediaSessionManager`/`MediaController`), the `NowPlaying` snapshot, and the opt-in `VibhorNotificationListenerService` that makes the package trusted for session access. |
 | `core.ui.clock` | Six stateless clock-face composables (`ClassicClockFace`, `SplitClockFace`, `MinimalClockFace`, `BoldClockFace`, `ElegantClockFace`, `AnalogClockFace`) shared by Home and the Settings preview cards. |
 | `core.ui.components` | Shared controls: the horizontal settings `PillSlider` and the vertical `VerticalPillSlider` used by both the Apps rail and the Music page. |
-| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Favourites button). |
+| `feature.home` | `HomeUiState`, `HomeViewModel`, and `HomeScreen` (wallpaper + clock + Blackout/Favourites actions). |
 | `feature.music` | `MusicUiState`, `MusicViewModel`, `MusicScreen`, and `AstronautScene` (session player, album art, equalizer, astronaut Canvas, volume pill). |
 | `feature.cockpit` | `CockpitUiState` and `CockpitViewModel` (real device controls, connectivity, night mode, and the Apps clock), shared by the Music and Apps pages. |
 | `feature.apps` | `AppDrawerUiState`, `AppDrawerViewModel`, `AppDrawerScreen` (standalone drawer components), and `UnifiedAppsScreen` (fixed quick-control rail plus app launcher for the left-swipe page). |
-| `feature.blackout` | Stateless immersive black page with the shared cockpit clock, the active media title, and an exit action. |
-| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting and the system-wallpaper action). |
+| `feature.blackout` | Stateless immersive black page with the shared cockpit clock, the active media title, and an icon-only close action. |
+| `feature.settings` | `SettingsUiState`, `SettingsViewModel`, and `SettingsScreen` (every persisted launcher setting, Blackout brightness, and the system-wallpaper action). |
 
 UI code does not access Android system services directly. All system
 integrations live in `core.platform` behind small interfaces (`ClockTicker`,
@@ -44,14 +44,15 @@ transitions target ~260 ms.
 ```text
 VibhorApp (HorizontalPager)
 ├── LauncherPage.Music → MusicScreen + MusicViewModel + CockpitViewModel + HomeViewModel (favourites)
-├── LauncherPage.Home  → HomeScreen + HomeViewModel (unchanged minimal wallpaper page)
+├── LauncherPage.Home  → HomeScreen + HomeViewModel (wallpaper + Blackout/Favourites actions)
 └── LauncherPage.Apps  → UnifiedAppsScreen + AppDrawerViewModel + CockpitViewModel
        ├── fixed quick-control rail (clock + settings gear, sound, brightness, radio/night/mute tiles, Blackout)
        └── embedded AppDrawerContent (search, tabs, app grid)
 
 SettingsScreen + SettingsViewModel (overlay) opens from the Apps clock gear.
-BlackoutScreen (overlay) reuses CockpitViewModel for time and MusicViewModel
-for the real active media title.
+BlackoutScreen (overlay) opens from the Apps tile or the Home action and reuses
+CockpitViewModel for time/brightness and MusicViewModel for the real active
+media title.
 ```
 
 - **Swipe left** (finger left) opens the unified Apps page; **swipe right**
@@ -68,11 +69,17 @@ for the real active media title.
   gear. `settingsVisible` is held in
   `rememberSaveable` inside `VibhorApp`, and a dedicated `BackHandler` closes
   Settings before the pager's own Back handling applies.
-- **Blackout** is a topmost overlay toggled by the full-width quick tile.
-  `blackoutVisible` is also held in `rememberSaveable`; it hides the status bar,
-  disables pager scrolling, consumes pointer input so the launcher underneath
-  cannot be operated, and closes through its bottom-right action, Back, or a
-  repeated Home press.
+- **Blackout** is a topmost overlay toggled by the full-width Apps tile or the
+  Home action. `blackoutVisible` is also held in `rememberSaveable`; it hides
+  both system bars, disables pager scrolling, consumes pointer input so the
+  launcher underneath cannot be operated, and closes through its bottom-right
+  cross, Back, or a repeated Home press. While Blackout is active the host
+  re-hides both bars if the system transiently reveals them or the one-time
+  immersive confirmation is dismissed. Non-Blackout screens always restore the
+  navigation bar, while the status bar follows the persisted preference.
+  While composed, `BlackoutRoute` applies the persisted `blackoutBrightness`
+  through `DeviceControls.setTemporaryScreenBrightness`; its `DisposableEffect`
+  restores the previous window brightness on exit or recreation.
 - The Apps route reuses process-scoped `AppDrawerViewModel` and
   `CockpitViewModel` instances, and the Music route reuses the same
   `CockpitViewModel` plus `HomeViewModel` for favourites. Volume and brightness
@@ -306,6 +313,13 @@ MusicScreen ── album art, title/artist, progress, transport, equalizer
   brightness setting plus the same fallback poll reflects external changes.
   The Apps page asks for that access in context the first time the Brightness
   slider is used; declining leaves the fallback in place.
+- **Blackout brightness** uses a separate, temporary window override rather
+  than `setScreenBrightness`. This dims only the launcher window, leaves the
+  global setting and adaptive-brightness mode untouched, and preserves the
+  previous window override (including "follow system") in
+  `AndroidDeviceControls` for exact restoration. `CockpitViewModel` exposes
+  `enterBlackout`/`exitBlackout` and refreshes the shared brightness state so
+  the Apps slider cannot keep a stale dimmed value after the page closes.
 - The Music page and the Apps rail share `VerticalPillSlider`
   (`core.ui.components`): a fully rounded track whose top is the maximum, tap
   or drag anywhere to change, with the icon and percentage embedded in the
@@ -376,11 +390,12 @@ Screens must read accents from `VibhorThemeColors.accent` (or
 anywhere in feature code. A new accent option is added once in `AccentColor`,
 once in the theme palette, and once in the Settings swatch row.
 
-The shipped defaults are `AccentColor.BLUE` and `LauncherBackground.BLACK`.
-The accent palette uses bright Material tones that stay legible on black, while
-the background palette remains dark and low-chroma for the same reason.
-Material surfaces are neutral rather than tinted, so a pure-black launcher
-surface keeps clean, readable card separation.
+The shipped defaults are `AccentColor.WHITE`, `LauncherBackground.BLACK`, and
+`LauncherSettings.DEFAULT_CLOCK_SCALE` (50%). The accent palette uses bright
+Material tones plus pure white that stay legible on black, while the
+background palette remains dark and low-chroma for the same reason. Material
+surfaces are neutral rather than tinted, so a pure-black launcher surface
+keeps clean, readable card separation.
 
 ### Settings persistence
 
@@ -398,12 +413,14 @@ SettingsStore (core.platform interface)
 ```
 
 - `LauncherSettings` holds the clamped scale multipliers (`clockScale`,
-  `appIconScale`, `quickButtonScale`), the selected `clockFace`,
+  default 0.5; `appIconScale`, default 1; `quickButtonScale`, default 1), the
+  selected `clockFace`,
   `clockFormat`, `accentColor`, and `background`, the launcher
   `backgroundOpacity` (0–1), the launcher-only `nightMode` flag, the
   clock-backdrop values (`clockBlurRadius` 0–20, `backgroundDarkness` 0–1),
   `showStatusBar`, the selected `animationStyle`, the `homeButtonTarget`
-  (Clock or Player), and the favourite package-name set.
+  (Clock or Player), the Blackout `blackoutBrightness` (0.01–1, default 0.05),
+  and the favourite package-name set.
 - The store exposes a `StateFlow<LauncherSettings>` plus plain (non-suspend)
   setter functions, so no coroutine or repository layer is needed.
 - `SharedPreferencesSettingsStore.get(context)` is a process-wide singleton
@@ -412,7 +429,8 @@ SettingsStore (core.platform interface)
   `clock_blur_radius`, `background_darkness`, `show_status_bar`,
   `quick_button_scale`, `accent_color`, `background_color`,
   `background_opacity`, `night_mode`, `animation_style`,
-  `home_button_target`, and `favourite_package_names`. The
+  `home_button_target`, `blackout_brightness`, and
+  `favourite_package_names`. The
   in-memory `StateFlow` is updated synchronously and the preference write is
   flushed with `apply()`. Enum keys store the stable string id and fall back to
   the default on unknown values.
@@ -437,11 +455,11 @@ SettingsStore (core.platform interface)
   the pure, unit-tested `snapToSteps` helper.
 - `SettingsScreen` groups its controls into accent-marked cards (`Clock`,
   `Clock backdrop`, `Launcher background`, `Appearance`, `Home & apps`,
-  `Home button`, `Swipe animation`). A
+  `Blackout`, `Home button`, `Swipe animation`). A
   `BoxWithConstraints` breakpoint at 900dp switches from a stacked layout to a
   landscape dashboard: full-width Clock, Clock backdrop / Launcher background /
-  Appearance side by side, then full-width Home & apps, Home button, and Swipe
-  animation. The
+  Appearance side by side, then full-width Home & apps, Blackout, Home button,
+  and Swipe animation. The
   clock-face row and both swatch grids adapt to their own available width instead
   of fixed screen sizes.
 

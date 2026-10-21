@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import kotlin.math.min
+import kotlin.math.roundToInt
 import com.pratap.vibhor.R
 import com.pratap.vibhor.core.platform.AccentColor
 import com.pratap.vibhor.core.platform.AnimationStyle
@@ -99,6 +100,7 @@ object SettingsTestTags {
     const val WallpaperButton = "settings_wallpaper_button"
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
+    const val BlackoutBrightnessSlider = "settings_blackout_brightness_slider"
     const val AccentOptionPrefix = "settings_accent_"
     const val BackgroundOptionPrefix = "settings_background_"
     const val BackgroundVisibilitySlider = "settings_background_visibility"
@@ -108,6 +110,7 @@ object SettingsTestTags {
     const val SectionAppearance = "settings_section_appearance"
     const val SectionHomeApps = "settings_section_home_apps"
     const val SectionHomeButton = "settings_section_home_button"
+    const val SectionBlackout = "settings_section_blackout"
     const val SectionAnimations = "settings_section_animations"
     const val AnimationOptionPrefix = "settings_animation_style_"
     const val HomeButtonOptionPrefix = "settings_home_button_"
@@ -138,6 +141,7 @@ fun SettingsScreen(
     onBackgroundOpacityChange: (Float) -> Unit,
     onAnimationStyleChange: (AnimationStyle) -> Unit,
     onHomeButtonTargetChange: (HomeButtonTarget) -> Unit,
+    onBlackoutBrightnessChange: (Float) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -237,6 +241,11 @@ fun SettingsScreen(
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
                         )
+                        BlackoutSettingsSection(
+                            brightness = state.blackoutBrightness,
+                            onBrightnessChange = onBlackoutBrightnessChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionBlackout),
+                        )
                         HomeButtonSettingsSection(
                             state = state,
                             onHomeButtonTargetChange = onHomeButtonTargetChange,
@@ -281,6 +290,11 @@ fun SettingsScreen(
                             onQuickButtonScaleChange = onQuickButtonScaleChange,
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
+                        )
+                        BlackoutSettingsSection(
+                            brightness = state.blackoutBrightness,
+                            onBrightnessChange = onBlackoutBrightnessChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionBlackout),
                         )
                         HomeButtonSettingsSection(
                             state = state,
@@ -493,6 +507,92 @@ private fun HomeAppsSettingsSection(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BlackoutSettingsSection(
+    brightness: Float,
+    onBrightnessChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_blackout),
+        modifier = modifier,
+    ) {
+        BlackoutBrightnessSetting(
+            value = brightness,
+            onValueChange = onBrightnessChange,
+        )
+    }
+}
+
+@Composable
+private fun BlackoutBrightnessSetting(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // The slider works in whole percent steps while the persisted setting
+    // remains a 0..1 fraction shared with the other brightness controls.
+    var percent by remember(value) {
+        mutableFloatStateOf(
+            (value * 100f).coerceIn(
+                LauncherSettings.MIN_BLACKOUT_BRIGHTNESS * 100f,
+                LauncherSettings.MAX_BLACKOUT_BRIGHTNESS * 100f,
+            ),
+        )
+    }
+    LaunchedEffect(value) {
+        percent = (value * 100f).coerceIn(
+            LauncherSettings.MIN_BLACKOUT_BRIGHTNESS * 100f,
+            LauncherSettings.MAX_BLACKOUT_BRIGHTNESS * 100f,
+        )
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_blackout_brightness),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(
+                    R.string.settings_scale_value,
+                    percent.roundToInt(),
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                color = VibhorThemeColors.accent,
+            )
+        }
+        PillSlider(
+            value = percent,
+            onValueChange = { percent = it },
+            onValueChangeFinished = {
+                onValueChange(
+                    (percent / 100f).coerceIn(
+                        LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+                        LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+                    ),
+                )
+            },
+            valueRange = 1f..100f,
+            steps = 98,
+            modifier = Modifier.testTag(SettingsTestTags.BlackoutBrightnessSlider),
+        )
+        Text(
+            text = stringResource(R.string.settings_blackout_brightness_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = SecondaryText,
+        )
     }
 }
 
@@ -1212,6 +1312,7 @@ private val AccentColor.labelRes: Int
         AccentColor.PURPLE -> R.string.settings_accent_purple
         AccentColor.ORANGE -> R.string.settings_accent_orange
         AccentColor.PINK -> R.string.settings_accent_pink
+        AccentColor.WHITE -> R.string.settings_accent_white
     }
 
 private val LauncherBackground.labelRes: Int
@@ -1511,6 +1612,7 @@ private fun SettingsLandscapePreview() {
             onBackgroundOpacityChange = {},
             onAnimationStyleChange = {},
             onHomeButtonTargetChange = {},
+            onBlackoutBrightnessChange = {},
             onResetToDefaults = {},
             onClose = {},
         )

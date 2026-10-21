@@ -1,10 +1,13 @@
 package com.pratap.vibhor
 
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import com.pratap.vibhor.core.ui.theme.VibhorTheme
 import com.pratap.vibhor.feature.blackout.BlackoutScreen
 import com.pratap.vibhor.feature.blackout.BlackoutTestTags
@@ -56,6 +59,10 @@ class BlackoutScreenTest {
         assertTrue("Dismiss should sit at the bottom", dismiss.top > track.bottom)
         assertTrue(dismiss.right <= page.right)
         assertTrue(dismiss.bottom <= page.bottom)
+
+        composeRule.onNodeWithTag(BlackoutTestTags.Dismiss)
+            .assertWidthIsEqualTo(64.dp)
+            .assertHeightIsEqualTo(64.dp)
 
         composeRule.onNodeWithTag(BlackoutTestTags.Dismiss).performClick()
         assertTrue(dismissed)

@@ -44,6 +44,7 @@ class SettingsViewModel(
                 backgroundOpacity = settings.backgroundOpacity,
                 animationStyle = settings.animationStyle,
                 homeButtonTarget = settings.homeButtonTarget,
+                blackoutBrightness = settings.blackoutBrightness,
             )
         }
         .stateIn(
@@ -80,9 +81,12 @@ class SettingsViewModel(
     fun setHomeButtonTarget(target: HomeButtonTarget) =
         settingsStore.setHomeButtonTarget(target)
 
+    fun setBlackoutBrightness(brightness: Float) =
+        settingsStore.setBlackoutBrightness(brightness)
+
     fun resetToDefaults() {
-        settingsStore.setClockScale(LauncherDefaults.Scale)
-        settingsStore.setAppIconScale(LauncherDefaults.Scale)
+        settingsStore.setClockScale(LauncherSettings.DEFAULT_CLOCK_SCALE)
+        settingsStore.setAppIconScale(LauncherSettings.DEFAULT_SCALE)
         settingsStore.setClockFace(ClockFace.DEFAULT)
         settingsStore.setClockFormat(ClockFormat.DEFAULT)
         settingsStore.setClockBlurRadius(LauncherSettings.DEFAULT_BLUR_RADIUS)
@@ -95,6 +99,7 @@ class SettingsViewModel(
         settingsStore.setNightMode(LauncherSettings.DEFAULT_NIGHT_MODE)
         settingsStore.setAnimationStyle(AnimationStyle.DEFAULT)
         settingsStore.setHomeButtonTarget(HomeButtonTarget.DEFAULT)
+        settingsStore.setBlackoutBrightness(LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS)
     }
 
     companion object {

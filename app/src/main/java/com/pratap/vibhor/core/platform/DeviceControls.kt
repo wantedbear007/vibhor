@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 
 /**
@@ -85,6 +86,17 @@ interface DeviceControls {
      */
     fun setScreenBrightness(fraction: Float)
 
+    /**
+     * Applies a temporary window-only brightness override. System brightness
+     * and adaptive-brightness mode are deliberately left untouched, so this
+     * is safe for an in-app immersive page. The previous window override is
+     * restored by [clearTemporaryScreenBrightness].
+     */
+    fun setTemporaryScreenBrightness(fraction: Float)
+
+    /** Restores the window brightness that was active before the temporary override. */
+    fun clearTemporaryScreenBrightness()
+
     /** True when the user granted the special system-settings app access. */
     fun canWriteSystemBrightness(): Boolean
 
@@ -106,6 +118,11 @@ class AndroidDeviceControls(
 
     private val audioManager: AudioManager =
         application.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    private var temporaryBrightnessActive = false
+    private var temporaryBrightnessActivity: WeakReference<Activity>? = null
+    private var windowBrightnessBeforeTemporary =
+        WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
 
     override fun mediaVolume(): Float = DeviceLevels.indexToVolumeFraction(
         audioManager.getStreamVolume(AudioManager.STREAM_MUSIC),
@@ -135,6 +152,17 @@ class AndroidDeviceControls(
     }
 
     override fun screenBrightness(): Float {
+        val activity = currentActivity()
+        // A temporary immersive-page override is window-scoped and wins over
+        // the system value while it is active.
+        if (temporaryBrightnessActive) {
+            val temporary = activity?.let {
+                DeviceLevels.windowBrightnessToFraction(
+                    it.window.attributes.screenBrightness,
+                )
+            }
+            if (temporary != null) return temporary
+        }
         val systemBrightness = DeviceLevels.systemBrightnessToFraction(
             readSystemBrightness(),
         )
@@ -143,16 +171,18 @@ class AndroidDeviceControls(
         // window override left over from the pre-permission fallback so those
         // external changes also affect the actual panel.
         if (canWriteSystemBrightness()) {
-            clearWindowOverride()
+            if (!temporaryBrightnessActive) clearWindowOverride()
             return systemBrightness
         }
-        val activity = currentActivity() ?: return systemBrightness
+        if (activity == null) return systemBrightness
         return DeviceLevels.windowBrightnessToFraction(
             activity.window.attributes.screenBrightness,
         ) ?: systemBrightness
     }
 
     override fun setScreenBrightness(fraction: Float) {
+        // A normal brightness change supersedes any immersive-page override.
+        clearTemporaryScreenBrightness()
         val clamped = fraction.coerceIn(0.01f, 1f)
         val systemApplied = if (canWriteSystemBrightness()) {
             runCatching {
@@ -187,6 +217,32 @@ class AndroidDeviceControls(
             }
             activity.window.attributes = params
         }
+    }
+
+    override fun setTemporaryScreenBrightness(fraction: Float) {
+        val activity = currentActivity() ?: return
+        val params = activity.window.attributes
+        val previousActivity = temporaryBrightnessActivity?.get()
+        if (!temporaryBrightnessActive || previousActivity !== activity) {
+            windowBrightnessBeforeTemporary = params.screenBrightness
+            temporaryBrightnessActivity = WeakReference(activity)
+            temporaryBrightnessActive = true
+        }
+        params.screenBrightness = fraction.coerceIn(0.01f, 1f)
+        activity.window.attributes = params
+    }
+
+    override fun clearTemporaryScreenBrightness() {
+        if (!temporaryBrightnessActive) return
+        val activity = temporaryBrightnessActivity?.get()
+        temporaryBrightnessActive = false
+        temporaryBrightnessActivity = null
+        if (activity != null) {
+            val params = activity.window.attributes
+            params.screenBrightness = windowBrightnessBeforeTemporary
+            activity.window.attributes = params
+        }
+        windowBrightnessBeforeTemporary = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
     }
 
     override fun canWriteSystemBrightness(): Boolean =

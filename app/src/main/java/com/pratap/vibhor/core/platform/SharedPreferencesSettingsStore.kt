@@ -112,6 +112,15 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(homeButtonTarget = target) }
     }
 
+    override fun setBlackoutBrightness(brightness: Float) {
+        val clamped = brightness.coerceIn(
+            LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+            LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+        )
+        prefs.edit { putFloat(KEY_BLACKOUT_BRIGHTNESS, clamped) }
+        state.update { it.copy(blackoutBrightness = clamped) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -156,7 +165,7 @@ class SharedPreferencesSettingsStore private constructor(
 
     private fun read(): LauncherSettings = LauncherSettings(
         clockScale = prefs
-            .getFloat(KEY_CLOCK_SCALE, LauncherSettings.DEFAULT_SCALE)
+            .getFloat(KEY_CLOCK_SCALE, LauncherSettings.DEFAULT_CLOCK_SCALE)
             .coerceIn(LauncherSettings.MIN_SCALE, LauncherSettings.MAX_SCALE),
         appIconScale = prefs
             .getFloat(KEY_ICON_SCALE, LauncherSettings.DEFAULT_SCALE)
@@ -194,6 +203,15 @@ class SharedPreferencesSettingsStore private constructor(
         homeButtonTarget = HomeButtonTarget.fromId(
             prefs.getString(KEY_HOME_BUTTON_TARGET, null),
         ),
+        blackoutBrightness = prefs
+            .getFloat(
+                KEY_BLACKOUT_BRIGHTNESS,
+                LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
+            )
+            .coerceIn(
+                LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+                LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+            ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -225,6 +243,7 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_NIGHT_MODE = "night_mode"
         private const val KEY_ANIMATION_STYLE = "animation_style"
         private const val KEY_HOME_BUTTON_TARGET = "home_button_target"
+        private const val KEY_BLACKOUT_BRIGHTNESS = "blackout_brightness"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

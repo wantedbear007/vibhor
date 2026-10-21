@@ -12,10 +12,11 @@ enum class AccentColor(val id: String) {
     PURPLE("purple"),
     ORANGE("orange"),
     PINK("pink"),
+    WHITE("white"),
     ;
 
     companion object {
-        val DEFAULT = BLUE
+        val DEFAULT = WHITE
 
         fun fromId(id: String?): AccentColor =
             entries.firstOrNull { it.id == id } ?: DEFAULT

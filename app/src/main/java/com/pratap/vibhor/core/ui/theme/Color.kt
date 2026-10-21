@@ -34,6 +34,7 @@ val AccentGreen = Color(0xFF74D68E)
 val AccentPurple = Color(0xFFB28CFF)
 val AccentOrange = Color(0xFFFFB168)
 val AccentPink = Color(0xFFF78DBF)
+val AccentWhite = Color(0xFFFFFFFF)
 
 /** Resolves a persisted accent choice to its Compose color. */
 fun AccentColor.toColor(): Color = when (this) {
@@ -43,6 +44,7 @@ fun AccentColor.toColor(): Color = when (this) {
     AccentColor.PURPLE -> AccentPurple
     AccentColor.ORANGE -> AccentOrange
     AccentColor.PINK -> AccentPink
+    AccentColor.WHITE -> AccentWhite
 }
 
 /** Resolves a persisted launcher background to its base Compose color. */

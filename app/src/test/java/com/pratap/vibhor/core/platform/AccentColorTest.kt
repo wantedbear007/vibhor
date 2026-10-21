@@ -6,8 +6,8 @@ import org.junit.Test
 class AccentColorTest {
 
     @Test
-    fun `blue is the default accent`() {
-        assertEquals(AccentColor.BLUE, AccentColor.DEFAULT)
+    fun `white is the default accent`() {
+        assertEquals(AccentColor.WHITE, AccentColor.DEFAULT)
     }
 
     @Test

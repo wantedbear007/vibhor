@@ -69,6 +69,7 @@ object HomeTestTags {
     const val Date = "home_date"
     const val ClockBackdrop = "home_clock_backdrop"
     const val QuickButton = "home_quick_button"
+    const val BlackoutButton = "home_blackout_button"
     const val QuickPopup = "home_quick_popup"
 }
 
@@ -83,6 +84,7 @@ fun HomeScreen(
     state: HomeUiState,
     onLaunchApp: (InstalledApp) -> Unit,
     onOpenAppDrawer: () -> Unit,
+    onOpenBlackout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -126,101 +128,133 @@ fun HomeScreen(
             }
 
             var quickMenuExpanded by remember { mutableStateOf(false) }
-            Box(
+            val scale = state.quickButtonScale
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(VibhorSpacing.md),
+                    .padding(VibhorSpacing.md)
+                    .padding(VibhorSpacing.md * scale),
+                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                val scale = state.quickButtonScale
-                val shape = RoundedCornerShape(18.dp * scale)
-                Surface(
-                    onClick = { quickMenuExpanded = true },
-                    shape = shape,
-                    color = Midnight.copy(alpha = 0.64f),
-                    contentColor = PrimaryText,
-                    border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
-                    modifier = Modifier
-                        .padding(VibhorSpacing.md * scale)
-                        .testTag(HomeTestTags.QuickButton),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(
-                            horizontal = VibhorSpacing.lg * scale,
-                            vertical = VibhorSpacing.md * scale,
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
+                HomeActionButton(
+                    iconRes = R.drawable.ic_fullscreen,
+                    label = stringResource(R.string.home_blackout_button),
+                    scale = scale,
+                    onClick = onOpenBlackout,
+                    testTag = HomeTestTags.BlackoutButton,
+                )
+                Box {
+                    HomeActionButton(
+                        iconRes = R.drawable.ic_favourite,
+                        label = stringResource(R.string.home_quick_button),
+                        scale = scale,
+                        onClick = { quickMenuExpanded = true },
+                        testTag = HomeTestTags.QuickButton,
+                    )
+                    DropdownMenu(
+                        expanded = quickMenuExpanded,
+                        onDismissRequest = { quickMenuExpanded = false },
+                        modifier = Modifier
+                            .widthIn(min = 360.dp, max = 440.dp)
+                            .testTag(HomeTestTags.QuickPopup),
+                        shape = RoundedCornerShape(20.dp),
+                        containerColor = Midnight.copy(alpha = 0.94f),
+                        tonalElevation = 0.dp,
+                        shadowElevation = 16.dp,
+                        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp * scale)
-                                .background(PrimaryText.copy(alpha = 0.06f), CircleShape)
-                                .border(
-                                    width = 1.dp,
-                                    color = PrimaryText.copy(alpha = 0.10f),
-                                    shape = CircleShape,
-                                ),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_favourite),
-                                contentDescription = null,
-                                tint = PrimaryText,
-                                modifier = Modifier.size(18.dp * scale),
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.home_quick_button),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = (14 * scale).sp,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                DropdownMenu(
-                    expanded = quickMenuExpanded,
-                    onDismissRequest = { quickMenuExpanded = false },
-                    modifier = Modifier
-                        .widthIn(min = 360.dp, max = 440.dp)
-                        .testTag(HomeTestTags.QuickPopup),
-                    shape = RoundedCornerShape(20.dp),
-                    containerColor = Midnight.copy(alpha = 0.94f),
-                    tonalElevation = 0.dp,
-                    shadowElevation = 16.dp,
-                    border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
-                ) {
-                    if (state.favourites.isEmpty()) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(R.string.home_quick_empty),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = SecondaryText,
-                                )
-                            },
-                            onClick = {
-                                quickMenuExpanded = false
-                                onOpenAppDrawer()
-                            },
-                            contentPadding = PaddingValues(
-                                horizontal = VibhorSpacing.lg,
-                                vertical = VibhorSpacing.md,
-                            ),
-                        )
-                    } else {
-                        state.favourites.forEach { app ->
-                            QuickAppItem(
-                                app = app,
+                        if (state.favourites.isEmpty()) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.home_quick_empty),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = SecondaryText,
+                                    )
+                                },
                                 onClick = {
                                     quickMenuExpanded = false
-                                    onLaunchApp(app)
+                                    onOpenAppDrawer()
                                 },
+                                contentPadding = PaddingValues(
+                                    horizontal = VibhorSpacing.lg,
+                                    vertical = VibhorSpacing.md,
+                                ),
                             )
+                        } else {
+                            state.favourites.forEach { app ->
+                                QuickAppItem(
+                                    app = app,
+                                    onClick = {
+                                        quickMenuExpanded = false
+                                        onLaunchApp(app)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Shared Home action pill used for Blackout and Favourites. Both buttons use
+ * the persisted Home-action scale so the pair stays visually balanced.
+ */
+@Composable
+private fun HomeActionButton(
+    iconRes: Int,
+    label: String,
+    scale: Float,
+    onClick: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(18.dp * scale)
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = Midnight.copy(alpha = 0.64f),
+        contentColor = PrimaryText,
+        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
+        modifier = modifier.testTag(testTag),
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                horizontal = VibhorSpacing.lg * scale,
+                vertical = VibhorSpacing.md * scale,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp * scale)
+                    .background(PrimaryText.copy(alpha = 0.06f), CircleShape)
+                    .border(
+                        width = 1.dp,
+                        color = PrimaryText.copy(alpha = 0.10f),
+                        shape = CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = PrimaryText,
+                    modifier = Modifier.size(18.dp * scale),
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = (14 * scale).sp,
+                maxLines = 1,
+            )
         }
     }
 }
@@ -351,6 +385,7 @@ private fun HomeLandscapePreview() {
             ),
             onLaunchApp = {},
             onOpenAppDrawer = {},
+            onOpenBlackout = {},
         )
     }
 }
@@ -366,6 +401,7 @@ private fun HomePortraitPreview() {
             ),
             onLaunchApp = {},
             onOpenAppDrawer = {},
+            onOpenBlackout = {},
         )
     }
 }

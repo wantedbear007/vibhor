@@ -9,8 +9,8 @@ import com.pratap.vibhor.core.platform.LauncherBackground
 import com.pratap.vibhor.core.platform.LauncherSettings
 
 data class SettingsUiState(
-    val clockScale: Float = LauncherDefaults.Scale,
-    val appIconScale: Float = LauncherDefaults.Scale,
+    val clockScale: Float = LauncherSettings.DEFAULT_CLOCK_SCALE,
+    val appIconScale: Float = LauncherSettings.DEFAULT_SCALE,
     val clockFace: ClockFace = ClockFace.DEFAULT,
     val clockFormat: ClockFormat = ClockFormat.DEFAULT,
     val clockBlurRadius: Int = LauncherSettings.DEFAULT_BLUR_RADIUS,
@@ -22,8 +22,5 @@ data class SettingsUiState(
     val backgroundOpacity: Float = LauncherSettings.DEFAULT_BACKGROUND_OPACITY,
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
     val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
+    val blackoutBrightness: Float = LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
 )
-
-object LauncherDefaults {
-    const val Scale = 1f
-}

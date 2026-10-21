@@ -7,15 +7,19 @@ application.
 
 This milestone turns the foundation into a three-screen automotive launcher.
 The screens are laid out on a horizontal pager: **Music** (astronaut stage, the
-real active media session, and a volume slider), **Home** (system
-wallpaper and a large clock), and **Apps** (a unified page with fixed quick
-controls beside the installed-app launcher). The system wallpaper is rendered by
+real active media session, and a volume slider), **Home** (system wallpaper
+and clock), and **Apps** (a unified page with fixed quick controls beside the
+installed-app launcher). The system wallpaper is rendered by
 Android behind the window, so no storage permission is required and no wallpaper
 bitmap is ever decoded. A **Settings** overlay is reachable from the Apps quick
 controls, and persists every tunable option — including the launcher-wide accent
 color and surface background — through `SharedPreferences`. A full-width
-**Blackout** quick action opens an immersive black now-playing page with only
-the time, the current media title, and an exit button.
+**Blackout** quick action on Apps and a matching **Blackout** action on Home
+open an immersive black now-playing page with only the time, the current media
+title, and an icon-only close button. Opening it from either page temporarily
+dims the screen to the configured **Blackout brightness** (5% by default) and
+restores the previous brightness when it closes. A fresh install starts with
+the black launcher background, white accent, and a 50% Home clock.
 
 ## Target device
 
@@ -113,7 +117,7 @@ Home button.
 
 | Page | Content |
 |---|---|
-| **Home** (default clock) | System wallpaper + large clock + date, with a compact **Favourites** button in the bottom-right corner that opens favourite apps. No other branding, cards, buttons, or dock. |
+| **Home** (default clock) | System wallpaper + large clock + date, with compact **Blackout** and **Favourites** buttons in the bottom-right corner. Blackout opens the immersive page; Favourites opens the favourite-apps card. No other branding, cards, buttons, or dock. |
 | **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, Bluetooth / Wi-Fi / Night mode / Mute tiles, and a full-width **Blackout** action) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
@@ -197,12 +201,19 @@ adapter state. On Android 9 the legacy normal permissions allow those
 toggles. Night mode is a persisted launcher-page dimming layer, because toggling
 the system Night Light requires privileged access.
 
-The full-width **Blackout** action opens a pure-black page above the whole
-launcher. Its small clock and the active media title are centered; the compact
-**Turn off** button sits in the bottom-right corner. The title is read from the
-same real media session as the Music page, with **No music playing** shown when
-no session is active. The status bar is hidden while Blackout is open, the
-pager stops accepting gestures, and Back or Home also dismisses the page.
+The full-width **Blackout** action and the **Blackout** button on Home open a
+pure-black page above the whole launcher. Its small clock and the active media
+title are centered; the large circular close button sits in the bottom-right
+corner and shows only a cross. The title is read from the same real media
+session as the Music page, with **No music playing** shown when no session is
+active. While Blackout is open the launcher applies a temporary window-level
+brightness override at the persisted **Blackout brightness** (5% by default),
+without changing the system brightness or adaptive-brightness mode. The
+previous window brightness is restored when the page closes, including through
+Back, Home, or the close button. Both the status bar and navigation bar are
+hidden while Blackout is open, so only the black page remains; if the system
+briefly reveals transient bars, the launcher hides them again. The pager stops
+accepting gestures, and Back or Home also dismisses the page.
 
 Settings opens from the compact gear beside the Apps clock.
 
@@ -213,30 +224,31 @@ button beside the Apps clock. It contains:
 
 | Setting | Range | Default | Effect |
 |---|---|---|---|
-| Clock size | 50%–200% (5% steps) | 100% | Multiplier on the computed Home clock size |
+| Clock size | 50%–200% (5% steps) | 50% | Multiplier on the computed Home clock size |
 | Clock face | Classic / Split / Minimal / Bold / Elegant / Analog | Classic | Which clock face renders on Home (see below) |
 | Time format | System / 12-hour / 24-hour | System | 12/24-hour format for the Home clock and the Apps control clock |
 | Clock backdrop: Blur | Off, or 1–20 | 8 | Blurs the wallpaper behind the clock (Android 12+); darkness still applies on older versions |
 | Clock backdrop: Darkness | 0%–100% | 35% | Full-screen dim layer over the wallpaper |
 | Show status bar | On / Off | On | Hides the system status bar for a cleaner Home |
 | System wallpaper | Android wallpaper picker | — | Opens the system wallpaper chooser from the Appearance card; no wallpaper data is read by Vibhor |
-| Accent color | Blue / Teal / Green / Purple / Orange / Pink | Blue | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
+| Accent color | Blue / Teal / Green / Purple / Orange / Pink / White | White | Primary accent for controls, both sliders, active quick tiles, selection states, and app highlights |
 | Launcher background | Black / Midnight / Slate / Graphite / Navy / Ocean | Black | Base surface color for the Music page, unified Apps page, and Settings; Home keeps the wallpaper |
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
-| Favourites button size | 50%–200% (5% steps) | 100% | Multiplier on the Home Favourites button |
+| Home action size | 50%–200% (5% steps) | 100% | Multiplier on the Home Blackout and Favourites buttons |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
+| Blackout brightness | 1%–100% (1% steps) | 5% | Temporary screen brightness while Blackout is open; the prior window brightness is restored on exit |
 | Home button default screen | Clock / Player | Clock | Screen the Home button returns to, including when launching from Home |
 | Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Music, Home, and Apps; each option shows a compact preview |
 
-Settings are grouped into seven accent-marked cards: **Clock** (size, face,
+Settings are grouped into eight accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
 visibility), **Appearance** (accent color, status bar, system wallpaper), **Home & apps**
-(Favourites button size, app icon size), **Home button** (default screen), and
-**Swipe animation** (seven selectable preview cards, four per row on wide
-screens and two per row on narrow ones). On wide
+(Home action size, app icon size), **Blackout** (brightness while active), **Home
+button** (default screen), and **Swipe animation** (seven selectable preview
+cards, four per row on wide screens and two per row on narrow ones). On wide
 landscape displays the Clock card spans the top, Clock backdrop / Launcher
-background / Appearance share a row, and Home & apps / Home button / Swipe
-animation run full width; narrow screens stack every card. The Appearance card
+background / Appearance share a row, and Home & apps / Blackout / Home button /
+Swipe animation run full width; narrow screens stack every card. The Appearance card
 also hosts the **System wallpaper** action, which launches Android's wallpaper
 picker. Clock face previews
 form a single row in the Clock card and scroll horizontally only when space is
@@ -265,7 +277,8 @@ size** and **Reset** apply to all of them):
   Home is visible.
 
 - **Reset to defaults** restores every setting, including the accent color,
-  launcher background, swipe animation, and Home button target.
+  launcher background, swipe animation, Home button target, and Blackout
+  brightness.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
@@ -341,7 +354,7 @@ app/src/main/java/com/pratap/vibhor/
 │       ├── navigation/          # LauncherPage enum (page order)
 │       └── theme/               # Colors, typography, spacing, shapes, accent CompositionLocal
 └── feature/
-    ├── home/                    # Wallpaper + clock + Favourites button (HomeViewModel, screen)
+    ├── home/                    # Wallpaper + clock + Blackout/Favourites actions (HomeViewModel, screen)
     ├── music/                   # Media player + astronaut stage (MusicViewModel, screen)
     ├── blackout/                # Immersive black now-playing page (stateless screen)
     ├── cockpit/                 # Device-control view model shared by Music and Apps

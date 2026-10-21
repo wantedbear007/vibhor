@@ -53,6 +53,7 @@
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_home_apps">Home &amp; apps</string>
     <string name="settings_section_home_button">Home button</string>
+    <string name="settings_section_blackout">Blackout</string>
     <string name="settings_section_animations">Swipe animation</string>
     <string name="settings_clock_size">Clock size</string>
     <string name="settings_clock_face">Clock face</string>
@@ -76,7 +77,9 @@
     <string name="settings_wallpaper_summary">Choose a new wallpaper with Android\'s picker.</string>
     <string name="settings_wallpaper_action">Change</string>
     <string name="settings_app_icon_size">App icon size</string>
-    <string name="settings_quick_button_size">Favourites button size</string>
+    <string name="settings_quick_button_size">Home action size</string>
+    <string name="settings_blackout_brightness">Brightness</string>
+    <string name="settings_blackout_brightness_hint">Applies while Blackout is open and restores your previous brightness when it closes.</string>
     <string name="settings_home_button_target">Default screen</string>
     <string name="settings_home_button_summary">Choose the screen the Home button returns to.</string>
     <string name="settings_home_button_clock">Clock screen</string>
@@ -88,6 +91,7 @@
     <string name="settings_accent_purple">Purple</string>
     <string name="settings_accent_orange">Orange</string>
     <string name="settings_accent_pink">Pink</string>
+    <string name="settings_accent_white">White</string>
     <string name="settings_background_color">Background color</string>
     <string name="settings_background_midnight">Midnight</string>
     <string name="settings_background_slate">Slate</string>
@@ -109,6 +113,7 @@
     <string name="settings_animation_cube">Cube</string>
     <string name="settings_reset">Reset to defaults</string>
     <string name="home_quick_button">Favourites</string>
+    <string name="home_blackout_button">Blackout</string>
     <string name="home_quick_empty">No favourites. Open App Drawer to add.</string>
     <string name="music_idle_title">No music playing</string>
     <string name="music_idle_body">Start playback in any media app</string>

@@ -52,9 +52,20 @@ class CockpitViewModel(
      * device flow continues to handle external changes and fallback polling.
      */
     private val volumeRefresh = MutableStateFlow(0)
+
+    /**
+     * Window-level brightness changes made by the Blackout page do not touch
+     * the system setting, so they are not covered by the content observers.
+     * This counter refreshes the shared brightness slider when Blackout opens
+     * or closes.
+     */
+    private val brightnessRefresh = MutableStateFlow(0)
+    private var blackoutBrightnessActive = false
+
     private val deviceChanges = merge(
         deviceControls.observeChanges(),
         volumeRefresh.map { },
+        brightnessRefresh.map { },
     ).onStart { emit(Unit) }
 
     val uiState: StateFlow<CockpitUiState> = combine(
@@ -101,6 +112,32 @@ class CockpitViewModel(
 
     fun setBrightness(level: Float) {
         deviceControls.setScreenBrightness(level)
+    }
+
+    /**
+     * Applies the persisted Blackout brightness as a window-only override.
+     * The first call captures the current window brightness so [exitBlackout]
+     * can restore it exactly, including "follow system brightness".
+     */
+    fun enterBlackout(level: Float) {
+        blackoutBrightnessActive = true
+        deviceControls.setTemporaryScreenBrightness(level)
+        brightnessRefresh.update { it + 1 }
+    }
+
+    /** Restores the brightness that was active before Blackout opened. */
+    fun exitBlackout() {
+        if (!blackoutBrightnessActive) return
+        blackoutBrightnessActive = false
+        deviceControls.clearTemporaryScreenBrightness()
+        brightnessRefresh.update { it + 1 }
+    }
+
+    override fun onCleared() {
+        if (blackoutBrightnessActive) {
+            blackoutBrightnessActive = false
+            deviceControls.clearTemporaryScreenBrightness()
+        }
     }
 
     fun toggleWifi() {

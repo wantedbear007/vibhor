@@ -9,11 +9,12 @@ import kotlinx.coroutines.flow.update
  * Launcher settings that the user can change at runtime. Scales are
  * multipliers applied to the responsive computed sizes, so one setting
  * works across screen densities and orientations. [clockBlurRadius] and
- * [backgroundDarkness] drive the Home clock backdrop.
+ * [backgroundDarkness] drive the Home clock backdrop. [blackoutBrightness]
+ * is the temporary window brightness applied while Blackout is open.
  */
 data class LauncherSettings(
-    val clockScale: Float = 1f,
-    val appIconScale: Float = 1f,
+    val clockScale: Float = DEFAULT_CLOCK_SCALE,
+    val appIconScale: Float = DEFAULT_SCALE,
     val clockFace: ClockFace = ClockFace.DEFAULT,
     val clockFormat: ClockFormat = ClockFormat.DEFAULT,
     val clockBlurRadius: Int = DEFAULT_BLUR_RADIUS,
@@ -26,12 +27,16 @@ data class LauncherSettings(
     val nightMode: Boolean = DEFAULT_NIGHT_MODE,
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
     val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
+    val blackoutBrightness: Float = DEFAULT_BLACKOUT_BRIGHTNESS,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
         const val MIN_SCALE = 0.5f
         const val MAX_SCALE = 2f
         const val DEFAULT_SCALE = 1f
+
+        /** Home clock starts at half the responsive base size on a fresh install. */
+        const val DEFAULT_CLOCK_SCALE = 0.5f
 
         /** Blur radius bounds: 0 disables blur; 8 is a subtle backdrop. */
         const val MIN_BLUR_RADIUS = 0
@@ -56,6 +61,15 @@ data class LauncherSettings(
         const val MIN_QUICK_BUTTON_SCALE = 0.5f
         const val MAX_QUICK_BUTTON_SCALE = 2f
         const val DEFAULT_QUICK_BUTTON_SCALE = 1f
+
+        /**
+         * Blackout uses a window-level brightness override. The minimum is 1%
+         * so the page never becomes completely unreadable or impossible to
+         * exit on devices that treat zero as screen-off.
+         */
+        const val MIN_BLACKOUT_BRIGHTNESS = 0.01f
+        const val MAX_BLACKOUT_BRIGHTNESS = 1f
+        const val DEFAULT_BLACKOUT_BRIGHTNESS = 0.05f
     }
 }
 
@@ -79,6 +93,7 @@ interface SettingsStore {
     fun setNightMode(enabled: Boolean)
     fun setAnimationStyle(style: AnimationStyle)
     fun setHomeButtonTarget(target: HomeButtonTarget)
+    fun setBlackoutBrightness(brightness: Float)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -109,6 +124,10 @@ class InMemorySettingsStore(
             backgroundOpacity = initial.backgroundOpacity.coerceIn(
                 LauncherSettings.MIN_BACKGROUND_OPACITY,
                 LauncherSettings.MAX_BACKGROUND_OPACITY,
+            ),
+            blackoutBrightness = initial.blackoutBrightness.coerceIn(
+                LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+                LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
             ),
         ),
     )
@@ -211,6 +230,17 @@ class InMemorySettingsStore(
 
     override fun setHomeButtonTarget(target: HomeButtonTarget) {
         state.update { it.copy(homeButtonTarget = target) }
+    }
+
+    override fun setBlackoutBrightness(brightness: Float) {
+        state.update {
+            it.copy(
+                blackoutBrightness = brightness.coerceIn(
+                    LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
+                    LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+                ),
+            )
+        }
     }
 
     override fun addFavourite(packageName: String) {

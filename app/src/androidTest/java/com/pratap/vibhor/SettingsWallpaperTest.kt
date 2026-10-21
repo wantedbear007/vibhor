@@ -38,6 +38,7 @@ class SettingsWallpaperTest {
                     onBackgroundOpacityChange = {},
                     onAnimationStyleChange = {},
                     onHomeButtonTargetChange = {},
+                    onBlackoutBrightnessChange = {},
                     onResetToDefaults = {},
                     onClose = {},
                 )
