@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Bridges the platform media sessions into the Music screen. The view model
- * never invents playback state: when the session layer reports nothing, the
- * screen shows its idle state.
+ * Bridges the platform media sessions into the Music screen and the Home
+ * now-playing ticker. The view model never invents playback state: when the
+ * session layer reports nothing, consumers show their idle state.
  */
 class MusicViewModel(private val mediaControls: MediaControls) : ViewModel() {
 

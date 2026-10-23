@@ -56,6 +56,8 @@ class HomeViewModel(
             minuteText = split.minuteText,
             meridiemText = split.meridiemText,
             quickButtonScale = settings.quickButtonScale,
+            nowPlayingTextSizeSp = settings.nowPlayingTextSizeSp,
+            showNowPlayingTicker = settings.showNowPlayingTicker,
             favourites = apps.filter { it.packageName in settings.favouritePackageNames },
         )
     }.stateIn(

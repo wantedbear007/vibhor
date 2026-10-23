@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,6 +58,7 @@ import com.pratap.vibhor.core.ui.clock.ClassicClockFace
 import com.pratap.vibhor.core.ui.clock.ElegantClockFace
 import com.pratap.vibhor.core.ui.clock.MinimalClockFace
 import com.pratap.vibhor.core.ui.clock.SplitClockFace
+import com.pratap.vibhor.core.ui.components.MarqueeText
 import com.pratap.vibhor.core.ui.theme.DeepSlate
 import com.pratap.vibhor.core.ui.theme.Midnight
 import com.pratap.vibhor.core.ui.theme.PrimaryText
@@ -71,13 +74,16 @@ object HomeTestTags {
     const val QuickButton = "home_quick_button"
     const val BlackoutButton = "home_blackout_button"
     const val QuickPopup = "home_quick_popup"
+    const val NowPlayingTicker = "home_now_playing_ticker"
+    const val NowPlayingText = "home_now_playing_text"
 }
 
 /**
- * Home shows only the system wallpaper and the clock/date. The wallpaper
+ * Home shows the system wallpaper, the clock/date, the compact actions, and
+ * a thin now-playing ticker when a real session is available. The wallpaper
  * itself is rendered by the window manager behind this transparent window
- * (android:windowShowWallpaper), so no storage permission is needed and no
- * bitmap is decoded or retained.
+ * (android:windowShowWallpaper), so no storage permission is needed and no bitmap
+ * is decoded or retained.
  */
 @Composable
 fun HomeScreen(
@@ -85,6 +91,7 @@ fun HomeScreen(
     onLaunchApp: (InstalledApp) -> Unit,
     onOpenAppDrawer: () -> Unit,
     onOpenBlackout: () -> Unit,
+    nowPlayingTitle: String?,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -128,72 +135,99 @@ fun HomeScreen(
             }
 
             var quickMenuExpanded by remember { mutableStateOf(false) }
+            var actionRowHeightPx by remember { mutableIntStateOf(0) }
             val scale = state.quickButtonScale
-            Row(
+            val tickerWidthFraction = if (maxWidth >= 700.dp) 0.58f else 0.82f
+            val density = LocalDensity.current
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
                     .padding(VibhorSpacing.md)
                     .padding(VibhorSpacing.md * scale),
-                horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                HomeActionButton(
-                    iconRes = R.drawable.ic_fullscreen,
-                    label = stringResource(R.string.home_blackout_button),
-                    scale = scale,
-                    onClick = onOpenBlackout,
-                    testTag = HomeTestTags.BlackoutButton,
-                )
-                Box {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .onSizeChanged { actionRowHeightPx = it.height },
+                    horizontalArrangement = Arrangement.spacedBy(VibhorSpacing.sm * scale),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     HomeActionButton(
-                        iconRes = R.drawable.ic_favourite,
-                        label = stringResource(R.string.home_quick_button),
+                        iconRes = R.drawable.ic_fullscreen,
+                        label = stringResource(R.string.home_blackout_button),
                         scale = scale,
-                        onClick = { quickMenuExpanded = true },
-                        testTag = HomeTestTags.QuickButton,
+                        onClick = onOpenBlackout,
+                        testTag = HomeTestTags.BlackoutButton,
                     )
-                    DropdownMenu(
-                        expanded = quickMenuExpanded,
-                        onDismissRequest = { quickMenuExpanded = false },
-                        modifier = Modifier
-                            .widthIn(min = 360.dp, max = 440.dp)
-                            .testTag(HomeTestTags.QuickPopup),
-                        shape = RoundedCornerShape(20.dp),
-                        containerColor = Midnight.copy(alpha = 0.94f),
-                        tonalElevation = 0.dp,
-                        shadowElevation = 16.dp,
-                        border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
-                    ) {
-                        if (state.favourites.isEmpty()) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = stringResource(R.string.home_quick_empty),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = SecondaryText,
-                                    )
-                                },
-                                onClick = {
-                                    quickMenuExpanded = false
-                                    onOpenAppDrawer()
-                                },
-                                contentPadding = PaddingValues(
-                                    horizontal = VibhorSpacing.lg,
-                                    vertical = VibhorSpacing.md,
-                                ),
-                            )
-                        } else {
-                            state.favourites.forEach { app ->
-                                QuickAppItem(
-                                    app = app,
+                    Box {
+                        HomeActionButton(
+                            iconRes = R.drawable.ic_favourite,
+                            label = stringResource(R.string.home_quick_button),
+                            scale = scale,
+                            onClick = { quickMenuExpanded = true },
+                            testTag = HomeTestTags.QuickButton,
+                        )
+                        DropdownMenu(
+                            expanded = quickMenuExpanded,
+                            onDismissRequest = { quickMenuExpanded = false },
+                            modifier = Modifier
+                                .widthIn(min = 360.dp, max = 440.dp)
+                                .testTag(HomeTestTags.QuickPopup),
+                            shape = RoundedCornerShape(20.dp),
+                            containerColor = Midnight.copy(alpha = 0.94f),
+                            tonalElevation = 0.dp,
+                            shadowElevation = 16.dp,
+                            border = BorderStroke(1.dp, PrimaryText.copy(alpha = 0.12f)),
+                        ) {
+                            if (state.favourites.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.home_quick_empty),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = SecondaryText,
+                                        )
+                                    },
                                     onClick = {
                                         quickMenuExpanded = false
-                                        onLaunchApp(app)
+                                        onOpenAppDrawer()
                                     },
+                                    contentPadding = PaddingValues(
+                                        horizontal = VibhorSpacing.lg,
+                                        vertical = VibhorSpacing.md,
+                                    ),
                                 )
+                            } else {
+                                state.favourites.forEach { app ->
+                                    QuickAppItem(
+                                        app = app,
+                                        onClick = {
+                                            quickMenuExpanded = false
+                                            onLaunchApp(app)
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
+                }
+
+                if (state.showNowPlayingTicker && nowPlayingTitle != null) {
+                    MarqueeText(
+                        text = nowPlayingTitle,
+                        fontSize = state.nowPlayingTextSizeSp.sp,
+                        color = PrimaryText.copy(alpha = 0.82f),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(
+                                bottom = with(density) { actionRowHeightPx.toDp() } +
+                                    VibhorSpacing.xl,
+                            )
+                            .fillMaxWidth(tickerWidthFraction)
+                            .testTag(HomeTestTags.NowPlayingTicker),
+                        textModifier = Modifier.testTag(HomeTestTags.NowPlayingText),
+                    )
                 }
             }
         }
@@ -386,6 +420,7 @@ private fun HomeLandscapePreview() {
             onLaunchApp = {},
             onOpenAppDrawer = {},
             onOpenBlackout = {},
+            nowPlayingTitle = "Now Playing",
         )
     }
 }
@@ -402,6 +437,7 @@ private fun HomePortraitPreview() {
             onLaunchApp = {},
             onOpenAppDrawer = {},
             onOpenBlackout = {},
+            nowPlayingTitle = "Now Playing",
         )
     }
 }

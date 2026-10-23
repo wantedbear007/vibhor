@@ -5,21 +5,95 @@ stereo. It is a normal Android application that registers itself as a home
 app; it is not an Android Auto, Android Automotive, or Car App Library
 application.
 
-This milestone turns the foundation into a three-screen automotive launcher.
-The screens are laid out on a horizontal pager: **Music** (astronaut stage, the
-real active media session, and a volume slider), **Home** (system wallpaper
-and clock), and **Apps** (a unified page with fixed quick controls beside the
-installed-app launcher). The system wallpaper is rendered by
-Android behind the window, so no storage permission is required and no wallpaper
-bitmap is ever decoded. A **Settings** overlay is reachable from the Apps quick
-controls, and persists every tunable option — including the launcher-wide accent
-color and surface background — through `SharedPreferences`. A full-width
-**Blackout** quick action on Apps and a matching **Blackout** action on Home
-open an immersive black now-playing page with only the time, the current media
-title, and an icon-only close button. Opening it from either page temporarily
-dims the screen to the configured **Blackout brightness** (5% by default) and
-restores the previous brightness when it closes. A fresh install starts with
-the black launcher background, white accent, and a 50% Home clock.
+Vibhor pairs a wallpaper-first Home screen with a real media-session player, a
+unified app launcher with live device controls, a deeply configurable Settings
+overlay, and an immersive Blackout screen. Everything runs locally: no accounts,
+no network calls, no analytics, and no always-running background service.
+
+![Vibhor Home screen with the wallpaper clock, now-playing ticker, and quick actions](docs/screenshots/home.jpg)
+
+## Screenshots
+
+| Music | Apps |
+|:---:|:---:|
+| ![Music screen with the astronaut stage and real media session](docs/screenshots/music.png) | ![Unified Apps screen with quick controls and app grid](docs/screenshots/apps.png) |
+| **Music** — animated astronaut stage, real album art, metadata, seek, transport, and live media volume. | **Apps** — fixed quick controls beside search, favourites, and the adaptive installed-app grid. |
+
+| Home favourites | App favourites |
+|:---:|:---:|
+| ![Home favourites popup over the wallpaper clock](docs/screenshots/home-favourites.jpg) | ![Favourites tab in the Apps screen](docs/screenshots/apps-favourites.png) |
+| **Home favourites** — one-tap access to pinned apps without leaving the wallpaper clock. | **Favourites** — long-press any app to pin it; the same set feeds Home and the Apps tab. |
+
+| Settings: clock and appearance | Settings: ticker and layout |
+|:---:|:---:|
+| ![Settings clock face, time format, backdrop, and appearance controls](docs/screenshots/settings-clock.png) | ![Settings now-playing ticker and home and app sizing controls](docs/screenshots/settings-ticker.png) |
+| **Clock and appearance** — six clock faces, time format, backdrop, accent color, background, status bar, and wallpaper picker. | **Ticker and layout** — show or hide the Home ticker, choose its text size, and scale Home actions or app icons. |
+
+| Settings: controls and motion | Blackout |
+|:---:|:---:|
+| ![Settings Blackout brightness, Home button target, and swipe animation controls](docs/screenshots/settings-controls.png) | ![Immersive Blackout screen with only the clock, track title, and close button](docs/screenshots/blackout.png) |
+| **Controls and motion** — Blackout brightness, Home-button target, seven transition styles, and reset-to-defaults. | **Blackout** — a pure-black now-playing page that dims the panel and restores the previous brightness on exit. |
+
+## Features
+
+### Launcher
+
+- Three-page horizontal pager: **Music → Home → Apps**, with the clock screen as
+  the default and a configurable Home-button target.
+- Wallpaper-first Home screen with a large clock, date, now-playing ticker, and
+  compact **Blackout** and **Favourites** actions.
+- Six clock faces — Classic, Split, Minimal, Bold, Elegant, and live Analog —
+  with 50%–200% scaling, system/12-hour/24-hour formats, clock size, wallpaper
+  blur on Android 12+, and a separate wallpaper darkness layer.
+- Seven swipe transition styles: Smooth Slide, Depth, Soft Fade, Parallax, Card
+  Stack, Tilt Cards, and Cube.
+- Optional status-bar hiding and a direct Android wallpaper picker action.
+- Portrait and landscape layouts that adapt to the available display.
+
+### Media
+
+- Reads the real Android `MediaSession`; never fabricates a track, artist,
+  artwork, duration, or playback state.
+- Album art, title, artist, progress, duration, seek, previous, next, and
+  play/pause all come from the active session and its advertised capabilities.
+- Animated Canvas astronaut stage that dances only while a real session is
+  playing and settles when playback pauses.
+- Home now-playing ticker with overflow marquee, soft edge fades, optional
+  visibility, and a 12–28 sp text-size control with live preview.
+- Immersive Blackout page with the active media title, clock, temporary
+  brightness override, and icon-only close action.
+
+### Apps and device controls
+
+- Unified app page with a fixed control rail and an independently scrolling app
+  grid.
+- Search, pill-shaped **Favourites**/**All** tabs, long-press pinning, and one
+  shared favourites set with the Home popup.
+- Adaptive app columns and icon/label sizing, with single-line ellipsized labels.
+- Real media volume and system brightness, plus Mute, Bluetooth, Wi-Fi, Night
+  mode, and Blackout controls.
+- Sliders and tiles stay in sync with the platform; unavailable radios and
+  unsupported states are shown honestly instead of being simulated.
+- Long-pressing Bluetooth or Wi-Fi opens the matching Android Settings page.
+
+### Personalization
+
+- Seven accent colors: Blue, Teal, Green, Purple, Orange, Pink, and White.
+- Six launcher backgrounds: Black, Midnight, Slate, Graphite, Navy, and Ocean.
+- Adjustable background opacity, Home action size, and app icon size.
+- Custom adaptive launcher icon with legacy PNG fallbacks.
+- Every setting persists in `SharedPreferences`, applies immediately across
+  screens, and can be restored with **Reset to defaults**.
+
+### Privacy and performance
+
+- No accounts, networking, analytics, ads, location access, or database.
+- The wallpaper is drawn by Android behind the window; Vibhor never decodes it.
+- Notification access is used only to enumerate media sessions and is never
+  used to read or store notifications.
+- No polling when idle, no boot receiver, and no always-running background
+  service; the clock and ticker update only while visible.
+- Built for **Android 9 (API 28)** with `minSdk = 28`.
 
 ## Target device
 
@@ -79,6 +153,69 @@ Other useful checks:
 ./gradlew connectedDebugAndroidTest  # UI tests; requires a device/emulator
 ```
 
+## Create a GitHub release
+
+The **Release** workflow (`.github/workflows/release.yml`) runs the unit tests
+and lint, builds a signed release APK, verifies its signature, and publishes
+the APK plus a SHA-256 checksum on GitHub Releases.
+
+It runs when:
+
+- a tag matching `v*` is pushed, or
+- **Actions → Release → Run workflow** is started with a tag such as `v1.0.0`.
+
+The tag supplies `versionName` (`v1.2.3` becomes `1.2.3`), while the GitHub
+Actions run number supplies a monotonically increasing `versionCode`. Manual
+runs create the tag at the selected commit if it does not already exist.
+
+### One-time signing setup
+
+Generate a release keystore outside the repository and keep it backed up
+securely. Losing it prevents future APKs from updating installations signed
+with the same key.
+
+```bash
+keytool -genkeypair -v \
+  -keystore vibhor-release.jks \
+  -alias vibhor \
+  -keyalg RSA -keysize 4096 -validity 10000 \
+  -dname "CN=Vibhor" \
+  -storepass '<store-password>' \
+  -keypass '<key-password>'
+```
+
+In **GitHub → Settings → Secrets and variables → Actions**, add:
+
+| Secret | Value |
+|---|---|
+| `RELEASE_KEYSTORE_BASE64` | Base64 of `vibhor-release.jks`, for example `base64 -i vibhor-release.jks \| tr -d '\n'` on macOS or `base64 -w0 vibhor-release.jks` on Linux |
+| `RELEASE_KEYSTORE_PASSWORD` | The keystore password |
+| `RELEASE_KEY_ALIAS` | The key alias, for example `vibhor` |
+| `RELEASE_KEY_PASSWORD` | The key password |
+
+The workflow fails deliberately when any of these secrets are missing, so an
+unsigned APK is never published as a release.
+
+Publish a release by pushing a version tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The same signing variables can be used for a local release build:
+
+```bash
+RELEASE_KEYSTORE_PATH=/path/to/vibhor-release.jks \
+RELEASE_KEYSTORE_PASSWORD='<store-password>' \
+RELEASE_KEY_ALIAS=vibhor \
+RELEASE_KEY_PASSWORD='<key-password>' \
+./gradlew assembleRelease -PversionCode=2 -PversionName=1.0.1
+```
+
+Release APKs and checksums are also retained as workflow artifacts even if
+publishing to GitHub Releases fails.
+
 ## Install the APK
 
 With the head unit (or an emulator) connected over ADB:
@@ -117,7 +254,7 @@ Home button.
 
 | Page | Content |
 |---|---|
-| **Home** (default clock) | System wallpaper + large clock + date, with compact **Blackout** and **Favourites** buttons in the bottom-right corner. Blackout opens the immersive page; Favourites opens the favourite-apps card. No other branding, cards, buttons, or dock. |
+| **Home** (default clock) | System wallpaper + large clock + date, with compact **Blackout** and **Favourites** buttons in the bottom-right corner. A thin, transparent now-playing ticker sits above those actions and shows the real active session title, scrolling only when it overflows. Blackout opens the immersive page; Favourites opens the favourite-apps card. No other branding, cards, buttons, or dock. |
 | **Music** | A lightweight Canvas astronaut on a moon above the real active media session in a rounded player card that uses the available width, with a compact tall volume pill on the right. Never shows fabricated tracks or playback state. |
 | **Apps** | Unified left-swipe screen: a fixed quick-control panel at roughly 30% width (compact left-aligned clock/date with the Settings gear beside the clock block, labelled Volume and Brightness pills, Bluetooth / Wi-Fi / Night mode / Mute tiles, and a full-width **Blackout** action) beside the app launcher. The launcher keeps a pill-shaped **Favourites**/**All** segmented control, a Material 3 filled search field, and an adaptive grid of tonal app cards; tapping launches an app and long-pressing toggles a favourite. Search filters the active tab by label. |
 
@@ -174,8 +311,9 @@ the same Material 3 styling as Settings: a compact, left-aligned digital clock,
 labelled Volume and Brightness sliders, a filled Material 3 search field,
 a pill-shaped Favourites/All segmented control with rounded ends and a divider,
 and tonal Material 3 app cards with the standard
-ripple. The default appearance is a vivid blue accent on a true-black surface;
-both sliders use the active accent color. Quick tiles are accent-tinted
+ripple. The appearance follows the selected accent color (white by default) over
+the persisted launcher background (black by default); both sliders use the active
+accent color. Quick tiles are accent-tinted
 when off and fill solid with the accent when active. The app columns and tile
 sizes adapt to the available width and the persisted app-icon-size setting;
 labels stay on one line and ellipsize when needed. The page background is
@@ -236,18 +374,21 @@ button beside the Apps clock. It contains:
 | Background visibility | 0%–100% (5% steps) | 100% | Opacity of the launcher background; 0% is transparent and lets the wallpaper show through |
 | Home action size | 50%–200% (5% steps) | 100% | Multiplier on the Home Blackout and Favourites buttons |
 | App icon size | 50%–200% (5% steps) | 100% | Multiplier on the Apps grid icon, cell, and label sizes |
+| Show now playing ticker | On / Off | On | Shows or hides the Home now-playing ticker without changing its text size |
+| Now Playing text size | 12–28 sp (1 sp steps) | 16 sp | Size of the Home now-playing ticker, with a live preview in Settings |
 | Blackout brightness | 1%–100% (1% steps) | 5% | Temporary screen brightness while Blackout is open; the prior window brightness is restored on exit |
 | Home button default screen | Clock / Player | Clock | Screen the Home button returns to, including when launching from Home |
 | Swipe animation | Smooth Slide / Depth / Soft Fade / Parallax / Card Stack / Tilt Cards / Cube | Smooth Slide | Transition effect used when swiping between Music, Home, and Apps; each option shows a compact preview |
 
-Settings are grouped into eight accent-marked cards: **Clock** (size, face,
+Settings are grouped into nine accent-marked cards: **Clock** (size, face,
 format), **Clock backdrop** (blur, darkness), **Launcher background** (color,
 visibility), **Appearance** (accent color, status bar, system wallpaper), **Home & apps**
-(Home action size, app icon size), **Blackout** (brightness while active), **Home
-button** (default screen), and **Swipe animation** (seven selectable preview
-cards, four per row on wide screens and two per row on narrow ones). On wide
-landscape displays the Clock card spans the top, Clock backdrop / Launcher
-background / Appearance share a row, and Home & apps / Blackout / Home button /
+(Home action size, app icon size), **Now playing ticker** (show/hide and text
+size with a live preview), **Blackout** (brightness while active), **Home button** (default
+screen), and **Swipe animation** (seven selectable preview cards, four per row
+on wide screens and two per row on narrow ones). On wide landscape displays the
+Clock card spans the top, Clock backdrop / Launcher background / Appearance
+share a row, and Home & apps / Now playing ticker / Blackout / Home button /
 Swipe animation run full width; narrow screens stack every card. The Appearance card
 also hosts the **System wallpaper** action, which launches Android's wallpaper
 picker. Clock face previews
@@ -277,8 +418,8 @@ size** and **Reset** apply to all of them):
   Home is visible.
 
 - **Reset to defaults** restores every setting, including the accent color,
-  launcher background, swipe animation, Home button target, and Blackout
-  brightness.
+  launcher background, swipe animation, Home button target, now-playing ticker
+  visibility and text size, sizing multipliers, and Blackout brightness.
 - Values persist in `SharedPreferences` (`vibhor_launcher_settings`) and
   survive process restarts.
 - The accent color is read from the Compose theme (`VibhorThemeColors.accent`),
@@ -350,11 +491,11 @@ app/src/main/java/com/pratap/vibhor/
 │   ├── time/                    # Clock abstraction, clock and playback-time formatting
 │   └── ui/
 │       ├── clock/               # Six stateless clock-face composables (shared by Home + Settings)
-│       ├── components/          # Shared rounded pill slider (Apps + Music)
+│       ├── components/          # Shared pill slider and edge-faded marquee text
 │       ├── navigation/          # LauncherPage enum (page order)
 │       └── theme/               # Colors, typography, spacing, shapes, accent CompositionLocal
 └── feature/
-    ├── home/                    # Wallpaper + clock + Blackout/Favourites actions (HomeViewModel, screen)
+    ├── home/                    # Wallpaper + clock + ticker + Blackout/Favourites actions (HomeViewModel, screen)
     ├── music/                   # Media player + astronaut stage (MusicViewModel, screen)
     ├── blackout/                # Immersive black now-playing page (stateless screen)
     ├── cockpit/                 # Device-control view model shared by Music and Apps

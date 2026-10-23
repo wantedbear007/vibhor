@@ -39,6 +39,8 @@ class SettingsWallpaperTest {
                     onAnimationStyleChange = {},
                     onHomeButtonTargetChange = {},
                     onBlackoutBrightnessChange = {},
+                    onNowPlayingTextSizeChange = {},
+                    onShowNowPlayingTickerChange = {},
                     onResetToDefaults = {},
                     onClose = {},
                 )

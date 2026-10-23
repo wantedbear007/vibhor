@@ -18,6 +18,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -71,6 +73,11 @@ class SettingsViewModelTest {
         assertEquals(LauncherSettings.DEFAULT_SCALE, viewModel.uiState.value.appIconScale)
         assertEquals(AccentColor.WHITE, viewModel.uiState.value.accentColor)
         assertEquals(LauncherBackground.BLACK, viewModel.uiState.value.background)
+        assertEquals(
+            LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+            viewModel.uiState.value.nowPlayingTextSizeSp,
+        )
+        assertTrue(viewModel.uiState.value.showNowPlayingTicker)
 
         collection.cancel()
     }
@@ -422,6 +429,96 @@ class SettingsViewModelTest {
             assertEquals(
                 LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
                 viewModel.uiState.value.blackoutBrightness,
+            )
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `now playing text size updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setNowPlayingTextSizeSp(24f)
+            advanceUntilIdle()
+
+            assertEquals(24f, viewModel.uiState.value.nowPlayingTextSizeSp)
+            assertEquals(24f, store.settings.value.nowPlayingTextSizeSp)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `reset to defaults restores the now playing text size`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setNowPlayingTextSizeSp(28f)
+            advanceUntilIdle()
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertEquals(
+                LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+                viewModel.uiState.value.nowPlayingTextSizeSp,
+            )
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `show now playing ticker updates ui state and persists to store`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setShowNowPlayingTicker(false)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showNowPlayingTicker)
+            assertFalse(store.settings.value.showNowPlayingTicker)
+
+            viewModel.resetToDefaults()
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.showNowPlayingTicker)
+            assertTrue(store.settings.value.showNowPlayingTicker)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `now playing text size is clamped to the supported range`() =
+        runTest(dispatcher) {
+            val store = InMemorySettingsStore()
+            val viewModel = SettingsViewModel(store)
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            viewModel.setNowPlayingTextSizeSp(100f)
+            advanceUntilIdle()
+            assertEquals(
+                LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+                viewModel.uiState.value.nowPlayingTextSizeSp,
+            )
+
+            viewModel.setNowPlayingTextSizeSp(1f)
+            advanceUntilIdle()
+            assertEquals(
+                LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                viewModel.uiState.value.nowPlayingTextSizeSp,
             )
 
             collection.cancel()

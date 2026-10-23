@@ -51,6 +51,7 @@ import com.pratap.vibhor.feature.blackout.BlackoutScreen
 import com.pratap.vibhor.feature.cockpit.CockpitViewModel
 import com.pratap.vibhor.feature.home.HomeScreen
 import com.pratap.vibhor.feature.home.HomeViewModel
+import com.pratap.vibhor.feature.home.tickerTitle
 import com.pratap.vibhor.feature.music.MusicScreen
 import com.pratap.vibhor.feature.music.MusicViewModel
 import com.pratap.vibhor.feature.settings.SettingsScreen
@@ -260,15 +261,19 @@ fun VibhorApp(
 private fun HomeRoute(
     onOpenBlackout: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
+    musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val appLauncher = remember(context) { AndroidAppLauncher(context.applicationContext) }
+    RefreshMediaAccessOnResume(musicViewModel)
     HomeScreen(
         state = state,
         onLaunchApp = { app -> appLauncher.launch(app.packageName, app.activityName) },
         onOpenAppDrawer = { /* no-op for now; can be extended */ },
         onOpenBlackout = onOpenBlackout,
+        nowPlayingTitle = musicState.track.tickerTitle(),
     )
 }
 
@@ -331,18 +336,7 @@ private fun MusicRoute(
     val controlState by controlViewModel.uiState.collectAsStateWithLifecycle()
     val musicState by musicViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // Notification access is granted in system settings; re-check on return.
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                musicViewModel.refreshAccess()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    RefreshMediaAccessOnResume(musicViewModel)
 
     MusicScreen(
         musicState = musicState,
@@ -358,6 +352,24 @@ private fun MusicRoute(
             }
         },
     )
+}
+
+/**
+ * Notification access is granted in Android settings, so both Home and Music
+ * re-check the real session layer when the launcher resumes.
+ */
+@Composable
+private fun RefreshMediaAccessOnResume(musicViewModel: MusicViewModel) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, musicViewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                musicViewModel.refreshAccess()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 }
 
 @Composable
@@ -408,6 +420,8 @@ private fun SettingsRoute(
         onAnimationStyleChange = viewModel::setAnimationStyle,
         onHomeButtonTargetChange = viewModel::setHomeButtonTarget,
         onBlackoutBrightnessChange = viewModel::setBlackoutBrightness,
+        onNowPlayingTextSizeChange = viewModel::setNowPlayingTextSizeSp,
+        onShowNowPlayingTickerChange = viewModel::setShowNowPlayingTicker,
         onChangeWallpaper = {
             runCatching {
                 context.startActivity(Intent(Intent.ACTION_SET_WALLPAPER))

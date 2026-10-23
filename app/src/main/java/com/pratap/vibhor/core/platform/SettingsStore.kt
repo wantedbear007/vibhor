@@ -28,6 +28,8 @@ data class LauncherSettings(
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
     val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
     val blackoutBrightness: Float = DEFAULT_BLACKOUT_BRIGHTNESS,
+    val nowPlayingTextSizeSp: Float = DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+    val showNowPlayingTicker: Boolean = DEFAULT_SHOW_NOW_PLAYING_TICKER,
     val favouritePackageNames: Set<String> = emptySet(),
 ) {
     companion object {
@@ -70,6 +72,14 @@ data class LauncherSettings(
         const val MIN_BLACKOUT_BRIGHTNESS = 0.01f
         const val MAX_BLACKOUT_BRIGHTNESS = 1f
         const val DEFAULT_BLACKOUT_BRIGHTNESS = 0.05f
+
+        /** Typographic size of the Home now-playing ticker, in sp. */
+        const val MIN_NOW_PLAYING_TEXT_SIZE_SP = 12f
+        const val MAX_NOW_PLAYING_TEXT_SIZE_SP = 28f
+        const val DEFAULT_NOW_PLAYING_TEXT_SIZE_SP = 16f
+
+        /** Whether the real-media now-playing ticker appears on Home. */
+        const val DEFAULT_SHOW_NOW_PLAYING_TICKER = true
     }
 }
 
@@ -94,6 +104,8 @@ interface SettingsStore {
     fun setAnimationStyle(style: AnimationStyle)
     fun setHomeButtonTarget(target: HomeButtonTarget)
     fun setBlackoutBrightness(brightness: Float)
+    fun setNowPlayingTextSizeSp(sizeSp: Float)
+    fun setShowNowPlayingTicker(show: Boolean)
     fun addFavourite(packageName: String)
     fun removeFavourite(packageName: String)
     fun toggleFavourite(packageName: String)
@@ -128,6 +140,10 @@ class InMemorySettingsStore(
             blackoutBrightness = initial.blackoutBrightness.coerceIn(
                 LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
                 LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
+            ),
+            nowPlayingTextSizeSp = initial.nowPlayingTextSizeSp.coerceIn(
+                LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
             ),
         ),
     )
@@ -241,6 +257,21 @@ class InMemorySettingsStore(
                 ),
             )
         }
+    }
+
+    override fun setNowPlayingTextSizeSp(sizeSp: Float) {
+        state.update {
+            it.copy(
+                nowPlayingTextSizeSp = sizeSp.coerceIn(
+                    LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                    LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+                ),
+            )
+        }
+    }
+
+    override fun setShowNowPlayingTicker(show: Boolean) {
+        state.update { it.copy(showNowPlayingTicker = show) }
     }
 
     override fun addFavourite(packageName: String) {

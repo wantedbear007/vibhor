@@ -1,6 +1,8 @@
 package com.pratap.vibhor.feature.home
 
 import com.pratap.vibhor.core.platform.ClockFace
+import com.pratap.vibhor.core.platform.InstalledApp
+import com.pratap.vibhor.core.platform.LauncherSettings
 
 data class HomeUiState(
     val timeText: String = "",
@@ -16,5 +18,8 @@ data class HomeUiState(
     val minuteText: String = "",
     val meridiemText: String = "",
     val quickButtonScale: Float = 1f,
-    val favourites: List<com.pratap.vibhor.core.platform.InstalledApp> = emptyList(),
+    val nowPlayingTextSizeSp: Float =
+        LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+    val showNowPlayingTicker: Boolean = LauncherSettings.DEFAULT_SHOW_NOW_PLAYING_TICKER,
+    val favourites: List<InstalledApp> = emptyList(),
 )

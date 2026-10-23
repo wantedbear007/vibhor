@@ -215,6 +215,9 @@ class AndroidMediaControls(context: Context) : MediaControls {
             canSkipNext = actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
             canSkipPrevious = actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L,
             canSeek = actions and PlaybackState.ACTION_SEEK_TO != 0L,
+            isStopped = state?.state == PlaybackState.STATE_STOPPED ||
+                state?.state == PlaybackState.STATE_ERROR ||
+                state?.state == PlaybackState.STATE_NONE,
         )
 
         if (state?.state == PlaybackState.STATE_PLAYING) {

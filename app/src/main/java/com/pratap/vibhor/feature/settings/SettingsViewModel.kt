@@ -45,6 +45,8 @@ class SettingsViewModel(
                 animationStyle = settings.animationStyle,
                 homeButtonTarget = settings.homeButtonTarget,
                 blackoutBrightness = settings.blackoutBrightness,
+                nowPlayingTextSizeSp = settings.nowPlayingTextSizeSp,
+                showNowPlayingTicker = settings.showNowPlayingTicker,
             )
         }
         .stateIn(
@@ -84,6 +86,12 @@ class SettingsViewModel(
     fun setBlackoutBrightness(brightness: Float) =
         settingsStore.setBlackoutBrightness(brightness)
 
+    fun setNowPlayingTextSizeSp(sizeSp: Float) =
+        settingsStore.setNowPlayingTextSizeSp(sizeSp)
+
+    fun setShowNowPlayingTicker(show: Boolean) =
+        settingsStore.setShowNowPlayingTicker(show)
+
     fun resetToDefaults() {
         settingsStore.setClockScale(LauncherSettings.DEFAULT_CLOCK_SCALE)
         settingsStore.setAppIconScale(LauncherSettings.DEFAULT_SCALE)
@@ -100,6 +108,12 @@ class SettingsViewModel(
         settingsStore.setAnimationStyle(AnimationStyle.DEFAULT)
         settingsStore.setHomeButtonTarget(HomeButtonTarget.DEFAULT)
         settingsStore.setBlackoutBrightness(LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS)
+        settingsStore.setNowPlayingTextSizeSp(
+            LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+        )
+        settingsStore.setShowNowPlayingTicker(
+            LauncherSettings.DEFAULT_SHOW_NOW_PLAYING_TICKER,
+        )
     }
 
     companion object {

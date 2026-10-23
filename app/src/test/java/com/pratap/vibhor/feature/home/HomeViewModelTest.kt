@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import java.time.ZoneId
@@ -80,6 +81,48 @@ class HomeViewModelTest {
 
         collection.cancel()
     }
+
+    @Test
+    fun `ui state reflects the now playing text size from settings`() =
+        runTest(dispatcher) {
+            val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+            val settingsStore = InMemorySettingsStore(
+                LauncherSettings(nowPlayingTextSizeSp = 22f),
+            )
+            val viewModel = HomeViewModel(
+                clockTicker = FakeClockTicker(instant),
+                settingsStore = settingsStore,
+                installedAppsSource = FakeInstalledAppsSource(),
+            )
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertEquals(22f, viewModel.uiState.value.nowPlayingTextSizeSp)
+
+            collection.cancel()
+        }
+
+    @Test
+    fun `ui state reflects now playing ticker visibility from settings`() =
+        runTest(dispatcher) {
+            val instant = ZonedDateTime.of(2026, 10, 19, 18, 42, 0, 0, ZoneId.of("UTC"))
+            val settingsStore = InMemorySettingsStore(
+                LauncherSettings(showNowPlayingTicker = false),
+            )
+            val viewModel = HomeViewModel(
+                clockTicker = FakeClockTicker(instant),
+                settingsStore = settingsStore,
+                installedAppsSource = FakeInstalledAppsSource(),
+            )
+
+            val collection = launch { viewModel.uiState.collect { } }
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.showNowPlayingTicker)
+
+            collection.cancel()
+        }
 
     @Test
     fun `ui state starts empty before the first tick`() = runTest(dispatcher) {

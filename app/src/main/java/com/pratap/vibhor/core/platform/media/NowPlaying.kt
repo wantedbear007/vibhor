@@ -18,4 +18,5 @@ data class NowPlaying(
     val canSkipNext: Boolean,
     val canSkipPrevious: Boolean,
     val canSeek: Boolean,
+    val isStopped: Boolean = false,
 )

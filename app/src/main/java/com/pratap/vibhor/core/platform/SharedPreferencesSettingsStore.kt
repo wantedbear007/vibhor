@@ -121,6 +121,20 @@ class SharedPreferencesSettingsStore private constructor(
         state.update { it.copy(blackoutBrightness = clamped) }
     }
 
+    override fun setNowPlayingTextSizeSp(sizeSp: Float) {
+        val clamped = sizeSp.coerceIn(
+            LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+            LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+        )
+        prefs.edit { putFloat(KEY_NOW_PLAYING_TEXT_SIZE, clamped) }
+        state.update { it.copy(nowPlayingTextSizeSp = clamped) }
+    }
+
+    override fun setShowNowPlayingTicker(show: Boolean) {
+        prefs.edit { putBoolean(KEY_SHOW_NOW_PLAYING_TICKER, show) }
+        state.update { it.copy(showNowPlayingTicker = show) }
+    }
+
     override fun addFavourite(packageName: String) {
         val key = packageName.trim()
         if (key.isEmpty()) return
@@ -212,6 +226,19 @@ class SharedPreferencesSettingsStore private constructor(
                 LauncherSettings.MIN_BLACKOUT_BRIGHTNESS,
                 LauncherSettings.MAX_BLACKOUT_BRIGHTNESS,
             ),
+        nowPlayingTextSizeSp = prefs
+            .getFloat(
+                KEY_NOW_PLAYING_TEXT_SIZE,
+                LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+            )
+            .coerceIn(
+                LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+            ),
+        showNowPlayingTicker = prefs.getBoolean(
+            KEY_SHOW_NOW_PLAYING_TICKER,
+            LauncherSettings.DEFAULT_SHOW_NOW_PLAYING_TICKER,
+        ),
         favouritePackageNames = prefs.getStringSet(KEY_FAVOURITES, emptySet())
             .orEmpty()
             .toSet(),
@@ -244,6 +271,8 @@ class SharedPreferencesSettingsStore private constructor(
         private const val KEY_ANIMATION_STYLE = "animation_style"
         private const val KEY_HOME_BUTTON_TARGET = "home_button_target"
         private const val KEY_BLACKOUT_BRIGHTNESS = "blackout_brightness"
+        private const val KEY_NOW_PLAYING_TEXT_SIZE = "now_playing_text_size_sp"
+        private const val KEY_SHOW_NOW_PLAYING_TICKER = "show_now_playing_ticker"
         private const val KEY_FAVOURITES = "favourite_package_names"
 
         @Volatile

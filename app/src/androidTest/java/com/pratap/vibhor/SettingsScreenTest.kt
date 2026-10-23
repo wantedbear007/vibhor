@@ -3,6 +3,8 @@ package com.pratap.vibhor
 import android.content.Context
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -21,6 +23,8 @@ import com.pratap.vibhor.feature.apps.AppDrawerTestTags
 import com.pratap.vibhor.feature.apps.UnifiedAppsTestTags
 import com.pratap.vibhor.feature.settings.SettingsTestTags
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -54,10 +58,17 @@ class SettingsScreenTest {
         composeRule.onNodeWithTag(SettingsTestTags.SectionLauncherBackground).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAppearance).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionHomeApps).assertExists()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionNowPlaying).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionHomeButton).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionBlackout).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.SectionAnimations).assertExists()
         composeRule.onNodeWithTag(SettingsTestTags.ClockSlider).assertExists()
+        composeRule.onNodeWithTag(SettingsTestTags.NowPlayingToggle)
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithTag(SettingsTestTags.NowPlayingTextSizeSlider)
+            .performScrollTo()
+            .assertIsDisplayed()
         composeRule.onNodeWithTag(SettingsTestTags.BlackoutBrightnessSlider)
             .performScrollTo()
             .assertIsDisplayed()
@@ -178,6 +189,61 @@ class SettingsScreenTest {
             .getSharedPreferences("vibhor_launcher_settings", Context.MODE_PRIVATE)
             .getString("accent_color", null)
         assertEquals(AccentColor.WHITE.id, stored)
+    }
+
+    @Test
+    fun nowPlayingTickerCanBeHiddenAndRestored() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = context.getSharedPreferences(
+            "vibhor_launcher_settings",
+            Context.MODE_PRIVATE,
+        )
+        openSettings()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionNowPlaying).performScrollTo()
+        val toggle = composeRule.onNodeWithTag(SettingsTestTags.NowPlayingToggle)
+            .performScrollTo()
+
+        // A previous interrupted run must not leave the switch off.
+        if (!prefs.getBoolean("show_now_playing_ticker", true)) {
+            toggle.performClick()
+            composeRule.waitForIdle()
+        }
+        toggle.assertIsOn().performClick()
+        composeRule.waitForIdle()
+        toggle.assertIsOff()
+        assertFalse(prefs.getBoolean("show_now_playing_ticker", true))
+
+        toggle.performClick()
+        composeRule.waitForIdle()
+        toggle.assertIsOn()
+        assertTrue(prefs.getBoolean("show_now_playing_ticker", false))
+    }
+
+    @Test
+    fun nowPlayingTextSizePersistsToPreferences() {
+        openSettings()
+        composeRule.onNodeWithTag(SettingsTestTags.SectionNowPlaying).performScrollTo()
+        composeRule.onNodeWithTag(SettingsTestTags.NowPlayingTextSizeSlider)
+            .performScrollTo()
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                setProgress(24f)
+            }
+        composeRule.waitForIdle()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val prefs = context.getSharedPreferences(
+            "vibhor_launcher_settings",
+            Context.MODE_PRIVATE,
+        )
+        assertEquals(24f, prefs.getFloat("now_playing_text_size_sp", -1f), 0.0001f)
+
+        // Restore the installer default for deterministic later tests.
+        composeRule.onNodeWithTag(SettingsTestTags.NowPlayingTextSizeSlider)
+            .performSemanticsAction(SemanticsActions.SetProgress) { setProgress ->
+                setProgress(16f)
+            }
+        composeRule.waitForIdle()
+        assertEquals(16f, prefs.getFloat("now_playing_text_size_sp", -1f), 0.0001f)
     }
 
     @Test

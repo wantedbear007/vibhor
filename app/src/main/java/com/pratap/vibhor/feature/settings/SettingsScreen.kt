@@ -77,6 +77,7 @@ import com.pratap.vibhor.core.ui.clock.ClassicClockFace
 import com.pratap.vibhor.core.ui.clock.ElegantClockFace
 import com.pratap.vibhor.core.ui.clock.MinimalClockFace
 import com.pratap.vibhor.core.ui.clock.SplitClockFace
+import com.pratap.vibhor.core.ui.components.MarqueeText
 import com.pratap.vibhor.core.ui.components.PillSlider
 import com.pratap.vibhor.core.ui.theme.DeepSlate
 import com.pratap.vibhor.core.ui.theme.VibhorThemeColors
@@ -101,6 +102,9 @@ object SettingsTestTags {
     const val QuickButtonSlider = "settings_quick_button_slider"
     const val IconSlider = "settings_icon_slider"
     const val BlackoutBrightnessSlider = "settings_blackout_brightness_slider"
+    const val NowPlayingToggle = "settings_now_playing_toggle"
+    const val NowPlayingTextSizeSlider = "settings_now_playing_text_size_slider"
+    const val NowPlayingTextSizePreview = "settings_now_playing_text_size_preview"
     const val AccentOptionPrefix = "settings_accent_"
     const val BackgroundOptionPrefix = "settings_background_"
     const val BackgroundVisibilitySlider = "settings_background_visibility"
@@ -109,6 +113,7 @@ object SettingsTestTags {
     const val SectionLauncherBackground = "settings_section_launcher_background"
     const val SectionAppearance = "settings_section_appearance"
     const val SectionHomeApps = "settings_section_home_apps"
+    const val SectionNowPlaying = "settings_section_now_playing"
     const val SectionHomeButton = "settings_section_home_button"
     const val SectionBlackout = "settings_section_blackout"
     const val SectionAnimations = "settings_section_animations"
@@ -142,6 +147,8 @@ fun SettingsScreen(
     onAnimationStyleChange: (AnimationStyle) -> Unit,
     onHomeButtonTargetChange: (HomeButtonTarget) -> Unit,
     onBlackoutBrightnessChange: (Float) -> Unit,
+    onNowPlayingTextSizeChange: (Float) -> Unit,
+    onShowNowPlayingTickerChange: (Boolean) -> Unit,
     onResetToDefaults: () -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
@@ -241,6 +248,13 @@ fun SettingsScreen(
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
                         )
+                        NowPlayingSettingsSection(
+                            show = state.showNowPlayingTicker,
+                            onShowChange = onShowNowPlayingTickerChange,
+                            textSizeSp = state.nowPlayingTextSizeSp,
+                            onTextSizeChange = onNowPlayingTextSizeChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionNowPlaying),
+                        )
                         BlackoutSettingsSection(
                             brightness = state.blackoutBrightness,
                             onBrightnessChange = onBlackoutBrightnessChange,
@@ -290,6 +304,13 @@ fun SettingsScreen(
                             onQuickButtonScaleChange = onQuickButtonScaleChange,
                             onAppIconScaleChange = onAppIconScaleChange,
                             modifier = Modifier.testTag(SettingsTestTags.SectionHomeApps),
+                        )
+                        NowPlayingSettingsSection(
+                            show = state.showNowPlayingTicker,
+                            onShowChange = onShowNowPlayingTickerChange,
+                            textSizeSp = state.nowPlayingTextSizeSp,
+                            onTextSizeChange = onNowPlayingTextSizeChange,
+                            modifier = Modifier.testTag(SettingsTestTags.SectionNowPlaying),
                         )
                         BlackoutSettingsSection(
                             brightness = state.blackoutBrightness,
@@ -507,6 +528,130 @@ private fun HomeAppsSettingsSection(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun NowPlayingSettingsSection(
+    show: Boolean,
+    onShowChange: (Boolean) -> Unit,
+    textSizeSp: Float,
+    onTextSizeChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(
+        title = stringResource(R.string.settings_section_now_playing),
+        modifier = modifier,
+    ) {
+        NowPlayingTickerVisibilitySetting(
+            show = show,
+            onToggle = onShowChange,
+        )
+        NowPlayingTextSizeSetting(
+            value = textSizeSp,
+            onValueChange = onTextSizeChange,
+        )
+    }
+}
+
+@Composable
+private fun NowPlayingTickerVisibilitySetting(
+    show: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.settings_now_playing_show),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(R.string.settings_now_playing_show_summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SecondaryText,
+            )
+        }
+        Switch(
+            checked = show,
+            onCheckedChange = onToggle,
+            modifier = Modifier.testTag(SettingsTestTags.NowPlayingToggle),
+        )
+    }
+}
+
+@Composable
+private fun NowPlayingTextSizeSetting(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var sizeSp by remember(value) {
+        mutableFloatStateOf(
+            value.coerceIn(
+                LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+            ),
+        )
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(VibhorSpacing.sm),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_now_playing_text_size),
+                style = MaterialTheme.typography.titleMedium,
+                color = PrimaryText,
+            )
+            Text(
+                text = stringResource(
+                    R.string.settings_sp_value,
+                    sizeSp.roundToInt(),
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                color = VibhorThemeColors.accent,
+            )
+        }
+        MarqueeText(
+            text = stringResource(R.string.settings_now_playing_preview),
+            fontSize = sizeSp.sp,
+            color = PrimaryText.copy(alpha = 0.82f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(SettingsTestTags.NowPlayingTextSizePreview),
+        )
+        PillSlider(
+            value = sizeSp,
+            onValueChange = { sizeSp = it },
+            onValueChangeFinished = {
+                onValueChange(
+                    sizeSp.coerceIn(
+                        LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP,
+                        LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+                    ),
+                )
+            },
+            valueRange = LauncherSettings.MIN_NOW_PLAYING_TEXT_SIZE_SP..
+                LauncherSettings.MAX_NOW_PLAYING_TEXT_SIZE_SP,
+            steps = 15,
+            modifier = Modifier.testTag(SettingsTestTags.NowPlayingTextSizeSlider),
+        )
+        Text(
+            text = stringResource(R.string.settings_now_playing_text_size_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = SecondaryText,
+        )
     }
 }
 
@@ -1613,6 +1758,8 @@ private fun SettingsLandscapePreview() {
             onAnimationStyleChange = {},
             onHomeButtonTargetChange = {},
             onBlackoutBrightnessChange = {},
+            onNowPlayingTextSizeChange = {},
+            onShowNowPlayingTickerChange = {},
             onResetToDefaults = {},
             onClose = {},
         )

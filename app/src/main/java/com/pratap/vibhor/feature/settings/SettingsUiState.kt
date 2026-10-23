@@ -23,4 +23,6 @@ data class SettingsUiState(
     val animationStyle: AnimationStyle = AnimationStyle.DEFAULT,
     val homeButtonTarget: HomeButtonTarget = HomeButtonTarget.DEFAULT,
     val blackoutBrightness: Float = LauncherSettings.DEFAULT_BLACKOUT_BRIGHTNESS,
+    val nowPlayingTextSizeSp: Float = LauncherSettings.DEFAULT_NOW_PLAYING_TEXT_SIZE_SP,
+    val showNowPlayingTicker: Boolean = LauncherSettings.DEFAULT_SHOW_NOW_PLAYING_TICKER,
 )

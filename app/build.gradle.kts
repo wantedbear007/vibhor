@@ -3,6 +3,32 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// The release workflow passes the tag-derived version name and the monotonic
+// GitHub Actions run number. Local builds keep the checked-in defaults.
+val releaseVersionName = providers.gradleProperty("versionName").orNull ?: "1.0"
+val releaseVersionCode = providers.gradleProperty("versionCode").orNull?.let { value ->
+    value.toIntOrNull() ?: error("versionCode must be an integer, got '$value'")
+} ?: 1
+
+// Release signing is configured only through environment variables so no
+// keystore or password ever needs to live in the repository.
+val signingEnvironment = listOf(
+    "RELEASE_KEYSTORE_PATH",
+    "RELEASE_KEYSTORE_PASSWORD",
+    "RELEASE_KEY_ALIAS",
+    "RELEASE_KEY_PASSWORD",
+)
+val signingValues = signingEnvironment.associateWith { name ->
+    providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+}
+val configuredSigningValues = signingValues.values.count { it != null }
+require(
+    configuredSigningValues == 0 || configuredSigningValues == signingEnvironment.size,
+) {
+    "Release signing is partially configured. Set all of: ${signingEnvironment.joinToString()}"
+}
+val releaseSigningConfigured = configuredSigningValues == signingEnvironment.size
+
 android {
     namespace = "com.pratap.vibhor"
     compileSdk {
@@ -13,10 +39,21 @@ android {
         applicationId = "com.pratap.vibhor"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseVersionCode
+        versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(signingValues.getValue("RELEASE_KEYSTORE_PATH")!!)
+                storePassword = signingValues.getValue("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = signingValues.getValue("RELEASE_KEY_ALIAS")
+                keyPassword = signingValues.getValue("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -24,6 +61,9 @@ android {
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
+            }
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }
