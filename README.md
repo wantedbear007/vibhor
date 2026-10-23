@@ -95,18 +95,6 @@ no network calls, no analytics, and no always-running background service.
   service; the clock and ticker update only while visible.
 - Built for **Android 9 (API 28)** with `minSdk = 28`.
 
-## Target device
-
-| Item | Value |
-|---|---|
-| Head unit | Blaupunkt FT Lauderdale 900 |
-| Vehicle | Hyundai Creta 2024 base model |
-| Target OS | Android 9 (API 28) |
-| Reported memory | 4 GB RAM |
-| Reported storage | 32 GB |
-| Primary orientation | Landscape |
-| Application ID | `com.pratap.vibhor` |
-
 ## Technology stack
 
 - Kotlin (AGP 9.4.1 built-in Kotlin, Kotlin 2.2.10)
